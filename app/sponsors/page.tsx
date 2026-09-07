@@ -17,7 +17,9 @@ export default function Sponsors() {
 
       <Reveal delay={0.1}>
         {siteConfig.sponsors.length === 0 ? (
-          <p className="text-starlight/60 italic">Sponsor list to be announced.</p>
+          <div className="rounded-lg p-8 border border-white/10 bg-gradient-to-br from-rift-purple/15 via-rift-pink/10 to-transparent text-center">
+            <p className="text-starlight/70">Sponsor list to be announced.</p>
+          </div>
         ) : (
           <ul className="grid sm:grid-cols-3 gap-4">
             {siteConfig.sponsors.map((s) => (
