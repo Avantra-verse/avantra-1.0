@@ -29,7 +29,7 @@ export default function CountdownTimer() {
 
   if (remaining.isPast) {
     return (
-      <p className="slab inline-block px-6 py-5 font-display text-xl text-starlight">
+      <p className="slab inline-block px-6 py-5 t-item text-starlight">
         AVANTRA has begun.
       </p>
     );
@@ -47,12 +47,12 @@ export default function CountdownTimer() {
                 initial={{ y: "-100%" }}
                 animate={{ y: "0%" }}
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="block font-display text-4xl font-bold tabular-nums leading-none text-starlight sm:text-5xl"
+                className="block text-4xl font-bold tabular-nums leading-none text-starlight sm:text-5xl"
               >
                 {String(remaining[key]).padStart(2, "0")}
               </motion.span>
             </div>
-            <span className="mt-2 block text-sm text-dim">{label}</span>
+            <span className="mt-2 block text-sm text-muted">{label}</span>
           </div>
         </div>
       ))}

@@ -22,7 +22,7 @@ export default function Nav() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link
           href="/"
-          className="font-display text-lg font-extrabold tracking-[-0.02em] text-starlight"
+          className="text-lg font-extrabold tracking-[-0.02em] text-starlight"
         >
           AVANTRA
         </Link>
@@ -36,7 +36,7 @@ export default function Nav() {
               className={
                 pathname === link.href
                   ? "text-starlight"
-                  : "text-dim transition-colors hover:text-starlight"
+                  : "text-muted transition-colors hover:text-starlight"
               }
             >
               {link.label}
@@ -72,7 +72,7 @@ export default function Nav() {
                 onClick={() => setOpen(false)}
                 className={
                   "border-t border-white/8 py-3 " +
-                  (pathname === link.href ? "text-starlight" : "text-dim")
+                  (pathname === link.href ? "text-starlight" : "text-muted")
                 }
               >
                 {link.label}

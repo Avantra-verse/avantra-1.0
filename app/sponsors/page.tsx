@@ -14,10 +14,10 @@ export default function Sponsors() {
         <section>
           {siteConfig.sponsors.length === 0 ? (
             <div className="max-w-[52ch]">
-              <p className="font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold leading-[1.1] tracking-[-0.02em] text-starlight">
+              <p className="t-section text-starlight">
                 No sponsors confirmed yet.
               </p>
-              <p className="mt-6 leading-relaxed text-starlight/70">
+              <p className="t-body mt-6 text-secondary">
                 Partners join in the run-up to December. This page lists them as they sign
                 on. To sponsor AVANTRA, write to ARITHI on the contact page.
               </p>
@@ -29,10 +29,10 @@ export default function Sponsors() {
                   key={s.name}
                   className="flex items-baseline justify-between gap-8 border-t border-white/8 py-7"
                 >
-                  <dt className="font-display text-xl font-semibold text-starlight">
+                  <dt className="t-item text-starlight">
                     {s.name}
                   </dt>
-                  <dd className="text-sm text-dim">{s.tier}</dd>
+                  <dd className="text-sm text-muted">{s.tier}</dd>
                 </div>
               ))}
             </dl>

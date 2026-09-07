@@ -19,7 +19,7 @@ export default function Contact() {
                 key={c.org}
                 className="grid gap-3 border-t border-white/8 py-7 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-10"
               >
-                <dt className="font-display text-xl font-semibold text-starlight">{c.org}</dt>
+                <dt className="t-item text-starlight">{c.org}</dt>
                 <dd className="flex flex-col gap-1">
                   {c.email && (
                     <a
@@ -32,7 +32,7 @@ export default function Contact() {
                   {c.phone && (
                     <a
                       href={`tel:${c.phone}`}
-                      className="w-fit text-starlight/70 transition-colors hover:text-starlight"
+                      className="w-fit text-secondary transition-colors hover:text-starlight"
                     >
                       {c.phone}
                     </a>
@@ -45,7 +45,7 @@ export default function Contact() {
       </Reveal>
 
       <section>
-        <h2 className="mb-8 font-display text-2xl font-semibold text-starlight">Gallery</h2>
+        <h2 className="mb-8 t-section text-starlight">Gallery</h2>
         <Gallery />
       </section>
     </div>

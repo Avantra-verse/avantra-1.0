@@ -10,7 +10,7 @@ export default function About() {
 
       <Reveal>
         <section className="pb-24">
-          <h2 className="mb-10 font-display text-2xl font-semibold text-starlight">
+          <h2 className="mb-10 t-section text-starlight">
             Who runs it
           </h2>
           <dl className="flex flex-col">
@@ -19,10 +19,10 @@ export default function About() {
                 key={p.name}
                 className="grid gap-2 border-t border-white/8 py-7 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-10"
               >
-                <dt className="font-display text-xl font-semibold text-starlight">
+                <dt className="t-item text-starlight">
                   {p.name}
                 </dt>
-                <dd className="max-w-[58ch] leading-relaxed text-starlight/70">{p.role}</dd>
+                <dd className="t-body max-w-[58ch] text-secondary">{p.role}</dd>
               </div>
             ))}
           </dl>
@@ -37,14 +37,14 @@ export default function About() {
 
       <Reveal>
         <section className="pb-24">
-          <h2 className="mb-10 font-display text-2xl font-semibold text-starlight">
+          <h2 className="mb-10 t-section text-starlight">
             How the three days run
           </h2>
           <ol className="grid gap-px overflow-hidden border border-white/8 sm:grid-cols-3">
             {siteConfig.days.map((d) => (
               <li key={d.title} className="bg-white/[0.02] px-7 py-8">
-                <p className="font-display text-lg font-semibold text-starlight">{d.title}</p>
-                <p className="mt-3 leading-relaxed text-starlight/70">{d.description}</p>
+                <p className="t-item text-starlight">{d.title}</p>
+                <p className="t-body mt-3 text-secondary">{d.description}</p>
               </li>
             ))}
           </ol>
@@ -53,10 +53,10 @@ export default function About() {
 
       <Reveal>
         <section>
-          <h2 className="mb-8 font-display text-2xl font-semibold text-starlight">Rules</h2>
+          <h2 className="mb-8 t-section text-starlight">Rules</h2>
           <ul className="flex flex-col gap-4">
             {siteConfig.rules.map((r) => (
-              <li key={r} className="max-w-[62ch] leading-relaxed text-starlight/75">
+              <li key={r} className="t-body max-w-[62ch] text-secondary">
                 {r}
               </li>
             ))}

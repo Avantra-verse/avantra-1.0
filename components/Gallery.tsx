@@ -17,7 +17,7 @@ function GalleryImage({
 
   if (failed) {
     return (
-      <div className="flex aspect-square items-center justify-center border border-white/8 text-sm text-dim">
+      <div className="flex aspect-square items-center justify-center border border-white/8 text-sm text-muted">
         Image coming soon
       </div>
     );
@@ -54,10 +54,10 @@ export default function Gallery() {
   if (siteConfig.gallery.length === 0) {
     return (
       <div className="max-w-[52ch]">
-        <p className="font-display text-xl font-semibold text-starlight">
+        <p className="t-item text-starlight">
           Photos arrive after the event.
         </p>
-        <p className="mt-3 leading-relaxed text-starlight/70">
+        <p className="t-body mt-3 text-secondary">
           Exhibits, sessions and prize-giving from all three days will be posted here.
         </p>
       </div>
@@ -99,7 +99,7 @@ export default function Gallery() {
             type="button"
             aria-label="Close image"
             onClick={() => setLightbox(null)}
-            className="absolute right-6 top-6 border border-white/30 px-4 py-2 text-sm text-starlight/80 transition-colors hover:text-starlight"
+            className="absolute right-6 top-6 border border-white/30 px-4 py-2 text-sm text-secondary transition-colors hover:text-starlight"
           >
             Close
           </button>
