@@ -1,5 +1,6 @@
 import { siteConfig } from "@/content/site";
 import Reveal from "@/components/Reveal";
+import HoverCard from "@/components/HoverCard";
 
 export default function About() {
   return (
@@ -16,20 +17,20 @@ export default function About() {
           <h2 className="text-2xl font-semibold mb-4">Partners</h2>
           <ul className="grid sm:grid-cols-3 gap-4">
             {siteConfig.partners.map((p, i) => (
-              <li
-                key={p.name}
-                className={
-                  (i === 0 ? "sm:col-span-3 " : "") +
-                  "rounded-lg p-5 border border-white/10 bg-gradient-to-br " +
-                  (i === 0
-                    ? "from-rift-purple/20 via-rift-pink/10 to-transparent"
-                    : "from-white/[0.04] to-transparent")
-                }
-              >
-                <p className={i === 0 ? "text-xl font-semibold text-starlight" : "font-semibold text-starlight"}>
-                  {p.name}
-                </p>
-                <p className="text-starlight/70 text-sm mt-1">{p.role}</p>
+              <li key={p.name} className={i === 0 ? "sm:col-span-3" : ""}>
+                <HoverCard
+                  className={
+                    "rounded-lg p-5 border border-white/10 bg-gradient-to-br h-full " +
+                    (i === 0
+                      ? "from-rift-purple/20 via-rift-pink/10 to-transparent"
+                      : "from-white/[0.04] to-transparent")
+                  }
+                >
+                  <p className={i === 0 ? "text-xl font-semibold text-starlight" : "font-semibold text-starlight"}>
+                    {p.name}
+                  </p>
+                  <p className="text-starlight/70 text-sm mt-1">{p.role}</p>
+                </HoverCard>
               </li>
             ))}
           </ul>

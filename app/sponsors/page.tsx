@@ -1,5 +1,6 @@
 import { siteConfig } from "@/content/site";
 import Reveal from "@/components/Reveal";
+import HoverCard from "@/components/HoverCard";
 
 export default function Sponsors() {
   return (
@@ -23,9 +24,11 @@ export default function Sponsors() {
         ) : (
           <ul className="grid sm:grid-cols-3 gap-4">
             {siteConfig.sponsors.map((s) => (
-              <li key={s.name} className="border border-rift-purple/30 rounded p-4 text-center">
-                <p className="font-semibold text-starlight">{s.name}</p>
-                <p className="text-starlight/60 text-sm">{s.tier}</p>
+              <li key={s.name}>
+                <HoverCard className="rounded-lg p-4 border border-white/10 bg-gradient-to-br from-white/[0.04] to-transparent text-center">
+                  <p className="font-semibold text-starlight">{s.name}</p>
+                  <p className="text-starlight/60 text-sm">{s.tier}</p>
+                </HoverCard>
               </li>
             ))}
           </ul>
