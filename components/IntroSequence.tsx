@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { siteConfig } from "@/content/site";
 import PortalAnimation from "./PortalAnimation";
 
 const SEEN_KEY = "avantra-intro-seen";
+const VIDEO_TIMEOUT_MS = 8000;
 
 export default function IntroSequence({ onComplete }: { onComplete: () => void }) {
   const [mode, setMode] = useState<"checking" | "video" | "fallback" | "done">("checking");
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const seen = typeof window !== "undefined" && localStorage.getItem(SEEN_KEY) === "1";
+    let seen = false;
+    try {
+      seen = typeof window !== "undefined" && sessionStorage.getItem(SEEN_KEY) === "1";
+    } catch {
+      seen = false;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only storage read must run post-mount to avoid SSR hydration mismatch
     setMode(seen ? "done" : "video");
   }, []);
 
@@ -20,9 +26,20 @@ export default function IntroSequence({ onComplete }: { onComplete: () => void }
   }, [mode, onComplete]);
 
   const finish = () => {
-    localStorage.setItem(SEEN_KEY, "1");
+    try {
+      sessionStorage.setItem(SEEN_KEY, "1");
+    } catch {
+      // storage blocked; still proceed past the intro
+    }
     setMode("done");
   };
+
+  // Safety net: if autoplay is blocked or the video stalls, onEnded may never fire.
+  useEffect(() => {
+    if (mode !== "video") return;
+    const timer = setTimeout(finish, VIDEO_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [mode]);
 
   if (mode === "checking" || mode === "done") return null;
 
@@ -30,7 +47,6 @@ export default function IntroSequence({ onComplete }: { onComplete: () => void }
     <div className="fixed inset-0 z-50 bg-void">
       {mode === "video" && (
         <video
-          ref={videoRef}
           className="w-full h-full object-cover"
           src={siteConfig.introVideoSrc}
           autoPlay
