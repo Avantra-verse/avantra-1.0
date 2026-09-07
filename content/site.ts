@@ -24,13 +24,13 @@ export const siteConfig: SiteConfig = {
     "showcase projects and run sessions, bringing college-level science " +
     "exposure to school students, all built around a Multiverse theme.",
   partners: [
-    { name: "SSRVM IEMS", role: "Institutional Partner — hosts, provides venue and infrastructure, internal coordination." },
-    { name: "ARITHI", role: "Event Partner — plans the event, brings sponsorship, coordinates NIT Rourkela clubs, runs execution." },
+    { name: "SSRVM IEMS", role: "Institutional Partner. Hosts the event, provides venue and infrastructure, handles internal coordination." },
+    { name: "ARITHI", role: "Event Partner. Plans the event, brings sponsorship, coordinates NIT Rourkela clubs, runs execution." },
     { name: "Sponsors", role: "Fund and support the event to keep school spend low." },
     { name: "NIT Rourkela Clubs", role: "Showcase projects and conduct science events and sessions for students." },
   ],
   days: [
-    { title: "Day 1", description: "Opening & science exhibition — exhibits from school students and NIT Rourkela clubs open to view; inaugural session." },
+    { title: "Day 1", description: "Opening and science exhibition. Exhibits from school students and NIT Rourkela clubs open to view, plus the inaugural session." },
     { title: "Day 2", description: "Science-related competitive events and challenges run across the day, alongside continuing exhibition." },
     { title: "Day 3", description: "Remaining events, NIT Rourkela club showcases and sessions, results, and closing ceremony." },
   ],

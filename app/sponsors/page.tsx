@@ -1,39 +1,48 @@
 import { siteConfig } from "@/content/site";
 import Reveal from "@/components/Reveal";
 import HoverCard from "@/components/HoverCard";
+import PageHeader from "@/components/PageHeader";
 
 export default function Sponsors() {
   return (
-    <section className="py-16 flex flex-col gap-8">
-      <Reveal>
-        <div>
-          <h1 className="text-3xl font-bold text-rift-cyan mb-4">Sponsors & Partners</h1>
-          <p className="text-starlight/80 max-w-2xl">
-            AVANTRA is made possible through sponsorship coordinated by ARITHI, keeping the
-            cost to the school minimal while bringing NIT Rourkela student clubs in to
-            showcase real college-level science to students.
-          </p>
-        </div>
-      </Reveal>
+    <div className="mx-auto max-w-5xl px-4 pb-28">
+      <PageHeader
+        title="Sponsors and partners"
+        lead="AVANTRA is made possible through sponsorship coordinated by ARITHI, keeping the cost to the school minimal while bringing NIT Rourkela student clubs in to showcase real college-level science to students."
+      />
 
-      <Reveal delay={0.1}>
+      <section>
         {siteConfig.sponsors.length === 0 ? (
-          <div className="rounded-lg p-8 border border-white/10 bg-gradient-to-br from-rift-purple/15 via-rift-pink/10 to-transparent text-center">
-            <p className="text-starlight/70">Sponsor list to be announced.</p>
-          </div>
+          <Reveal>
+            <div className="panel panel-accent px-8 py-16 text-center">
+              <p className="font-display text-2xl text-starlight">
+                Sponsor list to be announced
+              </p>
+              <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-starlight/60">
+                Partners join in the run-up to the event. This page updates as they are
+                confirmed.
+              </p>
+            </div>
+          </Reveal>
         ) : (
-          <ul className="grid sm:grid-cols-3 gap-4">
-            {siteConfig.sponsors.map((s) => (
+          <ul className="grid gap-4 sm:grid-cols-3">
+            {siteConfig.sponsors.map((s, i) => (
               <li key={s.name}>
-                <HoverCard className="rounded-lg p-4 border border-white/10 bg-gradient-to-br from-white/[0.04] to-transparent text-center">
-                  <p className="font-semibold text-starlight">{s.name}</p>
-                  <p className="text-starlight/60 text-sm">{s.tier}</p>
-                </HoverCard>
+                <Reveal delay={i * 0.06}>
+                  <HoverCard className="panel h-full px-6 py-8 text-center">
+                    <p className="font-display text-lg font-semibold text-starlight">
+                      {s.name}
+                    </p>
+                    <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-starlight/50">
+                      {s.tier}
+                    </p>
+                  </HoverCard>
+                </Reveal>
               </li>
             ))}
           </ul>
         )}
-      </Reveal>
-    </section>
+      </section>
+    </div>
   );
 }

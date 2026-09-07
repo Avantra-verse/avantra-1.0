@@ -23,12 +23,14 @@ export default function Nav() {
       initial={reduce ? false : { y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-40 bg-void/80 backdrop-blur border-b border-rift-purple/30"
+      className="fixed top-0 left-0 right-0 z-40 border-b border-white/8 bg-void/70 backdrop-blur-xl"
     >
-      <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
-        <span className="font-bold text-starlight">AVANTRA</span>
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+        <Link href="/" className="font-display text-lg font-bold tracking-tight text-starlight">
+          AVANTRA
+        </Link>
 
-        <nav className="hidden md:flex gap-6">
+        <nav className="hidden gap-7 text-sm md:flex">
           {LINKS.map((link) => (
             <Link
               key={link.href}

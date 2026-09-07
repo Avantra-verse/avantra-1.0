@@ -1,78 +1,83 @@
 import { siteConfig } from "@/content/site";
 import Reveal from "@/components/Reveal";
 import HoverCard from "@/components/HoverCard";
+import PageHeader from "@/components/PageHeader";
 
 export default function About() {
   return (
-    <section className="py-16 flex flex-col gap-12">
-      <Reveal>
-        <div>
-          <h1 className="text-3xl font-bold text-rift-cyan mb-4">About AVANTRA</h1>
-          <p className="text-starlight/80 max-w-2xl">{siteConfig.overview}</p>
-        </div>
-      </Reveal>
+    <div className="mx-auto max-w-5xl px-4 pb-28">
+      <PageHeader title="About AVANTRA" lead={siteConfig.overview} />
 
-      <Reveal delay={0.1}>
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Partners</h2>
-          <ul className="grid sm:grid-cols-3 gap-4">
-            {siteConfig.partners.map((p, i) => (
-              <li key={p.name} className={i === 0 ? "sm:col-span-3" : ""}>
+      <section className="pb-20">
+        <h2 className="mb-6 font-display text-2xl font-semibold text-starlight">
+          Who is behind it
+        </h2>
+        <ul className="grid gap-4 sm:grid-cols-3">
+          {siteConfig.partners.map((p, i) => (
+            <li key={p.name} className={i === 0 ? "sm:col-span-3" : ""}>
+              <Reveal delay={i * 0.06}>
                 <HoverCard
-                  className={
-                    "rounded-lg p-5 border border-white/10 bg-gradient-to-br h-full " +
-                    (i === 0
-                      ? "from-rift-purple/20 via-rift-pink/10 to-transparent"
-                      : "from-white/[0.04] to-transparent")
-                  }
+                  className={`panel h-full px-6 py-6 ${i === 0 ? "panel-accent" : ""}`}
                 >
-                  <p className={i === 0 ? "text-xl font-semibold text-starlight" : "font-semibold text-starlight"}>
+                  <p
+                    className={
+                      i === 0
+                        ? "font-display text-2xl font-semibold text-starlight"
+                        : "font-display text-lg font-semibold text-starlight"
+                    }
+                  >
                     {p.name}
                   </p>
-                  <p className="text-starlight/70 text-sm mt-1">{p.role}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-starlight/70">{p.role}</p>
                 </HoverCard>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Reveal>
+              </Reveal>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      <Reveal delay={0.2}>
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Event Structure</h2>
-          <ol className="flex flex-col sm:flex-row gap-6 sm:gap-4">
-            {siteConfig.days.map((d, i) => (
-              <li key={d.title} className="flex-1 flex sm:flex-col gap-3">
-                <div className="flex sm:flex-col items-center gap-2 sm:gap-0">
-                  <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-rift-purple to-rift-cyan text-void font-bold text-sm shrink-0">
+      <section className="pb-20">
+        <h2 className="mb-8 font-display text-2xl font-semibold text-starlight">
+          How the three days run
+        </h2>
+        <ol className="flex flex-col gap-8 sm:flex-row sm:gap-6">
+          {siteConfig.days.map((d, i) => (
+            <li key={d.title} className="flex flex-1 gap-4 sm:flex-col">
+              <Reveal delay={i * 0.1}>
+                <div className="flex items-center gap-3 sm:mb-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rift-purple to-rift-cyan font-display font-bold text-void">
                     {i + 1}
                   </span>
-                  {i < siteConfig.days.length - 1 && (
-                    <span className="hidden sm:block w-full h-px bg-gradient-to-r from-rift-purple/40 to-transparent mt-2" />
-                  )}
+                  <span
+                    aria-hidden="true"
+                    className="hidden h-px flex-1 bg-gradient-to-r from-rift-purple/50 to-transparent sm:block"
+                  />
                 </div>
                 <div>
-                  <p className="font-semibold text-starlight">{d.title}</p>
-                  <p className="text-starlight/70 text-sm">{d.description}</p>
+                  <p className="font-display text-lg font-semibold text-starlight">{d.title}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-starlight/70">
+                    {d.description}
+                  </p>
                 </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </Reveal>
+              </Reveal>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-      <Reveal delay={0.3}>
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Rules</h2>
-          <ul className="flex flex-col gap-3">
-            {siteConfig.rules.map((r) => (
-              <li key={r} className="border-l-2 border-rift-cyan/50 pl-4 text-starlight/80">
-                {r}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Reveal>
-    </section>
+      <section>
+        <h2 className="mb-6 font-display text-2xl font-semibold text-starlight">Rules</h2>
+        <ul className="flex flex-col gap-3">
+          {siteConfig.rules.map((r) => (
+            <li
+              key={r}
+              className="border-l-2 border-rift-cyan/50 pl-5 leading-relaxed text-starlight/75"
+            >
+              {r}
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
   );
 }
