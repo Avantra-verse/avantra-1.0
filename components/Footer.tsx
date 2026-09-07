@@ -10,21 +10,23 @@ const LINKS = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/8 py-12">
-      <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4 sm:flex-row sm:justify-between">
-        <div className="text-center sm:text-left">
-          <p className="font-display text-lg font-semibold text-starlight">
+    <footer className="border-t border-white/8">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="font-display text-xl font-extrabold tracking-[-0.02em] text-starlight">
             {siteConfig.eventName}
           </p>
-          <p className="mt-1 text-sm text-starlight/55">{siteConfig.tagline}</p>
+          <p className="mt-2 max-w-[38ch] text-sm leading-relaxed text-dim">
+            {siteConfig.tagline}
+          </p>
         </div>
 
-        <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+        <nav className="flex flex-wrap gap-x-7 gap-y-2">
           {LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm text-starlight/60 transition-colors hover:text-starlight"
+              className="text-sm text-dim transition-colors hover:text-starlight"
             >
               {link.label}
             </Link>

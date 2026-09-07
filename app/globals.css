@@ -1,71 +1,89 @@
 @import "tailwindcss";
 
 @theme {
-  --color-void: #05050f;
-  --color-starlight: #f2f0ff;
+  --color-void: #07070e;
+  --color-starlight: #edebf5;
+  --color-dim: #9a98ad;
   --color-rift-purple: #7b2ff7;
   --color-rift-pink: #f72fb6;
   --color-rift-cyan: #2ff7e0;
 
-  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-familjen), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background-color: #05050f;
-  color: #f2f0ff;
+  background-color: #07070e;
+  color: #edebf5;
+  font-family: var(--font-body);
   position: relative;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Ambient rift glow behind everything. Static, no repaint cost. */
+/* One soft field of light, low and off-centre. Not a rainbow wash. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -20;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 55% 45% at 12% -5%, rgb(123 47 247 / 0.26), transparent 62%),
-    radial-gradient(ellipse 45% 40% at 105% 15%, rgb(247 47 182 / 0.18), transparent 62%),
-    radial-gradient(ellipse 60% 50% at 25% 105%, rgb(47 247 224 / 0.13), transparent 62%);
+  background: radial-gradient(
+    ellipse 60% 50% at 18% -10%,
+    rgb(123 47 247 / 0.22),
+    transparent 65%
+  );
 }
 
-/* Frosted panel used for every card-like surface on the site. */
-.panel {
-  border-radius: 1rem;
-  border: 1px solid rgb(255 255 255 / 0.09);
-  background:
-    linear-gradient(to bottom right, rgb(255 255 255 / 0.055), rgb(255 255 255 / 0.015));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.07),
-    0 18px 50px rgb(0 0 0 / 0.35);
-}
-
-.panel-accent {
-  border-color: rgb(123 47 247 / 0.35);
-  background:
-    linear-gradient(to bottom right, rgb(123 47 247 / 0.18), rgb(247 47 182 / 0.07), transparent 70%);
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .panel,
-  .panel-accent {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: rgb(16 16 34 / 0.92);
-  }
-}
-
-/* Thin rule used to separate sections without boxing them in. */
-.rift-rule {
+/*
+ * Seams: the structural device of the site. Sections are divided by rifts,
+ * not wrapped in boxes.
+ */
+.seam {
   height: 1px;
   background: linear-gradient(
     to right,
+    rgb(123 47 247 / 0.45),
+    rgb(123 47 247 / 0.12) 45%,
+    transparent 85%
+  );
+}
+
+.seam-v {
+  width: 1px;
+  align-self: stretch;
+  background: linear-gradient(
+    to bottom,
     transparent,
-    rgb(123 47 247 / 0.5),
-    rgb(47 247 224 / 0.35),
+    rgb(123 47 247 / 0.3) 30%,
+    rgb(123 47 247 / 0.3) 70%,
     transparent
   );
+}
+
+/*
+ * The only raised surface on the site, reserved for the live countdown.
+ */
+.slab {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(11 11 22 / 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .slab {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: #0b0b16;
+  }
+}
+
+::selection {
+  background: rgb(47 247 224 / 0.28);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-rift-cyan);
+  outline-offset: 3px;
 }

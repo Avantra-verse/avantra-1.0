@@ -1,83 +1,61 @@
 import { siteConfig } from "@/content/site";
-import Reveal from "@/components/Reveal";
-import HoverCard from "@/components/HoverCard";
 import PageHeader from "@/components/PageHeader";
+import Reveal from "@/components/Reveal";
 
 export default function About() {
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-28">
+    <div className="mx-auto max-w-6xl px-6 pb-32">
       <PageHeader title="About AVANTRA" lead={siteConfig.overview} />
 
-      <section className="pb-20">
-        <h2 className="mb-6 font-display text-2xl font-semibold text-starlight">
-          Who is behind it
-        </h2>
-        <ul className="grid gap-4 sm:grid-cols-3">
-          {siteConfig.partners.map((p, i) => (
-            <li key={p.name} className={i === 0 ? "sm:col-span-3" : ""}>
-              <Reveal delay={i * 0.06}>
-                <HoverCard
-                  className={`panel h-full px-6 py-6 ${i === 0 ? "panel-accent" : ""}`}
-                >
-                  <p
-                    className={
-                      i === 0
-                        ? "font-display text-2xl font-semibold text-starlight"
-                        : "font-display text-lg font-semibold text-starlight"
-                    }
-                  >
-                    {p.name}
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-starlight/70">{p.role}</p>
-                </HoverCard>
-              </Reveal>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <Reveal>
+        <section className="pb-24">
+          <h2 className="mb-10 font-display text-2xl font-semibold text-starlight">
+            Who runs it
+          </h2>
+          <dl className="flex flex-col">
+            {siteConfig.partners.map((p) => (
+              <div
+                key={p.name}
+                className="grid gap-2 border-t border-white/8 py-7 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-10"
+              >
+                <dt className="font-display text-xl font-semibold text-starlight">
+                  {p.name}
+                </dt>
+                <dd className="max-w-[58ch] leading-relaxed text-starlight/70">{p.role}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      </Reveal>
 
-      <section className="pb-20">
-        <h2 className="mb-8 font-display text-2xl font-semibold text-starlight">
-          How the three days run
-        </h2>
-        <ol className="flex flex-col gap-8 sm:flex-row sm:gap-6">
-          {siteConfig.days.map((d, i) => (
-            <li key={d.title} className="flex flex-1 gap-4 sm:flex-col">
-              <Reveal delay={i * 0.1}>
-                <div className="flex items-center gap-3 sm:mb-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rift-purple to-rift-cyan font-display font-bold text-void">
-                    {i + 1}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="hidden h-px flex-1 bg-gradient-to-r from-rift-purple/50 to-transparent sm:block"
-                  />
-                </div>
-                <div>
-                  <p className="font-display text-lg font-semibold text-starlight">{d.title}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-starlight/70">
-                    {d.description}
-                  </p>
-                </div>
-              </Reveal>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <Reveal>
+        <section className="pb-24">
+          <h2 className="mb-10 font-display text-2xl font-semibold text-starlight">
+            How the three days run
+          </h2>
+          <ol className="grid gap-px overflow-hidden border border-white/8 sm:grid-cols-3">
+            {siteConfig.days.map((d) => (
+              <li key={d.title} className="bg-white/[0.02] px-7 py-8">
+                <p className="font-display text-lg font-semibold text-starlight">{d.title}</p>
+                <p className="mt-3 leading-relaxed text-starlight/70">{d.description}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      </Reveal>
 
-      <section>
-        <h2 className="mb-6 font-display text-2xl font-semibold text-starlight">Rules</h2>
-        <ul className="flex flex-col gap-3">
-          {siteConfig.rules.map((r) => (
-            <li
-              key={r}
-              className="border-l-2 border-rift-cyan/50 pl-5 leading-relaxed text-starlight/75"
-            >
-              {r}
-            </li>
-          ))}
-        </ul>
-      </section>
+      <Reveal>
+        <section>
+          <h2 className="mb-8 font-display text-2xl font-semibold text-starlight">Rules</h2>
+          <ul className="flex flex-col gap-4">
+            {siteConfig.rules.map((r) => (
+              <li key={r} className="max-w-[62ch] leading-relaxed text-starlight/75">
+                {r}
+              </li>
+            ))}
+          </ul>
+        </section>
+      </Reveal>
     </div>
   );
 }

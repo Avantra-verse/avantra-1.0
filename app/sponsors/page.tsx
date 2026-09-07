@@ -1,48 +1,44 @@
 import { siteConfig } from "@/content/site";
-import Reveal from "@/components/Reveal";
-import HoverCard from "@/components/HoverCard";
 import PageHeader from "@/components/PageHeader";
+import Reveal from "@/components/Reveal";
 
 export default function Sponsors() {
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-28">
+    <div className="mx-auto max-w-6xl px-6 pb-32">
       <PageHeader
         title="Sponsors and partners"
-        lead="AVANTRA is made possible through sponsorship coordinated by ARITHI, keeping the cost to the school minimal while bringing NIT Rourkela student clubs in to showcase real college-level science to students."
+        lead="Sponsorship is coordinated by ARITHI. It keeps the cost to the school low and brings NIT Rourkela student clubs in to show school students what college-level science looks like up close."
       />
 
-      <section>
-        {siteConfig.sponsors.length === 0 ? (
-          <Reveal>
-            <div className="panel panel-accent px-8 py-16 text-center">
-              <p className="font-display text-2xl text-starlight">
-                Sponsor list to be announced
+      <Reveal>
+        <section>
+          {siteConfig.sponsors.length === 0 ? (
+            <div className="max-w-[52ch]">
+              <p className="font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold leading-[1.1] tracking-[-0.02em] text-starlight">
+                No sponsors confirmed yet.
               </p>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-starlight/60">
-                Partners join in the run-up to the event. This page updates as they are
-                confirmed.
+              <p className="mt-6 leading-relaxed text-starlight/70">
+                Partners join in the run-up to December. This page lists them as they sign
+                on. To sponsor AVANTRA, write to ARITHI on the contact page.
               </p>
             </div>
-          </Reveal>
-        ) : (
-          <ul className="grid gap-4 sm:grid-cols-3">
-            {siteConfig.sponsors.map((s, i) => (
-              <li key={s.name}>
-                <Reveal delay={i * 0.06}>
-                  <HoverCard className="panel h-full px-6 py-8 text-center">
-                    <p className="font-display text-lg font-semibold text-starlight">
-                      {s.name}
-                    </p>
-                    <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-starlight/50">
-                      {s.tier}
-                    </p>
-                  </HoverCard>
-                </Reveal>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          ) : (
+            <dl className="flex flex-col">
+              {siteConfig.sponsors.map((s) => (
+                <div
+                  key={s.name}
+                  className="flex items-baseline justify-between gap-8 border-t border-white/8 py-7"
+                >
+                  <dt className="font-display text-xl font-semibold text-starlight">
+                    {s.name}
+                  </dt>
+                  <dd className="text-sm text-dim">{s.tier}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </section>
+      </Reveal>
     </div>
   );
 }

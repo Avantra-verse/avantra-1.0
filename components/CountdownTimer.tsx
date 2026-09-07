@@ -6,10 +6,10 @@ import { getTimeRemaining, type TimeRemaining } from "@/lib/countdown";
 import { siteConfig } from "@/content/site";
 
 const UNITS: { key: keyof Omit<TimeRemaining, "isPast">; label: string }[] = [
-  { key: "days", label: "Days" },
-  { key: "hours", label: "Hours" },
-  { key: "minutes", label: "Minutes" },
-  { key: "seconds", label: "Seconds" },
+  { key: "days", label: "days" },
+  { key: "hours", label: "hours" },
+  { key: "minutes", label: "minutes" },
+  { key: "seconds", label: "seconds" },
 ];
 
 export default function CountdownTimer() {
@@ -22,41 +22,38 @@ export default function CountdownTimer() {
     return () => clearInterval(id);
   }, []);
 
-  // Reserve the panel row's height before the first client tick so the hero
-  // does not jump when the countdown mounts.
+  // Hold the row's height before the first client tick so nothing jumps.
   if (!remaining) {
-    return <div className="h-[104px] sm:h-[120px]" aria-hidden="true" />;
+    return <div className="h-[92px]" aria-hidden="true" />;
   }
 
   if (remaining.isPast) {
     return (
-      <p className="panel panel-accent px-8 py-5 text-xl text-starlight">
+      <p className="slab inline-block px-6 py-5 font-display text-xl text-starlight">
         AVANTRA has begun.
       </p>
     );
   }
 
   return (
-    <div className="flex gap-3 sm:gap-4">
-      {UNITS.map(({ key, label }) => (
-        <div
-          key={key}
-          className="panel flex min-w-[74px] flex-col items-center px-4 py-4 sm:min-w-[92px] sm:px-6 sm:py-5"
-        >
-          <div className="relative h-10 overflow-hidden sm:h-12">
-            <motion.span
-              key={remaining[key]}
-              initial={{ y: "-100%", opacity: 0 }}
-              animate={{ y: "0%", opacity: 1 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="block font-display text-4xl font-bold tabular-nums text-starlight sm:text-5xl"
-            >
-              {String(remaining[key]).padStart(2, "0")}
-            </motion.span>
+    <div className="slab inline-flex items-stretch gap-5 px-6 py-5 sm:gap-7 sm:px-8">
+      {UNITS.map(({ key, label }, i) => (
+        <div key={key} className="flex items-stretch gap-5 sm:gap-7">
+          {i > 0 && <span aria-hidden="true" className="seam-v" />}
+          <div>
+            <div className="h-10 overflow-hidden sm:h-12">
+              <motion.span
+                key={remaining[key]}
+                initial={{ y: "-100%" }}
+                animate={{ y: "0%" }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                className="block font-display text-4xl font-bold tabular-nums leading-none text-starlight sm:text-5xl"
+              >
+                {String(remaining[key]).padStart(2, "0")}
+              </motion.span>
+            </div>
+            <span className="mt-2 block text-sm text-dim">{label}</span>
           </div>
-          <span className="mt-2 text-[11px] uppercase tracking-[0.16em] text-starlight/50">
-            {label}
-          </span>
         </div>
       ))}
     </div>

@@ -5,9 +5,9 @@ import { useReducedMotion } from "framer-motion";
 import { siteConfig } from "@/content/site";
 
 /**
- * Loops the intro film behind the hero so the multiverse motion continues
- * into the site itself. Falls back silently to the portal rings alone if the
- * file is missing or the viewer prefers reduced motion.
+ * The intro film keeps running behind the hero, so the multiverse motion
+ * continues into the site instead of ending with the intro. Disappears
+ * silently if the file is missing or the viewer prefers reduced motion.
  */
 export default function HeroVideo() {
   const [failed, setFailed] = useState(false);
@@ -18,7 +18,7 @@ export default function HeroVideo() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
       <video
-        className="h-full w-full object-cover opacity-80"
+        className="h-full w-full object-cover"
         src={siteConfig.introVideoSrc}
         autoPlay
         muted
@@ -26,18 +26,9 @@ export default function HeroVideo() {
         playsInline
         onError={() => setFailed(true)}
       />
-
-      {/* Vignette only behind the copy, so the footage stays visible at the
-          edges while the headline keeps its contrast. */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 55% 50% at 50% 50%, rgb(5 5 15 / 0.72), rgb(5 5 15 / 0.25) 70%, transparent 100%)",
-        }}
-      />
-      {/* Short fade at the bottom edge so the hero meets the page cleanly. */}
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-void" />
+      {/* Weighted to the bottom, where the headline sits. The film stays
+          fully visible across the upper frame. */}
+      <div className="absolute inset-0 bg-gradient-to-t from-void via-void/70 via-40% to-void/10" />
     </div>
   );
 }

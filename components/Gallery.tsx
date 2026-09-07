@@ -17,7 +17,7 @@ function GalleryImage({
 
   if (failed) {
     return (
-      <div className="panel flex aspect-square items-center justify-center text-sm text-starlight/40">
+      <div className="flex aspect-square items-center justify-center border border-white/8 text-sm text-dim">
         Image coming soon
       </div>
     );
@@ -53,10 +53,12 @@ export default function Gallery() {
 
   if (siteConfig.gallery.length === 0) {
     return (
-      <div className="panel px-8 py-16 text-center">
-        <p className="font-display text-xl text-starlight/80">Gallery photos coming soon</p>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-starlight/55">
-          Photos from the exhibition appear here once the event runs.
+      <div className="max-w-[52ch]">
+        <p className="font-display text-xl font-semibold text-starlight">
+          Photos arrive after the event.
+        </p>
+        <p className="mt-3 leading-relaxed text-starlight/70">
+          Exhibits, sessions and prize-giving from all three days will be posted here.
         </p>
       </div>
     );

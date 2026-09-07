@@ -9,57 +9,49 @@ import {
   useTransform,
   type Variants,
 } from "framer-motion";
-import IntroSequence from "@/components/IntroSequence";
 import CountdownTimer from "@/components/CountdownTimer";
-import PortalRings from "@/components/PortalRings";
 import HeroVideo from "@/components/HeroVideo";
-import Reveal from "@/components/Reveal";
 import { siteConfig } from "@/content/site";
 
 const container: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.12, delayChildren: 0.15 } },
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.12 } },
 };
 
 const item: Variants = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 18 },
   show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } },
 };
 
-const glance = [
-  { label: "When", value: "December 2026" },
-  { label: "Where", value: siteConfig.venue.name },
-  { label: "Format", value: `${siteConfig.days.length} days of exhibits and events` },
+const facts = [
+  { label: "when", value: "December 2026" },
+  { label: "where", value: siteConfig.venue.name },
+  { label: "how long", value: `${siteConfig.days.length} days` },
 ];
 
 export default function Home() {
   const reduce = useReducedMotion();
   const heroRef = useRef<HTMLElement>(null);
 
-  // Scroll-linked hero exit: content drifts up and dims while the portal
-  // behind it pushes forward, so leaving the hero reads as travelling through it.
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, -90]);
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const backdropScale = useTransform(scrollYProgress, [0, 1], [1, 1.25]);
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, -70]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
+  const filmScale = useTransform(scrollYProgress, [0, 1], [1, 1.18]);
 
   return (
     <>
-      <IntroSequence onComplete={() => {}} />
-
       <section
         ref={heroRef}
-        className="relative flex min-h-[calc(100dvh-4rem)] items-center justify-center overflow-hidden px-4"
+        className="relative flex min-h-[calc(100dvh-4rem)] items-end overflow-hidden"
       >
         <motion.div
-          style={reduce ? undefined : { scale: backdropScale }}
+          style={reduce ? undefined : { scale: filmScale }}
           className="absolute inset-0"
         >
           <HeroVideo />
-          <PortalRings />
         </motion.div>
 
         <motion.div
@@ -67,72 +59,59 @@ export default function Home() {
           initial={reduce ? false : "hidden"}
           animate="show"
           style={reduce ? undefined : { y: contentY, opacity: contentOpacity }}
-          className="relative flex flex-col items-center text-center"
+          className="relative mx-auto w-full max-w-6xl px-6 pb-16 sm:pb-24"
         >
-          <motion.span
-            variants={item}
-            className="mb-6 rounded-full border border-white/12 bg-void/30 px-4 py-1.5 text-[11px] uppercase tracking-[0.22em] text-starlight/60 backdrop-blur-sm"
-          >
-            December 2026
-          </motion.span>
-
           <motion.h1
             variants={item}
-            className="font-display text-[clamp(3.5rem,14vw,10rem)] font-bold leading-[0.9] tracking-tight text-starlight"
+            className="font-display text-[clamp(4rem,17vw,13rem)] font-extrabold leading-[0.82] tracking-[-0.03em] text-starlight"
           >
             {siteConfig.eventName}
           </motion.h1>
 
-          <motion.p
-            variants={item}
-            className="mt-5 max-w-lg text-lg text-starlight/75 sm:text-xl"
-          >
-            {siteConfig.tagline}
-          </motion.p>
+          <div className="mt-10 flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
+            <motion.div variants={item} className="max-w-sm">
+              <p className="text-xl leading-snug text-starlight/85">
+                {siteConfig.tagline}
+              </p>
+              <div className="mt-7 flex flex-wrap gap-6">
+                <Link
+                  href="/about"
+                  className="border-b border-rift-cyan pb-1 text-rift-cyan transition-colors hover:text-starlight"
+                >
+                  Explore the event
+                </Link>
+                <Link
+                  href="/venue"
+                  className="border-b border-white/25 pb-1 text-starlight/80 transition-colors hover:border-starlight hover:text-starlight"
+                >
+                  Find the venue
+                </Link>
+              </div>
+            </motion.div>
 
-          <motion.div variants={item} className="mt-10">
-            <CountdownTimer />
-          </motion.div>
-
-          <motion.div variants={item} className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/about"
-              className="rounded-full bg-starlight px-7 py-3 font-medium text-void transition-transform hover:scale-[1.03] active:scale-[0.98]"
-            >
-              Explore the event
-            </Link>
-            <Link
-              href="/venue"
-              className="rounded-full border border-white/25 px-7 py-3 font-medium text-starlight backdrop-blur-sm transition-colors hover:border-rift-cyan/60 hover:text-rift-cyan"
-            >
-              Venue and directions
-            </Link>
-          </motion.div>
+            <motion.div variants={item}>
+              <CountdownTimer />
+            </motion.div>
+          </div>
         </motion.div>
       </section>
 
-      <div className="mx-auto max-w-5xl px-4">
-        <div className="rift-rule" />
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="seam" />
 
-        <section className="py-24">
-          <Reveal variant="warp">
-            <p className="max-w-3xl font-display text-2xl leading-relaxed text-starlight/85 sm:text-[1.75rem]">
-              {siteConfig.overview}
-            </p>
-          </Reveal>
-        </section>
+        <section className="grid gap-10 py-24 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]">
+          <p className="max-w-[60ch] font-display text-[clamp(1.5rem,3vw,2.25rem)] font-medium leading-[1.25] tracking-[-0.01em] text-starlight">
+            {siteConfig.overview}
+          </p>
 
-        <section className="grid gap-4 pb-28 sm:grid-cols-3">
-          {glance.map((g, i) => (
-            <Reveal key={g.label} delay={i * 0.08}>
-              <div className="panel h-full px-6 py-7">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-starlight/45">
-                  {g.label}
-                </p>
-                <p className="mt-3 font-display text-xl text-starlight">{g.value}</p>
+          <dl className="flex flex-col gap-6 lg:pt-3">
+            {facts.map((f) => (
+              <div key={f.label} className="flex items-baseline gap-5">
+                <dt className="w-24 shrink-0 text-sm text-dim">{f.label}</dt>
+                <dd className="font-display text-lg text-starlight">{f.value}</dd>
               </div>
-            </Reveal>
-          ))}
+            ))}
+          </dl>
         </section>
       </div>
     </>
