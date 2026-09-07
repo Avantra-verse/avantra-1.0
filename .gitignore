@@ -39,4 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local tooling and working notes
 .impeccable/
+.claude/
+.superpowers/
+docs/
