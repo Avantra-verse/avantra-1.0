@@ -13,19 +13,39 @@ const archivo = Archivo({
   display: "swap",
 });
 
+const description =
+  "A three-day science fair and exhibition hosted by SSRVM IEMS with student clubs from NIT Rourkela.";
+
 export const metadata: Metadata = {
   title: "AVANTRA, a multiverse science fair",
-  description:
-    "A three-day science fair and exhibition hosted by SSRVM IEMS with student clubs from NIT Rourkela.",
+  description,
+  openGraph: {
+    title: "AVANTRA, a multiverse science fair",
+    description,
+    type: "website",
+    siteName: "AVANTRA",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AVANTRA, a multiverse science fair",
+    description,
+  },
+};
+
+export const viewport = {
+  themeColor: "#07070e",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={archivo.variable}>
       <body>
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
         <Starfield />
         <Nav />
-        <main className="pt-16">
+        <main id="main" className="pt-16">
           <PageTransition>{children}</PageTransition>
         </main>
         <Footer />

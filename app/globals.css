@@ -129,12 +129,69 @@ body::before {
   }
 }
 
+/*
+ * Browser surfaces. These ship with defaults that belong to no design system,
+ * so they are themed from the palette like everything else.
+ */
 ::selection {
   background: rgb(47 247 224 / 0.28);
   color: #edebf5;
 }
 
+html {
+  caret-color: var(--color-rift-cyan);
+  scrollbar-color: #2a2a3d var(--color-void);
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-void);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a3d;
+  border: 2px solid var(--color-void);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a52;
+}
+
+a {
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: from-font;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-rift-cyan);
   outline-offset: 3px;
+}
+
+/* Skip link: visible only once focused. */
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 60;
+  padding: 0.75rem 1.25rem;
+  background: var(--color-starlight);
+  color: var(--color-void);
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
 }
