@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@theme {
+  --color-void: #05050f;
+  --color-starlight: #f2f0ff;
+  --color-rift-purple: #7b2ff7;
+  --color-rift-pink: #f72fb6;
+  --color-rift-cyan: #2ff7e0;
+}
+
 body {
   background-color: #05050f;
   color: #f2f0ff;
