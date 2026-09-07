@@ -1,6 +1,7 @@
 import { siteConfig } from "@/content/site";
 import PageHeader from "@/components/PageHeader";
 import Reveal from "@/components/Reveal";
+import FilmBand from "@/components/FilmBand";
 
 export default function About() {
   return (
@@ -25,6 +26,12 @@ export default function About() {
               </div>
             ))}
           </dl>
+        </section>
+      </Reveal>
+
+      <Reveal>
+        <section className="pb-24">
+          <FilmBand />
         </section>
       </Reveal>
 

@@ -82,7 +82,7 @@ export default function Home() {
                 </Link>
                 <Link
                   href="/venue"
-                  className="border-b border-white/25 pb-1 text-starlight/80 transition-colors hover:border-starlight hover:text-starlight"
+                  className="border-b border-white/50 pb-1 text-starlight transition-colors hover:border-starlight hover:text-rift-cyan"
                 >
                   Find the venue
                 </Link>

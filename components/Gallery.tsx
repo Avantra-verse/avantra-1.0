@@ -32,7 +32,7 @@ function GalleryImage({
         setFailed(true);
         onError();
       }}
-      className="aspect-square w-full rounded-2xl object-cover transition-transform duration-300 hover:scale-[1.04]"
+      className="aspect-square w-full object-cover transition-transform duration-300 hover:scale-[1.04]"
     />
   );
 }
@@ -76,7 +76,7 @@ export default function Gallery() {
             aria-label={`Open ${img.alt}`}
             disabled={failedSrcs.has(img.src)}
             onClick={() => setLightbox(img.src)}
-            className="block overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rift-cyan disabled:cursor-default"
+            className="block overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rift-cyan disabled:cursor-default"
           >
             <GalleryImage
               src={img.src}
@@ -99,7 +99,7 @@ export default function Gallery() {
             type="button"
             aria-label="Close image"
             onClick={() => setLightbox(null)}
-            className="absolute right-6 top-6 rounded-full border border-white/25 px-4 py-2 text-sm text-starlight/80 transition-colors hover:text-starlight"
+            className="absolute right-6 top-6 border border-white/30 px-4 py-2 text-sm text-starlight/80 transition-colors hover:text-starlight"
           >
             Close
           </button>
@@ -108,7 +108,7 @@ export default function Gallery() {
             src={lightbox}
             alt={lightboxAlt}
             onError={() => setLightbox(null)}
-            className="max-h-full max-w-full rounded-2xl"
+            className="max-h-full max-w-full"
           />
         </div>
       )}
