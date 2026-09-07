@@ -23,10 +23,10 @@
 ## File Structure
 
 ```
-package.json, tsconfig.json, next.config.js, tailwind.config.ts, postcss.config.js
+package.json, tsconfig.json, next.config.js, postcss.config.mjs
 vitest.config.ts
 app/layout.tsx              root layout: Nav, Footer, PageTransition wrapper
-app/globals.css             Tailwind directives + base theme
+app/globals.css             Tailwind v4 `@theme` block (no tailwind.config.ts) + base theme
 app/page.tsx                Home: IntroSequence, Hero, CountdownTimer
 app/about/page.tsx          Overview, partner roles, 3-day structure, rules
 app/venue/page.tsx          Venue & directions, prizes & certificates
