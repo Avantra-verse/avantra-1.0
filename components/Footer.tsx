@@ -13,7 +13,7 @@ export default function Footer() {
     <footer className="border-t border-white/8">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xl font-extrabold tracking-[-0.02em] text-starlight">
+          <p className="text-xl font-bold tracking-[-0.02em] text-starlight">
             {siteConfig.eventName}
           </p>
           <p className="t-small mt-2 max-w-[38ch] text-muted">

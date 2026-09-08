@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+} from "framer-motion";
+import CountdownTimer from "@/components/CountdownTimer";
 
 const LINKS = [
   { href: "/about", label: "About" },
@@ -15,17 +22,35 @@ const LINKS = [
 export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const reduce = useReducedMotion();
+  const { scrollY } = useScroll();
+
+  // Gets out of the way going down, returns the moment you scroll back up.
+  useMotionValueEvent(scrollY, "change", (y) => {
+    if (open) return;
+    const previous = scrollY.getPrevious() ?? 0;
+    setHidden(y > 120 && y > previous);
+  });
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/8 bg-void/70 backdrop-blur-xl">
+    <motion.header
+      animate={{ y: hidden && !reduce ? "-100%" : "0%" }}
+      transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-x-0 top-0 z-40 border-b border-white/8 bg-void/70 backdrop-blur-xl"
+    >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link
           href="/"
-          className="text-lg font-extrabold tracking-[-0.02em] text-starlight"
+          className="text-lg font-bold tracking-[-0.02em] text-starlight"
         >
           AVANTRA
         </Link>
+
+        <div className="hidden items-center gap-8 md:flex">
+          <CountdownTimer />
+          <span aria-hidden="true" className="h-5 w-px bg-white/15" />
+        </div>
 
         <nav className="hidden gap-8 md:flex">
           {LINKS.map((link) => (
@@ -81,6 +106,6 @@ export default function Nav() {
           </motion.nav>
         )}
       </AnimatePresence>
-    </header>
+    </motion.header>
   );
 }

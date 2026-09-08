@@ -1,6 +1,7 @@
 import { siteConfig } from "@/content/site";
 import Gallery from "@/components/Gallery";
 import PageHeader from "@/components/PageHeader";
+import MaskedReveal from "@/components/MaskedReveal";
 import Reveal from "@/components/Reveal";
 
 export default function Contact() {
@@ -11,13 +12,14 @@ export default function Contact() {
         lead="Reach the organising team about taking part, sponsoring, or covering the event."
       />
 
-      <Reveal>
-        <section className="pb-24">
-          <dl className="flex flex-col">
+      {/* Contacts on glass, the page's primary business. */}
+      <section className="pb-28">
+        <Reveal>
+          <dl className="glass divide-y divide-white/8 px-7 sm:px-12">
             {siteConfig.contact.map((c) => (
               <div
                 key={c.org}
-                className="grid gap-3 border-t border-white/8 py-7 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-10"
+                className="grid gap-3 py-8 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-10"
               >
                 <dt className="t-item text-starlight">{c.org}</dt>
                 <dd className="flex flex-col gap-1">
@@ -41,11 +43,14 @@ export default function Contact() {
               </div>
             ))}
           </dl>
-        </section>
-      </Reveal>
+        </Reveal>
+      </section>
 
+      {/* Gallery open on the ground, so it reads as a different section. */}
       <section>
-        <h2 className="mb-8 t-section text-starlight">Gallery</h2>
+        <MaskedReveal className="mb-12">
+          <h2 className="t-section text-starlight">Gallery</h2>
+        </MaskedReveal>
         <Gallery />
       </section>
     </div>

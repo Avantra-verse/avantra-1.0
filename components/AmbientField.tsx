@@ -29,7 +29,7 @@ const INKS: [number, number, number][] = [
  * blurred orbs at different depths, drifting slowly, with nearer ones larger
  * and brighter. Replaces the video without falling back to stock imagery.
  */
-export default function DepthField() {
+export default function AmbientField() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduce = useReducedMotion();
 
@@ -126,18 +126,20 @@ export default function DepthField() {
   }, [reduce]);
 
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      <canvas ref={canvasRef} className="h-full w-full" />
-      {/* Grain, matching the film's texture. Fixed and cheap. */}
-      <svg className="absolute inset-0 h-full w-full opacity-[0.16] mix-blend-overlay">
-        <filter id="depth-grain">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+    >
+      {/* Kept quiet: this is the room the page sits in, not a feature. */}
+      <canvas ref={canvasRef} className="h-full w-full opacity-70" />
+      {/* Grain, matching the film's texture. Fixed, so it never repaints on scroll. */}
+      <svg className="absolute inset-0 h-full w-full opacity-[0.13] mix-blend-overlay">
+        <filter id="ambient-grain">
           <feTurbulence baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" type="fractalNoise" />
           <feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0" />
         </filter>
-        <rect width="100%" height="100%" filter="url(#depth-grain)" />
+        <rect width="100%" height="100%" filter="url(#ambient-grain)" />
       </svg>
-      {/* Ground the composition so content sits in darkness at the bottom. */}
-      <div className="absolute inset-0 bg-gradient-to-t from-void via-void/55 to-transparent" />
     </div>
   );
 }

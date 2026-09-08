@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
-import Starfield from "@/components/Starfield";
+import AmbientField from "@/components/AmbientField";
 
-const archivo = Archivo({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-archivo",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-space-grotesk",
   display: "swap",
 });
 
@@ -38,12 +38,12 @@ export const viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={archivo.variable}>
+    <html lang="en" className={spaceGrotesk.variable}>
       <body>
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <Starfield />
+        <AmbientField />
         <Nav />
         <main id="main" className="pt-16">
           <PageTransition>{children}</PageTransition>

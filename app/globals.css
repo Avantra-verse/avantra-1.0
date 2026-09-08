@@ -16,7 +16,7 @@
   --color-slate: #4a72a0; /* atmosphere, surfaces and rules. 3.9:1, large only */
   --color-rose: #c8749b; /* spark, used sparingly. 5.9:1 */
 
-  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
@@ -49,14 +49,14 @@ body::before {
  */
 .t-hero {
   font-size: clamp(3.25rem, 12vw, 8.5rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 0.88;
   letter-spacing: -0.035em;
 }
 
 .t-title {
   font-size: clamp(2.25rem, 5.5vw, 4rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 0.98;
   letter-spacing: -0.03em;
 }
@@ -117,20 +117,52 @@ body::before {
   );
 }
 
-/* The only raised surface on the site, reserved for the live countdown. */
-.slab {
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(16 18 22 / 0.74);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+/*
+ * Glass. The film runs fixed behind the whole page, so these surfaces have
+ * something real to refract. Inner highlight along the top edge gives the
+ * sheet an edge instead of reading as a flat tint.
+ */
+.glass {
+  border: 1px solid rgb(255 255 255 / 0.09);
+  background: rgb(13 15 19 / 0.62);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    0 24px 60px rgb(0 0 0 / 0.4);
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .slab {
+  .glass {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     background: #101216;
+  }
+}
+
+/*
+ * Glitch. A brief chromatic flicker when a countdown value changes, borrowed
+ * from the film's own aberration. Deliberately the only glitch on the site.
+ */
+@keyframes glitch-tick {
+  0% {
+    text-shadow: none;
+  }
+  35% {
+    text-shadow: -1.5px 0 0 rgb(49 168 164 / 0.55), 1.5px 0 0 rgb(200 116 155 / 0.55);
+  }
+  100% {
+    text-shadow: none;
+  }
+}
+
+.glitch-tick {
+  animation: glitch-tick 200ms ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glitch-tick {
+    animation: none;
   }
 }
 
