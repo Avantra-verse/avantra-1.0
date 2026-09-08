@@ -10,7 +10,7 @@ import {
   type Variants,
 } from "framer-motion";
 import CountdownTimer from "@/components/CountdownTimer";
-import HeroVideo from "@/components/HeroVideo";
+import DepthField from "@/components/hero/DepthField";
 import { siteConfig } from "@/content/site";
 
 const container: Variants = {
@@ -39,7 +39,7 @@ export default function Home() {
   });
   const contentY = useTransform(scrollYProgress, [0, 1], [0, -70]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
-  const filmScale = useTransform(scrollYProgress, [0, 1], [1, 1.18]);
+  const fieldScale = useTransform(scrollYProgress, [0, 1], [1, 1.14]);
 
   return (
     <>
@@ -48,10 +48,10 @@ export default function Home() {
         className="relative flex min-h-[calc(100dvh-4rem)] items-end overflow-hidden"
       >
         <motion.div
-          style={reduce ? undefined : { scale: filmScale }}
+          style={reduce ? undefined : { scale: fieldScale }}
           className="absolute inset-0"
         >
-          <HeroVideo />
+          <DepthField />
         </motion.div>
 
         <motion.div
@@ -73,18 +73,12 @@ export default function Home() {
               <p className="t-lead text-secondary">
                 {siteConfig.tagline}
               </p>
-              <div className="mt-7 flex flex-wrap gap-6">
+              <div className="mt-7">
                 <Link
                   href="/about"
-                  className="border-b border-rift-cyan pb-1 text-rift-cyan transition-colors hover:text-starlight"
+                  className="border-b border-teal pb-1 text-teal transition-colors hover:text-starlight"
                 >
-                  Explore the event
-                </Link>
-                <Link
-                  href="/venue"
-                  className="border-b border-white/50 pb-1 text-starlight transition-colors hover:border-starlight hover:text-rift-cyan"
-                >
-                  Find the venue
+                  See the three days
                 </Link>
               </div>
             </motion.div>

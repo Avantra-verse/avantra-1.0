@@ -1,15 +1,20 @@
 @import "tailwindcss";
 
+/*
+ * Palette sampled from the event's own title film. Teal dominates, slate blue
+ * carries the mid-tones, rose appears rarely. Deliberately dustier than neon.
+ */
 @theme {
-  --color-void: #07070e;
+  --color-void: #0b0b0d; /* ground, near-black and neutral */
 
   /* Three text colours, fixed values. No opacity ramps. */
-  --color-starlight: #edebf5; /* primary,   14.9:1 on void */
-  --color-secondary: #a9a7ba; /* body,       8.2:1 on void */
-  --color-muted: #85839a; /* small labels,   5.2:1 on void */
+  --color-starlight: #eaf2f8; /* primary,     15.6:1 on void */
+  --color-secondary: #a7adb8; /* body,         8.0:1 on void */
+  --color-muted: #828894; /* small labels,     5.1:1 on void */
 
-  --color-rift-purple: #7b2ff7;
-  --color-rift-cyan: #2ff7e0;
+  --color-teal: #31a8a4; /* primary accent, live and interactive. 6.7:1 */
+  --color-slate: #4a72a0; /* atmosphere, surfaces and rules. 3.9:1, large only */
+  --color-rose: #c8749b; /* spark, used sparingly. 5.9:1 */
 
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
 }
@@ -33,7 +38,7 @@ body::before {
   pointer-events: none;
   background: radial-gradient(
     ellipse 60% 50% at 18% -10%,
-    rgb(123 47 247 / 0.22),
+    rgb(74 114 160 / 0.20),
     transparent 65%
   );
 }
@@ -94,8 +99,8 @@ body::before {
   height: 1px;
   background: linear-gradient(
     to right,
-    rgb(123 47 247 / 0.45),
-    rgb(123 47 247 / 0.12) 45%,
+    rgb(49 168 164 / 0.42),
+    rgb(74 114 160 / 0.16) 45%,
     transparent 85%
   );
 }
@@ -106,8 +111,8 @@ body::before {
   background: linear-gradient(
     to bottom,
     transparent,
-    rgb(123 47 247 / 0.3) 30%,
-    rgb(123 47 247 / 0.3) 70%,
+    rgb(49 168 164 / 0.28) 30%,
+    rgb(49 168 164 / 0.28) 70%,
     transparent
   );
 }
@@ -115,7 +120,7 @@ body::before {
 /* The only raised surface on the site, reserved for the live countdown. */
 .slab {
   border: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(11 11 22 / 0.72);
+  background: rgb(16 18 22 / 0.74);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
@@ -125,7 +130,7 @@ body::before {
   .slab {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: #0b0b16;
+    background: #101216;
   }
 }
 
@@ -134,13 +139,13 @@ body::before {
  * so they are themed from the palette like everything else.
  */
 ::selection {
-  background: rgb(47 247 224 / 0.28);
-  color: #edebf5;
+  background: rgb(49 168 164 / 0.30);
+  color: var(--color-starlight);
 }
 
 html {
-  caret-color: var(--color-rift-cyan);
-  scrollbar-color: #2a2a3d var(--color-void);
+  caret-color: var(--color-teal);
+  scrollbar-color: #26303a var(--color-void);
   scrollbar-width: thin;
   scroll-behavior: smooth;
 }
@@ -161,12 +166,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a3d;
+  background: #26303a;
   border: 2px solid var(--color-void);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a52;
+  background: #35434f;
 }
 
 a {
@@ -175,7 +180,7 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-rift-cyan);
+  outline: 2px solid var(--color-teal);
   outline-offset: 3px;
 }
 

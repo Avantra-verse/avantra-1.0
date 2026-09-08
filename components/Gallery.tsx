@@ -76,7 +76,7 @@ export default function Gallery() {
             aria-label={`Open ${img.alt}`}
             disabled={failedSrcs.has(img.src)}
             onClick={() => setLightbox(img.src)}
-            className="block overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rift-cyan disabled:cursor-default"
+            className="block overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal disabled:cursor-default"
           >
             <GalleryImage
               src={img.src}

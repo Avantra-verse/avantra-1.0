@@ -24,7 +24,7 @@ export default function Contact() {
                   {c.email && (
                     <a
                       href={`mailto:${c.email}`}
-                      className="w-fit border-b border-rift-cyan/50 pb-0.5 text-rift-cyan transition-colors hover:border-rift-cyan hover:text-starlight"
+                      className="w-fit border-b border-teal/50 pb-0.5 text-teal transition-colors hover:border-teal hover:text-starlight"
                     >
                       {c.email}
                     </a>
