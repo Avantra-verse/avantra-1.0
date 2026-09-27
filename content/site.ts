@@ -1,10 +1,11 @@
 export interface SiteConfig {
   eventName: string;
   tagline: string;
-  eventDateISO: string;
+  /** Exact start time. null until the dates are confirmed; the nav then shows `eventWhen` instead of a countdown. */
+  eventDateISO: string | null;
+  eventWhen: string;
   overview: string;
   partners: { name: string; role: string }[];
-  days: { title: string; description: string }[];
   rules: string[];
   venue: { name: string; address: string; directions: string };
   prizes: { title: string; description: string }[];
@@ -16,39 +17,33 @@ export interface SiteConfig {
 
 export const siteConfig: SiteConfig = {
   eventName: "AVANTRA",
-  tagline: "A Multiverse-Themed Science Fair & Exhibition",
-  eventDateISO: "2026-12-01T00:00:00",
+  tagline: "A Multiverse-themed inter-school science & innovation festival",
+  eventDateISO: null,
+  eventWhen: "December 2026",
   overview:
-    "AVANTRA is a three-day science fair and exhibition hosted by SSRVM IEMS, " +
-    "organized in partnership with ARITHI. Student clubs from NIT Rourkela " +
-    "showcase projects and run sessions, bringing college-level science " +
-    "exposure to school students, all built around a Multiverse theme.",
+    "AVANTRA 2026 is a two-day festival where school students bring their own " +
+    "science and technology projects, show what they have built, and take on " +
+    "hands-on challenges with students from other schools. Everything is set " +
+    "in a Multiverse theme. The full line-up is announced soon.",
   partners: [
-    { name: "SSRVM IEMS", role: "Institutional Partner. Hosts the event, provides venue and infrastructure, handles internal coordination." },
-    { name: "ARITHI", role: "Event Partner. Plans the event, brings sponsorship, coordinates NIT Rourkela clubs, runs execution." },
-    { name: "Sponsors", role: "Fund and support the event to keep school spend low." },
-    { name: "NIT Rourkela Clubs", role: "Showcase projects and conduct science events and sessions for students." },
-  ],
-  days: [
-    { title: "Day 1", description: "Opening and science exhibition. Exhibits from school students and NIT Rourkela clubs open to view, plus the inaugural session." },
-    { title: "Day 2", description: "Science-related competitive events and challenges run across the day, alongside continuing exhibition." },
-    { title: "Day 3", description: "Remaining events, NIT Rourkela club showcases and sessions, results, and closing ceremony." },
+    { name: "ARITHI Ventures", role: "Event partner, running the festival, its events and registration." },
+    { name: "Host school", role: "To be announced." },
   ],
   rules: [
-    "Details to be published closer to the event by the organizing committee.",
+    "Registration, rules and formats will be published before registration opens.",
   ],
   venue: {
-    name: "SSRVM IEMS",
-    address: "To be confirmed by the organizing committee.",
-    directions: "Directions and map will be published closer to the event.",
+    name: "Venue to be announced",
+    address: "The venue will be announced with the event dates.",
+    directions: "Directions and a map will be published closer to the event.",
   },
   prizes: [
-    { title: "Certificates", description: "Certificates of participation and achievement will be issued to all exhibitors and event winners." },
+    { title: "Prizes", description: "Prizes for winners. Details will be announced with the line-up." },
+    { title: "Certificates", description: "Certificates for every participant." },
   ],
   sponsors: [],
   contact: [
-    { org: "ARITHI", email: "contact@arithi.example", phone: "" },
-    { org: "SSRVM IEMS", email: "info@ssrvmiems.example", phone: "" },
+    { org: "ARITHI Ventures", email: "arithitechnologies.contact@zohomail.in", phone: "+91 7846944584" },
   ],
   gallery: [],
   introVideoSrc: "/video/intro.mp4",

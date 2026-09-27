@@ -26,30 +26,6 @@ export default function About() {
         </dl>
       </section>
 
-      {/* The three days: a real sequence, so it is numbered. */}
-      <section className="pb-28">
-        <MaskedReveal className="mb-12">
-          <h2 className="t-section text-starlight">Three days</h2>
-        </MaskedReveal>
-
-        <ol className="grid gap-px overflow-hidden border border-white/10 sm:grid-cols-3">
-          {siteConfig.days.map((d, i) => (
-            <li
-              key={d.title}
-              className="group bg-white/[0.03] px-7 py-10 transition-colors duration-300 hover:bg-teal/[0.07]"
-            >
-              <Reveal delay={i * 0.09}>
-                <span className="block text-5xl font-bold leading-none tabular-nums text-teal/70 transition-colors duration-300 group-hover:text-teal">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <p className="t-item mt-6 text-starlight">{d.title}</p>
-                <p className="t-body mt-3 text-secondary">{d.description}</p>
-              </Reveal>
-            </li>
-          ))}
-        </ol>
-      </section>
-
       {/* Rules: glass sheet, so the section reads differently again. */}
       <section>
         <MaskedReveal className="mb-12">

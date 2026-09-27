@@ -8,7 +8,7 @@ export default function Sponsors() {
     <div className="mx-auto max-w-6xl px-6 pb-32">
       <PageHeader
         title="Sponsors and partners"
-        lead="Sponsorship is coordinated by ARITHI. It keeps the cost to the school low and brings NIT Rourkela student clubs in to show school students what college-level science looks like up close."
+        lead="The organisations backing AVANTRA 2026, listed here as they join."
       />
 
       <section className="relative">

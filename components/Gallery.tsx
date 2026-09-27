@@ -58,7 +58,7 @@ export default function Gallery() {
           Photos arrive after the event.
         </p>
         <p className="t-body mt-3 text-secondary">
-          Exhibits, sessions and prize-giving from all three days will be posted here.
+          Exhibits, sessions and prize-giving from the festival will be posted here.
         </p>
       </div>
     );

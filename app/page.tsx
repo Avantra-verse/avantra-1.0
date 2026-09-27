@@ -8,9 +8,9 @@ import MaskedReveal from "@/components/MaskedReveal";
 import { siteConfig } from "@/content/site";
 
 const facts = [
-  { label: "when", value: "December 2026" },
-  { label: "where", value: siteConfig.venue.name },
-  { label: "how long", value: `${siteConfig.days.length} days` },
+  { label: "when", value: `${siteConfig.eventWhen}, dates soon` },
+  { label: "where", value: "Host school, TBA" },
+  { label: "how long", value: "2 days" },
 ];
 
 export default function Home() {
@@ -18,7 +18,8 @@ export default function Home() {
     <>
       <section className="relative flex min-h-[calc(100dvh-4rem)] items-end overflow-hidden">
         <FilmBackdrop />
-        <div className="mx-auto w-full max-w-6xl px-6 pb-16 sm:pb-20">
+        {/* relative: without it the absolutely positioned backdrop paints over the tagline */}
+        <div className="relative mx-auto w-full max-w-6xl px-6 pb-16 sm:pb-20">
           <ConvergingWordmark text={siteConfig.eventName} />
 
           {/*
@@ -33,7 +34,7 @@ export default function Home() {
                 href="/about"
                 className="inline-block border-b border-teal pb-1 text-teal transition-colors hover:text-starlight"
               >
-                See the three days
+                About AVANTRA
               </Link>
             </div>
           </div>
@@ -56,33 +57,6 @@ export default function Home() {
             </dl>
           </section>
         </Reveal>
-
-        {/*
-          Three days. Open on the ambient field, no sheet, so it reads as a
-          different kind of section from the glass above it.
-        */}
-        <section className="pt-28">
-          <MaskedReveal className="mb-12">
-            <h2 className="t-section text-starlight">Three days</h2>
-          </MaskedReveal>
-
-          <ol className="grid gap-px overflow-hidden border border-white/10 sm:grid-cols-3">
-            {siteConfig.days.map((d, i) => (
-              <li
-                key={d.title}
-                className="group bg-white/[0.03] px-7 py-10 transition-colors duration-300 hover:bg-teal/[0.07]"
-              >
-                <Reveal delay={i * 0.09}>
-                  <span className="block text-5xl font-bold leading-none tabular-nums text-teal/70 transition-colors duration-300 group-hover:text-teal">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <p className="t-item mt-6 text-starlight">{d.title}</p>
-                  <p className="t-body mt-3 text-secondary">{d.description}</p>
-                </Reveal>
-              </li>
-            ))}
-          </ol>
-        </section>
 
         {/* Who runs it. Bare rules on the ground, the quietest section. */}
         <section className="pt-28">
@@ -121,8 +95,7 @@ export default function Home() {
                   </p>
                 </MaskedReveal>
                 <p className="t-body mt-8 max-w-[52ch] text-secondary">
-                  Exhibition space, sponsorship and school delegations are all
-                  coordinated by ARITHI.
+                  Registration opens with the line-up. Questions before then? Write to the team.
                 </p>
                 <div className="mt-10 flex flex-wrap gap-8">
                   <Link

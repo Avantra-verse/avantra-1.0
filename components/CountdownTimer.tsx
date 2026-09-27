@@ -28,6 +28,7 @@ export default function CountdownTimer() {
 
   useEffect(() => {
     const tick = () => {
+      if (!siteConfig.eventDateISO) return;
       const next = getTimeRemaining(siteConfig.eventDateISO);
 
       // Flag only the units that actually changed, so the glitch fires on the
@@ -52,6 +53,15 @@ export default function CountdownTimer() {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
+
+  // No confirmed date yet: say the month rather than count down to a guess.
+  if (!siteConfig.eventDateISO) {
+    return (
+      <span className="text-sm text-muted">
+        {siteConfig.eventWhen} · dates soon
+      </span>
+    );
+  }
 
   // Hold the row's width before the first client tick so the nav does not jump.
   if (!remaining) {

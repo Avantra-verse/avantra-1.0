@@ -14,10 +14,10 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const description =
-  "A three-day science fair and exhibition hosted by SSRVM IEMS with student clubs from NIT Rourkela.";
+  "AVANTRA 2026: a two-day, Multiverse-themed inter-school science and innovation festival in December 2026, with ARITHI Ventures as event partner.";
 
 export const metadata: Metadata = {
-  title: "AVANTRA, a multiverse science fair",
+  title: "AVANTRA 2026, a multiverse science & innovation festival",
   description,
   openGraph: {
     title: "AVANTRA, a multiverse science fair",
