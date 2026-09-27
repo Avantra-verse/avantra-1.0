@@ -91,7 +91,7 @@ export default function Home() {
               <div className="glass px-7 py-20 sm:px-14">
                 <MaskedReveal>
                   <p className="t-title max-w-[20ch] text-starlight">
-                    Bring a project, or bring a school.
+                    Bring a project.
                   </p>
                 </MaskedReveal>
                 <p className="t-body mt-8 max-w-[52ch] text-secondary">
