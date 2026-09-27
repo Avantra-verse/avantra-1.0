@@ -17,17 +17,17 @@ const description =
   "AVANTRA 2026: a two-day, Multiverse-themed inter-school science and innovation festival in December 2026, with ARITHI Ventures as event partner.";
 
 export const metadata: Metadata = {
-  title: "AVANTRA 2026, a multiverse science & innovation festival",
+  title: "AVANTRA",
   description,
   openGraph: {
-    title: "AVANTRA, a multiverse science fair",
+    title: "AVANTRA 2026",
     description,
     type: "website",
     siteName: "AVANTRA",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AVANTRA, a multiverse science fair",
+    title: "AVANTRA 2026",
     description,
   },
 };
