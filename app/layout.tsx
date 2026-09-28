@@ -14,7 +14,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const description =
-  "AVANTRA 2026: a two-day, Multiverse-themed inter-school science and innovation festival in December 2026, with ARITHI Ventures as event partner.";
+  "AVANTRA 2026: a two-day, Multiverse-themed inter-school science and innovation festival in December 2026, with ARITHI INNOVATION & TECHNOLOGIES PRIVATE LIMITED as event partner.";
 
 export const metadata: Metadata = {
   title: "AVANTRA",

@@ -26,7 +26,7 @@ export const siteConfig: SiteConfig = {
     "hands-on challenges with students from other schools. Everything is set " +
     "in a Multiverse theme. The full line-up is announced soon.",
   partners: [
-    { name: "ARITHI Ventures", role: "Event partner, running the festival, its events and registration." },
+    { name: "ARITHI INNOVATION & TECHNOLOGIES PRIVATE LIMITED", role: "Event partner, running the festival, its events and registration." },
     { name: "Host school", role: "To be announced." },
   ],
   rules: [
@@ -43,7 +43,7 @@ export const siteConfig: SiteConfig = {
   ],
   sponsors: [],
   contact: [
-    { org: "ARITHI Ventures", email: "arithitechnologies.contact@zohomail.in", phone: "+91 7846944584" },
+    { org: "ARITHI INNOVATION & TECHNOLOGIES PRIVATE LIMITED", email: "arithitechnologies.contact@zohomail.in", phone: "+91 7846944584" },
   ],
   gallery: [],
   introVideoSrc: "/video/intro.mp4",
