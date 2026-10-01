@@ -1,0 +1,187 @@
+// AVANTRA 2026 data model. Money is stored in paise (Int), never floats.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  SCHOOL_COORDINATOR
+  JUDGE
+  VOLUNTEER
+  ADMIN
+}
+
+enum SchoolStatus {
+  PENDING // registered, waiting for ARITHI admin approval
+  APPROVED // shows up in the student school dropdown
+  REJECTED
+}
+
+enum EventCategory {
+  EXHIBITION
+  TECHNOLOGY
+  EXPERIENCE
+  WORKSHOP
+}
+
+enum RegistrationStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  CREATED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  phone        String
+  name         String
+  passwordHash String
+  role         Role
+  createdAt    DateTime  @default(now())
+  student      Student?
+  school       School? // set when role = SCHOOL_COORDINATOR
+  sessions     Session[]
+  scans        CheckIn[]
+  scores       Score[]
+}
+
+// Refresh-token sessions; access tokens are short-lived JWTs.
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model School {
+  id            String       @id @default(cuid())
+  name          String
+  city          String
+  address       String
+  status        SchoolStatus @default(PENDING)
+  coordinatorId String       @unique
+  coordinator   User         @relation(fields: [coordinatorId], references: [id])
+  students      Student[]
+  createdAt     DateTime     @default(now())
+
+  @@unique([name, city])
+  @@index([status])
+}
+
+model Student {
+  userId        String               @id
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId      String
+  school        School               @relation(fields: [schoolId], references: [id])
+  grade             Int
+  guardianPhone     String
+  guardianConsentAt DateTime // DPDP: verifiable parental consent for minors
+  avantraId     String               @unique // human-readable, printed on badge: AV26-00123
+  qrToken       String               @unique // random, opaque; what the QR encodes
+  registrations RegistrationMember[]
+  checkIns      CheckIn[]
+
+  @@index([schoolId]) // coordinator view: students of my school
+}
+
+model Event {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  name          String
+  category      EventCategory
+  feePaise      Int            @default(0) // exhibition: 19900 per student
+  teamMin       Int            @default(1)
+  teamMax       Int            @default(1)
+  capacity      Int?
+  registrations Registration[]
+  checkIns      CheckIn[]
+}
+
+// One row per team (or solo entry) in an event.
+model Registration {
+  id           String               @id @default(cuid())
+  eventId      String
+  event        Event                @relation(fields: [eventId], references: [id])
+  teamName     String?
+  projectTitle String? // exhibition only
+  topic        String? // exhibition topic
+  status       RegistrationStatus   @default(PENDING_PAYMENT)
+  members      RegistrationMember[]
+  payments     Payment[]
+  scores       Score[]
+  createdAt    DateTime             @default(now())
+
+  @@index([eventId, status])
+}
+
+model RegistrationMember {
+  registrationId String
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student      @relation(fields: [studentId], references: [userId])
+  isLeader       Boolean      @default(false)
+
+  @@id([registrationId, studentId])
+  @@index([studentId])
+}
+
+// Razorpay order per payment attempt. Webhook is the source of truth for PAID.
+model Payment {
+  id                String        @id @default(cuid())
+  registrationId    String
+  registration      Registration  @relation(fields: [registrationId], references: [id])
+  amountPaise       Int
+  status            PaymentStatus @default(CREATED)
+  razorpayOrderId   String        @unique
+  razorpayPaymentId String?       @unique // unique = idempotent webhook handling
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([registrationId])
+}
+
+// eventId null = main gate entry.
+model CheckIn {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [userId])
+  eventId     String?
+  event       Event?   @relation(fields: [eventId], references: [id])
+  scannedById String
+  scannedBy   User     @relation(fields: [scannedById], references: [id])
+  scannedAt   DateTime @default(now())
+
+  @@index([studentId])
+  @@index([eventId])
+}
+
+model Score {
+  id             String       @id @default(cuid())
+  registrationId String
+  registration   Registration @relation(fields: [registrationId], references: [id])
+  judgeId        String
+  judge          User         @relation(fields: [judgeId], references: [id])
+  criterion      String
+  points         Int
+  createdAt      DateTime     @default(now())
+
+  @@unique([registrationId, judgeId, criterion])
+}
