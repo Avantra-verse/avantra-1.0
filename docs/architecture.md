@@ -32,7 +32,7 @@ Planned API modules (add each as a folder in `apps/api/src/` when built):
 | Payments | Razorpay — **school's own account** | brochure: ₹199 goes directly to SSRVM IEMS |
 | Email | Google Workspace `noreply@arithi.in` via SMTP (`nodemailer`) | 2,000/day; provider swap = `.env` change only (Brevo / SES as fallback) |
 | Files | Cloudflare R2 (free) | certificate PDFs, DB backups |
-| Auth libs | `@nestjs/jwt`, `google-auth-library`, Node `crypto.scrypt` | scrypt is built-in, OWASP-approved; no native build |
+| Auth libs | `@nestjs/jwt`, `google-auth-library`, Node `crypto.argon2` (argon2id, 19 MiB, 2 passes) | OWASP first choice, built into Node ≥24.7, no native build |
 | Monitoring | Sentry free + UptimeRobot free | errors + `/health` uptime |
 
 Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Auth cookie is host-only on the API (`HttpOnly; Secure; SameSite=Lax`, no `Domain`), so other `*.arithi.in` sites never receive it. CORS allows only `https://avantra.arithi.in`. Workspace mail needs SPF + DKIM + DMARC on `arithi.in`.
@@ -73,7 +73,7 @@ Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Au
 ## Non-negotiables (real users, real money, minors)
 
 - **Minors' data (DPDP Act 2023):** students are under 18 → parent/guardian consent checkbox + parent phone at sign-up; collect only what we need.
-- Passwords hashed with scrypt; JWT access (15 min) + refresh token in httpOnly cookie, hashed in `Session`.
+- Passwords hashed with argon2id (`node:crypto`); JWT access (15 min) + refresh token in httpOnly cookie, hashed in `Session`.
 - Razorpay webhook signature verified; amounts computed server-side from `Event.feePaise`, never from the client.
 - Rate-limit auth + OTP endpoints (Redis).
 - Nightly `pg_dump` to R2 via GitHub Action (Supabase free has no backups). Test a restore once before 1 Nov.

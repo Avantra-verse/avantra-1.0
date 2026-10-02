@@ -26,5 +26,8 @@
     "@types/node": "^24.0.0",
     "prisma": "^6.6.0",
     "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=24.7"
   }
 }
