@@ -79,21 +79,17 @@ Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Au
 - Nightly `pg_dump` to R2 via GitHub Action (Supabase free has no backups). Test a restore once before 1 Nov.
 - **School Wi-Fi is a risk:** scanner must work on mobile data; queue scans offline (IndexedDB) and sync. Printed CSV fallback list per desk.
 
-## Timeline (code complete by 14 Oct 2026, event: 19 Dec)
+## Build order
 
-| By | Ship |
-|---|---|
-| 4 Oct | DB changes, email+password + email code, sessions, Google sign-in |
-| 6 Oct | School sign-up + admin approval, student sign-up + profile, coordinator view, `/admin` two-step login |
-| 8 Oct | Events, registration, Razorpay test mode + webhook |
-| 10 Oct | QR badges, `/staff` scanner + check-in, judge scoring |
-| 12 Oct | Admin dashboard, exports, offline registration, certificates |
-| 13 Oct | Deploy (Render + Supabase + DNS), end-to-end test |
-| 14 Oct | Buffer → open registrations once Razorpay live keys arrive |
-| Dec | Load test, Student Council dry run, venue Wi-Fi check |
-| 19–20 Dec | Event — on-call during event hours |
+No dates. Build in this order and ship each piece as it finishes.
 
-Start today (outside our control): school Razorpay KYC, DNS for `api.avantra.arithi.in` + SPF/DKIM/DMARC, Google OAuth consent screen.
+1. DB changes, email+password + email code, sessions, Google sign-in
+2. School sign-up + admin approval, student sign-up + profile, coordinator view, `/admin` two-step login
+3. Events, registration, Razorpay test mode + webhook
+4. QR badges, `/staff` scanner + check-in, judge scoring
+5. Admin dashboard, exports, offline registration, certificates
+6. Deploy (Render + Supabase + DNS), end-to-end test
+7. Before the event (19–20 Dec): load test, Student Council dry run, venue Wi-Fi check
 
 ## Deployment
 
