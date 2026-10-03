@@ -37,7 +37,8 @@ export async function call(path: string, body?: object, cookie = '', opts: { ori
   });
   const text = await res.text();
   const cookieOut = res.headers.get('set-cookie')?.split(';')[0] ?? '';
-  return { status: res.status, json: text ? JSON.parse(text) : null, cookie: cookieOut };
+  const isJson = res.headers.get('content-type')?.includes('json');
+  return { status: res.status, json: isJson && text ? JSON.parse(text) : null, text, headers: res.headers, cookie: cookieOut };
 }
 
 export async function codeFor(email: string): Promise<string> {

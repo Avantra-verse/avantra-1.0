@@ -1,13 +1,10 @@
 import { Body, ConflictException, Controller, ForbiddenException, Get, Post } from '@nestjs/common';
 import { SchoolProfile, StudentProfile } from '@avantra/shared';
 import type { User } from '@prisma/client';
-import { randomBytes } from 'node:crypto';
 import { CurrentUser, Public, Roles } from './auth/session.guard';
-import { isUniqueViolation, randomCode } from './ids';
+import { isUniqueViolation, newStudentIds, retryOnIdClash } from './ids';
 import { PrismaService } from './prisma.service';
 import { ZodPipe } from './zod.pipe';
-
-const newAvantraId = () => 'AV26-' + randomCode(5);
 
 @Controller()
 export class ProfileController {
@@ -42,30 +39,14 @@ export class ProfileController {
     if (schoolId && !(await this.prisma.school.findFirst({ where: { id: schoolId, status: 'APPROVED' } }))) {
       throw new ForbiddenException('Pick a school from the list');
     }
-    for (let attempt = 0; attempt < 5; attempt++) {
-      try {
-        const updated = await this.prisma.user.update({
-          where: { id: user.id },
-          data: {
-            phone,
-            student: {
-              create: {
-                ...rest,
-                schoolId,
-                guardianConsentAt: new Date(),
-                avantraId: newAvantraId(),
-                qrToken: randomBytes(16).toString('base64url'),
-              },
-            },
-          },
-          select: { student: true },
-        });
-        return updated.student;
-      } catch (e) {
-        if (!isUniqueViolation(e)) throw e; // else: avantraId collision (1 in ~33M per student), try a new one
-      }
-    }
-    throw new ConflictException('Please try again');
+    const updated = await retryOnIdClash(['avantraId', 'qrToken'], () =>
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { phone, student: { create: { ...rest, schoolId, guardianConsentAt: new Date(), ...newStudentIds() } } },
+        select: { student: true },
+      }),
+    );
+    return updated.student;
   }
 
   @Roles('SCHOOL_COORDINATOR') @Post('profile/school')

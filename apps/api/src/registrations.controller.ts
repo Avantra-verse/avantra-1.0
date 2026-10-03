@@ -28,6 +28,19 @@ import { createOrder, hmacMatches, razorpayConfigured } from './razorpay';
 import { createSoloTeamIfNeeded, teamInclude } from './teams.controller';
 import { ZodPipe } from './zod.pipe';
 
+// Same email for online (webhook) and cash (admin desk) payments.
+export const feeConfirmedMail = (to: string, avantraId: string, amountPaise: number, reference: string) => ({
+  to,
+  subject: 'AVANTRA 2026: registration confirmed',
+  text:
+    `Payment of ₹${amountPaise / 100} received. You're an AVANTRA 2026 participant.
+` +
+    `Your AVANTRA ID: ${avantraId}
+
+Next: register for events and form your teams.
+Payment reference: ${reference}`,
+});
+
 @Controller()
 export class RegistrationsController {
   private readonly logger = new Logger('Payments');

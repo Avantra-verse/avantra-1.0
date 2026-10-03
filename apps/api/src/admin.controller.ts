@@ -1,10 +1,21 @@
 import { Body, ConflictException, Controller, Get, HttpCode, NotFoundException, Param, Post, Query } from '@nestjs/common';
-import { AssignJudgeRequest, CreateStaffRequest, LinkStudentRequest, SchoolStatus } from '@avantra/shared';
-import { Prisma } from '@prisma/client';
+import {
+  AssignJudgeRequest,
+  AVANTRA_FEE_PAISE,
+  CreateStaffRequest,
+  LinkStudentRequest,
+  MarkPaidRequest,
+  SchoolStatus,
+  SetRankRequest,
+  WalkInRequest,
+} from '@avantra/shared';
+import { Prisma, type User } from '@prisma/client';
 import { hashPassword } from './auth/password';
-import { Roles } from './auth/session.guard';
+import { CurrentUser, Roles } from './auth/session.guard';
+import { isUniqueViolation, newStudentIds, retryOnIdClash } from './ids';
 import { MailService } from './mail.service';
 import { PrismaService } from './prisma.service';
+import { feeConfirmedMail } from './registrations.controller';
 import { ZodPipe } from './zod.pipe';
 
 // Staff accounts stop working the day after the event unless the admin sets another date.
@@ -88,6 +99,71 @@ export class AdminController {
       .catch(() => {
         throw new NotFoundException('Student not found');
       });
+  }
+
+  // ---- registration desk: cash fee and walk-ins ----
+
+  // Cash fee for a student who signed up online. Records which admin took the money.
+  @Post('students/:avantraId/mark-paid') @HttpCode(200)
+  async markPaid(@CurrentUser() admin: User, @Param('avantraId') avantraId: string, @Body(new ZodPipe(MarkPaidRequest)) { note }: MarkPaidRequest) {
+    const student = await this.prisma.student.findUnique({ where: { avantraId: avantraId.toUpperCase() }, include: { user: true } });
+    if (!student) throw new NotFoundException('Unknown AVANTRA ID');
+    await this.prisma.$transaction(async (tx) => {
+      // Conditional update = only one of two admins clicking at once records the cash.
+      const { count } = await tx.student.updateMany({ where: { userId: student.userId, feePaidAt: null }, data: { feePaidAt: new Date() } });
+      if (!count) throw new ConflictException('Fee already paid');
+      await tx.payment.create({
+        data: { studentId: student.userId, amountPaise: AVANTRA_FEE_PAISE, method: 'OFFLINE', status: 'PAID', recordedById: admin.id, note },
+      });
+    });
+    await this.mail.send(feeConfirmedMail(student.user.email, student.avantraId, AVANTRA_FEE_PAISE, note ?? 'cash at desk'));
+    return { avantraId: student.avantraId, name: student.user.name, feePaid: true };
+  }
+
+  // Walk-in: account + profile + cash fee in one step. They set a password later via "Forgot password".
+  @Post('walk-in')
+  async walkIn(@CurrentUser() admin: User, @Body(new ZodPipe(WalkInRequest)) body: WalkInRequest) {
+    const { name, email, phone, note, guardianConsent: _, schoolId, ...profile } = body;
+    if (schoolId && !(await this.prisma.school.findFirst({ where: { id: schoolId, status: 'APPROVED' } }))) {
+      throw new NotFoundException('School not found or not approved');
+    }
+    try {
+      const student = await retryOnIdClash(['avantraId', 'qrToken'], () =>
+        this.prisma.student.create({
+          data: {
+            ...profile,
+            ...newStudentIds(),
+            school: schoolId ? { connect: { id: schoolId } } : undefined,
+            guardianConsentAt: new Date(),
+            feePaidAt: new Date(),
+            user: { create: { name, email, phone, role: 'STUDENT' } },
+            payments: { create: { amountPaise: AVANTRA_FEE_PAISE, method: 'OFFLINE', status: 'PAID', recordedById: admin.id, note } },
+          },
+        }),
+      );
+      await this.mail.send({
+        ...feeConfirmedMail(email, student.avantraId, AVANTRA_FEE_PAISE, note ?? 'cash at desk'),
+        text:
+          `${name} is registered for AVANTRA 2026 (paid ₹${AVANTRA_FEE_PAISE / 100} at the desk).
+AVANTRA ID: ${student.avantraId}
+
+` +
+          `To log in, open the AVANTRA site, choose "Forgot password" and enter this email to set a password.`,
+      });
+      return { avantraId: student.avantraId, qrToken: student.qrToken, name };
+    } catch (e) {
+      if (isUniqueViolation(e)) throw new ConflictException('An account with this email already exists. Use mark-paid with their AVANTRA ID.');
+      throw e;
+    }
+  }
+
+  // ---- results ----
+
+  @Post('teams/:id/rank') @HttpCode(200)
+  async setRank(@Param('id') id: string, @Body(new ZodPipe(SetRankRequest)) { rank }: SetRankRequest) {
+    return this.prisma.team.update({ where: { id }, data: { rank }, select: { id: true, name: true, rank: true } }).catch(() => {
+      throw new NotFoundException();
+    });
   }
 
   // ---- volunteers and judges ----

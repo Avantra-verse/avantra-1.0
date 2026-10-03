@@ -149,13 +149,15 @@ model Event {
 
 // A student's entry in an event. Free, but only students who paid the AVANTRA fee can register.
 model Registration {
-  id         String      @id @default(cuid())
-  eventId    String
-  event      Event       @relation(fields: [eventId], references: [id])
-  studentId  String
-  student    Student     @relation(fields: [studentId], references: [userId])
-  teamMember TeamMember? // null until they create or join a team
-  createdAt  DateTime    @default(now())
+  id                  String      @id @default(cuid())
+  eventId             String
+  event               Event       @relation(fields: [eventId], references: [id])
+  studentId           String
+  student             Student     @relation(fields: [studentId], references: [userId])
+  teamMember          TeamMember? // null until they create or join a team
+  certificateCode     String?     @unique // set when the admin issues certificates; public verify link uses it
+  certificateIssuedAt DateTime?
+  createdAt           DateTime    @default(now())
 
   @@unique([eventId, studentId])
   @@index([studentId])
@@ -170,6 +172,7 @@ model Team {
   inviteCode   String       @unique // 6 chars, leader can regenerate
   projectTitle String? // exhibition
   topic        String? // exhibition
+  rank         Int? // 1, 2, 3 = winners, set by an admin after judging
   members      TeamMember[]
   scores       Score[]
   createdAt    DateTime     @default(now())
@@ -200,6 +203,8 @@ model Payment {
   status            PaymentStatus @default(CREATED)
   razorpayOrderId   String?       @unique // null for OFFLINE
   razorpayPaymentId String?       @unique // unique = idempotent webhook handling
+  recordedById      String? // OFFLINE: the admin who took the cash
+  note              String? // OFFLINE: receipt number etc.
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

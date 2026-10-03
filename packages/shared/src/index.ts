@@ -52,20 +52,19 @@ export const SchoolProfile = z.object({
 });
 export type SchoolProfile = z.infer<typeof SchoolProfile>;
 
-export const StudentProfile = z
-  .object({
-    phone,
-    grade: z.number().int().min(1).max(12),
-    schoolId: z.string().min(1).optional(), // an APPROVED school
-    otherSchoolName: z.string().trim().min(3).max(200).optional(), // "Others"
-    guardianEmail: email.optional(),
-    guardianPhone: phone,
-    guardianConsent: z.literal(true),
-  })
-  .refine((v) => !!v.schoolId !== !!v.otherSchoolName, {
-    message: 'Pick your school or type its name',
-    path: ['schoolId'],
-  });
+const studentProfileFields = z.object({
+  phone,
+  grade: z.number().int().min(1).max(12),
+  schoolId: z.string().min(1).optional(), // an APPROVED school
+  otherSchoolName: z.string().trim().min(3).max(200).optional(), // "Others"
+  guardianEmail: email.optional(),
+  guardianPhone: phone,
+  guardianConsent: z.literal(true),
+});
+const oneSchool = (v: { schoolId?: string; otherSchoolName?: string }) => !!v.schoolId !== !!v.otherSchoolName;
+const oneSchoolError = { message: 'Pick your school or type its name', path: ['schoolId'] };
+
+export const StudentProfile = studentProfileFields.refine(oneSchool, oneSchoolError);
 export type StudentProfile = z.infer<typeof StudentProfile>;
 
 // ---- staff (/staff) and admin (/admin) ----
@@ -215,3 +214,17 @@ export type SubmitScoresRequest = z.infer<typeof SubmitScoresRequest>;
 
 export const AssignJudgeRequest = z.object({ eventId: z.string().min(1) });
 export type AssignJudgeRequest = z.infer<typeof AssignJudgeRequest>;
+
+// ---- admin desk ----
+
+// Walk-in at the registration desk: admin creates the account and takes the fee in cash.
+// Email can be the parent's; the student sets a password later with "Forgot password".
+export const WalkInRequest = studentProfileFields.extend({ name, email, note: z.string().trim().max(200).optional() }).refine(oneSchool, oneSchoolError);
+export type WalkInRequest = z.infer<typeof WalkInRequest>;
+
+// Cash fee for a student who signed up online.
+export const MarkPaidRequest = z.object({ note: z.string().trim().max(200).optional() }); // e.g. receipt number
+export type MarkPaidRequest = z.infer<typeof MarkPaidRequest>;
+
+export const SetRankRequest = z.object({ rank: z.number().int().min(1).max(3).nullable() }); // null = clear
+export type SetRankRequest = z.infer<typeof SetRankRequest>;

@@ -147,3 +147,27 @@ Even if the browser closes before `handler` runs, Razorpay's webhook (`POST /pay
 | `POST /staff/judge/scores` | JUDGE | `SubmitScoresRequest` `{ teamId, scores: [{ criterion, points }] }` | 200 team | Points 0–`MAX_POINTS` (10). Re-sending corrects the judge's own scores. Once a team has a score, its members are locked. |
 
 Team (judge view): `{ id, name, projectTitle, topic, members: [{ name, avantraId }], criteria, maxPoints, myScores: { [criterion]: points } }`.
+
+## Admin desk, dashboard and exports (ADMIN)
+
+| Method + path | Body | Notes |
+|---|---|---|
+| `GET /admin/stats` | none | Dashboard numbers: `students { total, paid, unpaid, unlinkedSchool }`, `schools { PENDING, APPROVED, REJECTED }`, `fees { onlinePaise, onlineCount, cashPaise, cashCount }`, `gate.checkedInToday`, `events[]` with `registrations`, `teams`, `deskScans`. |
+| `POST /admin/students/:avantraId/mark-paid` | `MarkPaidRequest` `{ note? }` | Cash fee for an online sign-up. Records which admin took it. 409 = already paid. |
+| `POST /admin/walk-in` | `WalkInRequest` = student profile + `{ name, email, note? }` | Walk-in: account + profile + cash fee in one step. Returns `{ avantraId, qrToken, name }` (print the badge). Email can be the parent's; they set a password via "Forgot password". 409 = email exists (use mark-paid). |
+| `POST /admin/teams/:id/rank` | `SetRankRequest` `{ rank: 1 \| 2 \| 3 \| null }` | Winners, after judging. Shows on certificates. |
+| `GET /admin/export/students.csv` | none | Download. Opens in Excel. |
+| `GET /admin/export/registrations.csv?eventId=` | none | `eventId` optional. Teams, ranks, certificate IDs. |
+| `GET /admin/export/payments.csv` | none | Reconcile with Razorpay settlements and the cash box (`cashTakenBy`). |
+
+CSV downloads need the session cookie: open them with `fetch(..., { credentials: 'include' })` and save the blob, or a plain link on the same site.
+
+## Certificates
+
+| Method + path | Who | Notes |
+|---|---|---|
+| `POST /admin/events/:id/certificates` | ADMIN | After the event (set ranks first): issues a certificate to every registrant who checked in at least once. Re-run is safe. Returns `{ issuedNow, issued, notCheckedIn }`. |
+| `GET /certificates/:code` | anyone | Verify page data: `{ valid, name, school, event, rank, issuedAt, verifyUrl }`. 404 = invalid. |
+| `GET /certificates/:code/pdf` | anyone | The PDF (A4 landscape). |
+
+Students find their codes in `GET /registrations/mine` → `certificateCode` (null = not issued). The frontend needs a public page at **`/verify/[code]`**; that URL is printed on every certificate.
