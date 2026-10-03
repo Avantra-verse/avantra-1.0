@@ -1,10 +1,7 @@
-import { applyDecorators, Controller, Get, Header, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { Roles } from './auth/session.guard';
-import { toCsv } from './csv';
+import { CsvFile, toCsv } from './csv';
 import { PrismaService } from './prisma.service';
-
-const CsvFile = (name: string) =>
-  applyDecorators(Header('content-type', 'text/csv; charset=utf-8'), Header('content-disposition', `attachment; filename="avantra-${name}.csv"`));
 
 @Roles('ADMIN')
 @Controller('admin')

@@ -55,6 +55,7 @@ export type SchoolProfile = z.infer<typeof SchoolProfile>;
 const studentProfileFields = z.object({
   phone,
   grade: z.number().int().min(1).max(12),
+  section: z.string().trim().toUpperCase().min(1).max(10).optional(), // e.g. "B"
   schoolId: z.string().min(1).optional(), // an APPROVED school
   otherSchoolName: z.string().trim().min(3).max(200).optional(), // "Others"
   guardianEmail: email.optional(),
@@ -100,7 +101,8 @@ export type SchoolStatus = z.infer<typeof SchoolStatus>;
 
 // ---- events, registrations, payments ----
 
-// AVANTRA registration fee, paid once per student. Without it a student can't enter any event.
+// Science & Innovation Exhibition fee, paid once per student. Needed only to register for EXHIBITION events;
+// every other event, the Engagement Wall and entry to AVANTRA are free.
 export const AVANTRA_FEE_PAISE = 19900; // ₹199
 
 export const EventCategory = z.enum(['EXHIBITION', 'TECHNOLOGY', 'EXPERIENCE', 'WORKSHOP']);
@@ -145,7 +147,7 @@ export const AvantraId = z
   .toUpperCase()
   .regex(/^AV26-[2-9A-HJ-NP-Z]{5}$/, 'Invalid AVANTRA ID');
 
-// A student who paid the AVANTRA fee registers for an event. Free.
+// Free, except EXHIBITION events need the ₹199 fee paid first.
 export const CreateRegistrationRequest = z.object({ eventId: z.string().min(1) });
 export type CreateRegistrationRequest = z.infer<typeof CreateRegistrationRequest>;
 
@@ -228,3 +230,73 @@ export type MarkPaidRequest = z.infer<typeof MarkPaidRequest>;
 
 export const SetRankRequest = z.object({ rank: z.number().int().min(1).max(3).nullable() }); // null = clear
 export type SetRankRequest = z.infer<typeof SetRankRequest>;
+
+// ---- ARITHI Engagement Wall ----
+
+export const WALL_CATEGORIES = [
+  'Mathematics',
+  'Science',
+  'AI',
+  'Technology',
+  'Logical Reasoning',
+  'Puzzle',
+  'Entrepreneurship',
+  'Observation',
+  'Exhibition',
+] as const;
+// Tries before a challenge locks for that student. Multiple choice gets one, or guessing would win.
+export const WALL_TYPED_ATTEMPTS = 3;
+export const WALL_CHOICE_ATTEMPTS = 1;
+export const wallAttempts = (c: { options: string[] }) => (c.options.length ? WALL_CHOICE_ATTEMPTS : WALL_TYPED_ATTEMPTS);
+
+// The code printed on a chit. Same alphabet as invite codes: no 0/O/1/I.
+export const ChitCode = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[2-9A-HJ-NP-Z]{6}$/, 'Chit codes are 6 letters/digits');
+
+// How answers are compared: case, spacing and a trailing full stop don't matter; numbers compare by value ("1,000" = "1000.0").
+export function normalizeAnswer(s: string): string {
+  const t = s.normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim().replace(/[.!]+$/, '');
+  const n = t.replace(/,/g, '');
+  return /^-?\d+(\.\d+)?$/.test(n) ? String(Number(n)) : t;
+}
+export const answerMatches = (given: string, accepted: string[]) => accepted.some((a) => normalizeAnswer(a) === normalizeAnswer(given));
+
+const text = (max: number) => z.string().trim().min(1).max(max);
+const wallFields = z.object({
+  number: z.number().int().min(1).max(9999),
+  category: z.enum(WALL_CATEGORIES),
+  difficulty: z.number().int().min(1).max(8),
+  points: z.number().int().min(1).max(1000).optional(), // default 10 × difficulty
+  question: text(1000),
+  options: z.array(text(200)).max(6).optional(), // multiple choice (2–6); omit for a typed answer
+  answers: z.array(text(200)).min(1).max(20), // every accepted answer; for multiple choice, the correct option(s)
+  active: z.boolean().optional(),
+});
+// Multiple choice: 2+ options and every answer is one of them. Also checked on edits, after merging.
+export const wallAnswersValid = (v: { options?: string[]; answers?: string[] }) =>
+  !v.options?.length || (v.options.length >= 2 && (v.answers ?? []).every((a) => answerMatches(a, v.options!)));
+const wallAnswersError = { message: 'Multiple choice needs 2+ options, and each answer must be one of them', path: ['answers'] };
+
+export const WallChallengeInput = wallFields.refine(wallAnswersValid, wallAnswersError);
+export type WallChallengeInput = z.infer<typeof WallChallengeInput>;
+// Admin adds one or many (e.g. a whole sheet) at once; all or nothing.
+export const CreateWallChallengesRequest = z.array(WallChallengeInput).min(1).max(500);
+export type CreateWallChallengesRequest = z.infer<typeof CreateWallChallengesRequest>;
+export const UpdateWallChallengeRequest = wallFields.partial();
+export type UpdateWallChallengeRequest = z.infer<typeof UpdateWallChallengeRequest>;
+
+// The filled template, read in the browser as text (FileReader / file.text()).
+export const WallImportRequest = z.object({ csv: z.string().min(1).max(2_000_000) });
+export type WallImportRequest = z.infer<typeof WallImportRequest>;
+
+export const WallAnswerRequest = z.object({ answer: text(200) }); // multiple choice: the option text
+export type WallAnswerRequest = z.infer<typeof WallAnswerRequest>;
+
+// open: codes can be played. frozen: the public leaderboard stops at this moment (final-hour suspense).
+export const WallStateRequest = z
+  .object({ open: z.boolean().optional(), frozen: z.boolean().optional() })
+  .refine((v) => v.open !== undefined || v.frozen !== undefined, { message: 'Send open and/or frozen' });
+export type WallStateRequest = z.infer<typeof WallStateRequest>;

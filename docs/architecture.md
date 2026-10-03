@@ -64,11 +64,12 @@ Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Au
 
 1. **School sign-up** → School `PENDING` → ARITHI admin approves → appears in student dropdown.
 2. **Student sign-up** → email OTP → picks school → gets `avantraId` (AV26-00123) + random `qrToken`.
-3. **AVANTRA fee (₹199, once per student)** → API creates Razorpay order → Checkout → client callback (signature verified, optimistic) → **webhook `payment.captured` is source of truth** → Payment `PAID`, `Student.feePaidAt` set. Unique `razorpayPaymentId` makes webhook retries harmless. Unpaid = not a participant.
+3. **Science Exhibition fee (₹199, once per student; everything else is free)** → API creates Razorpay order → Checkout → client callback (signature verified, optimistic) → **webhook `payment.captured` is source of truth** → Payment `PAID`, `Student.feePaidAt` set. Unique `razorpayPaymentId` makes webhook retries harmless. Unpaid = can't register for the exhibition; entry, other events and the Engagement Wall are free.
 4. **Event registration** (free, paid students only) → **teams** form per event via 6-char invite codes; solo events get a team of one.
 5. **Check-in** → QR encodes only the opaque `qrToken` (no personal data) → volunteer scans in `/staff` → API records CheckIn.
 6. **Scoring** → judge scans student QR in `/staff` → opens that student's registration in the judge's event → scores per criterion → leaderboard computed by query.
-7. **Certificates** → after event, BullMQ job renders PDFs for fee-paid, checked-in students, each with a public verify URL.
+7. **Certificates** → after the event, PDFs for every checked-in registrant, each with a public verify URL.
+8. **ARITHI Engagement Wall** → student types a chit code → challenge → answer auto-checked (3 tries typed, 1 multiple choice) → points once per challenge → individual + school leaderboards (public, cached 5 s). Admin opens/closes the Wall, freezes the board for the final hour, adds challenges in bulk, reprints lost chits, re-grades.
 
 ## Non-negotiables (real users, real money, minors)
 
@@ -118,6 +119,6 @@ Optional: Supabase Pro ~₹2,200/mo. Razorpay fee ~2% + GST ≈ ₹4.70 per ₹1
 ## Open questions
 
 1. School's Razorpay account + KYC — start now, KYC can take days.
-2. Are ARITHI events (Drone, Robotics, …) paid or free? Separate fee?
+2. ~~Are ARITHI events paid?~~ Resolved: only the Science Exhibition is paid (₹199 once); all else free.
 3. Do visitors need a free entry pass / QR, or only participants?
 4. Who bears the Razorpay fee: school, or a convenience fee to students?

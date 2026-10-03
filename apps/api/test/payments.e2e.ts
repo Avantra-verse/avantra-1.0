@@ -52,16 +52,19 @@ async function event(adminCookie: string, fields: object) {
   return res.json.id as string;
 }
 
-test('AVANTRA fee once per student: Razorpay order + webhook, idempotency, gate on events', async () => {
+test('exhibition fee once per student: Razorpay order + webhook, idempotency, only exhibition needs it', async () => {
   const { cookie: adminCookie } = await admin();
-  const eventId = await event(adminCookie, { teamMax: 3, capacity: 1 });
+  const eventId = await event(adminCookie, { category: 'EXHIBITION', teamMax: 3, capacity: 1 });
+  const freeEvent = await event(adminCookie, {});
   const [a, b] = [await student('a'), await student('b')];
   assert.equal((await call('/admin/events', { slug: 'nope-x', name: 'Nope', category: 'WORKSHOP', teamMin: 1, teamMax: 1 }, a.cookie)).status, 403, 'students cannot create events');
 
-  // Unpaid: not a participant, can't enter events. No profile: can't pay.
+  // Unpaid: can't enter the exhibition, but every other event is free. No profile: can't pay or register.
   assert.equal((await call('/registrations', { eventId }, a.cookie)).status, 403);
+  assert.equal((await call('/registrations', { eventId: freeEvent }, a.cookie)).status, 201);
   const noProfile = await signUp('STUDENT', 'noprofile');
   assert.equal((await call('/payments/fee', {}, noProfile.cookie)).status, 403);
+  assert.equal((await call('/registrations', { eventId: freeEvent }, noProfile.cookie)).status, 403);
 
   const pay = await call('/payments/fee', {}, a.cookie);
   assert.equal(pay.status, 201);
@@ -84,7 +87,7 @@ test('AVANTRA fee once per student: Razorpay order + webhook, idempotency, gate 
   const sig = sign(RZP.RAZORPAY_KEY_SECRET, `${orderId}|${payId}`);
   assert.equal((await call('/payments/verify', { razorpay_order_id: orderId, razorpay_payment_id: payId, razorpay_signature: sig }, a.cookie)).status, 200);
   await sleep(500);
-  assert.equal(logs().split(`to ${a.email} | AVANTRA 2026: registration confirmed`).length - 1, 1, 'exactly one confirmation email');
+  assert.equal(logs().split(`to ${a.email} | AVANTRA 2026: exhibition fee received`).length - 1, 1, 'exactly one confirmation email');
   assert.ok((await call('/profile', undefined, a.cookie)).json.student.feePaidAt);
   assert.equal((await call('/payments/fee', {}, a.cookie)).status, 409, 'pay once');
 

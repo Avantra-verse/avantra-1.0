@@ -16,6 +16,7 @@ import { RegistrationsController } from './registrations.controller';
 import { ReportsController } from './reports.controller';
 import { StaffController } from './staff.controller';
 import { TeamsController } from './teams.controller';
+import { WallController } from './wall.controller';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { TeamsController } from './teams.controller';
     BullModule.forRoot({ connection: { url: process.env.REDIS_URL } }),
     BullModule.registerQueue({ name: 'mail' }),
   ],
-  controllers: [HealthController, AuthController, ProfileController, AdminController, EventsController, RegistrationsController, TeamsController, StaffController, ReportsController, CertificatesController],
+  controllers: [HealthController, AuthController, ProfileController, AdminController, EventsController, RegistrationsController, TeamsController, StaffController, ReportsController, CertificatesController, WallController],
   providers: [
     PrismaService,
     AuthService,

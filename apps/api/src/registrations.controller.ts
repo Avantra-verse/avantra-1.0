@@ -31,14 +31,10 @@ import { ZodPipe } from './zod.pipe';
 // Same email for online (webhook) and cash (admin desk) payments.
 export const feeConfirmedMail = (to: string, avantraId: string, amountPaise: number, reference: string) => ({
   to,
-  subject: 'AVANTRA 2026: registration confirmed',
+  subject: 'AVANTRA 2026: exhibition fee received',
   text:
-    `Payment of ₹${amountPaise / 100} received. You're an AVANTRA 2026 participant.
-` +
-    `Your AVANTRA ID: ${avantraId}
-
-Next: register for events and form your teams.
-Payment reference: ${reference}`,
+    `Payment of ₹${amountPaise / 100} received. You can now register for the Science & Innovation Exhibition.\n` +
+    `Your AVANTRA ID: ${avantraId}\n\nNext: register for the exhibition and form your team.\nPayment reference: ${reference}`,
 });
 
 @Controller()
@@ -50,18 +46,18 @@ export class RegistrationsController {
     private readonly mail: MailService,
   ) {}
 
-  // ---- AVANTRA fee: ₹199 once per student. Unpaid = not a participant. ----
+  // ---- Science Exhibition fee: ₹199 once per student. Only EXHIBITION events need it. ----
 
   @Roles('STUDENT') @Post('payments/fee')
   async payFee(@CurrentUser() user: User) {
     if (!razorpayConfigured()) throw new ServiceUnavailableException('Payments are not set up yet');
     const student = await this.prisma.student.findUnique({ where: { userId: user.id } });
     if (!student) throw new ForbiddenException('Complete your profile first');
-    if (student.feePaidAt) throw new ConflictException('Registration fee already paid');
+    if (student.feePaidAt) throw new ConflictException('Exhibition fee already paid');
     const order = await createOrder(AVANTRA_FEE_PAISE, student.avantraId);
     await this.prisma.payment.create({ data: { studentId: user.id, amountPaise: AVANTRA_FEE_PAISE, razorpayOrderId: order.id } });
     // Everything Razorpay Checkout needs on the web page.
-    return { keyId: process.env.RAZORPAY_KEY_ID, orderId: order.id, amount: AVANTRA_FEE_PAISE, currency: 'INR', description: 'AVANTRA 2026 registration' };
+    return { keyId: process.env.RAZORPAY_KEY_ID, orderId: order.id, amount: AVANTRA_FEE_PAISE, currency: 'INR', description: 'AVANTRA 2026 Science Exhibition' };
   }
 
   // Fast path: the browser reports success. The webhook below confirms it independently.
@@ -106,16 +102,10 @@ export class RegistrationsController {
       this.prisma.student.update({ where: { userId: payment.studentId }, data: { feePaidAt: payment.student.feePaidAt ?? new Date() } }),
     ]);
     if (payment.student.feePaidAt) return;
-    await this.mail.send({
-      to: payment.student.user.email,
-      subject: 'AVANTRA 2026: registration confirmed',
-      text:
-        `Payment of ₹${payment.amountPaise / 100} received. You're an AVANTRA 2026 participant.\n` +
-        `Your AVANTRA ID: ${payment.student.avantraId}\n\nNext: register for events and form your teams.\nPayment ID: ${paymentId}`,
-    });
+    await this.mail.send(feeConfirmedMail(payment.student.user.email, payment.student.avantraId, payment.amountPaise, paymentId));
   }
 
-  // ---- event entries: free, but only for students who paid the fee ----
+  // ---- event entries: free, except EXHIBITION events need the fee ----
 
   @Roles('STUDENT') @Get('registrations/mine')
   mine(@CurrentUser() user: User) {
@@ -132,13 +122,14 @@ export class RegistrationsController {
   @Roles('STUDENT') @Post('registrations')
   async create(@CurrentUser() user: User, @Body(new ZodPipe(CreateRegistrationRequest)) { eventId }: CreateRegistrationRequest) {
     const student = await this.prisma.student.findUnique({ where: { userId: user.id } });
-    if (!student?.feePaidAt) throw new ForbiddenException('Pay the AVANTRA registration fee first');
+    if (!student) throw new ForbiddenException('Complete your profile first');
 
     return this.prisma.$transaction(async (tx) => {
       // Lock the event row so two people can't both take the last spot.
       const [event] = await tx.$queryRaw<Event[]>`SELECT * FROM "Event" WHERE id = ${eventId} FOR UPDATE`;
       if (!event) throw new NotFoundException('Event not found');
       if (!event.registrationOpen) throw new BadRequestException('Registration for this event is closed');
+      if (event.category === 'EXHIBITION' && !student.feePaidAt) throw new ForbiddenException('Pay the ₹199 exhibition fee first');
       if (event.capacity !== null && (await tx.registration.count({ where: { eventId } })) >= event.capacity) {
         throw new ConflictException('This event is full');
       }

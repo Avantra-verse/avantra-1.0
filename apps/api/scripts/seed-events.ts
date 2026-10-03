@@ -1,6 +1,6 @@
 // Usage: pnpm --filter @avantra/api seed-events
 // Creates the brochure's events, or updates them by slug. Safe to re-run.
-// Placeholders to confirm with the team: team sizes and capacities. Events are free; the ₹199 fee is per student for AVANTRA.
+// Placeholders to confirm with the team: team sizes and capacities. Only the exhibition needs the ₹199 fee (once per student); everything else is free.
 import { PrismaClient, type EventCategory } from '@prisma/client';
 
 try {

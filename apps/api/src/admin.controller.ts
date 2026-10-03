@@ -144,7 +144,7 @@ export class AdminController {
       await this.mail.send({
         ...feeConfirmedMail(email, student.avantraId, AVANTRA_FEE_PAISE, note ?? 'cash at desk'),
         text:
-          `${name} is registered for AVANTRA 2026 (paid ₹${AVANTRA_FEE_PAISE / 100} at the desk).
+          `${name} is registered for AVANTRA 2026 and the Science Exhibition (paid ₹${AVANTRA_FEE_PAISE / 100} at the desk).
 AVANTRA ID: ${student.avantraId}
 
 ` +

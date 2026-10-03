@@ -117,15 +117,18 @@ model Student {
   school            School?        @relation(fields: [schoolId], references: [id])
   otherSchoolName   String? // typed when "Others" is picked
   grade             Int
+  section           String?
   guardianEmail     String?
   guardianPhone     String
   guardianConsentAt DateTime // DPDP: verifiable parental consent for minors
   avantraId         String         @unique // human-readable, printed on badge: AV26-00123
   qrToken           String         @unique // random, opaque; what the QR encodes
-  feePaidAt         DateTime? // AVANTRA registration fee (once per student). null = not a participant yet
+  feePaidAt         DateTime? // ₹199 Science Exhibition fee (once per student). Everything else is free
   registrations     Registration[]
   checkIns          CheckIn[]
   payments          Payment[]
+  wallAttempts      WallAttempt[]
+  wallSolves        WallSolve[]
 
   @@index([schoolId]) // coordinator view: students of my school
 }
@@ -237,4 +240,53 @@ model Score {
   createdAt DateTime @default(now())
 
   @@unique([teamId, judgeId, criterion])
+}
+
+// ---- ARITHI Engagement Wall: physical chits with a code; students answer for points ----
+
+model WallChallenge {
+  id         String        @id @default(cuid())
+  code       String        @unique // 6 characters, printed on the chit
+  number     Int           @unique // challenge number, printed on the chit
+  category   String
+  difficulty Int // 1–8
+  points     Int
+  question   String
+  options    String[] // multiple choice; empty = typed answer
+  answers    String[] // accepted answers, never sent to students
+  active     Boolean       @default(true) // false = chit withdrawn
+  createdAt  DateTime      @default(now())
+  attempts   WallAttempt[]
+  solves     WallSolve[]
+}
+
+model WallAttempt {
+  id          String        @id @default(cuid())
+  challengeId String
+  challenge   WallChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student       @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+  answer      String
+  correct     Boolean
+  createdAt   DateTime      @default(now())
+
+  @@index([challengeId, studentId])
+}
+
+// One row per student per solved challenge: points are earned once.
+model WallSolve {
+  studentId   String
+  student     Student       @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+  challengeId String
+  challenge   WallChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  solvedAt    DateTime      @default(now())
+
+  @@id([studentId, challengeId])
+  @@index([challengeId])
+}
+
+// Runtime switches flipped by admins, e.g. "wall.open".
+model Setting {
+  key   String @id
+  value String
 }

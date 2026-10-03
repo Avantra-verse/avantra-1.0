@@ -32,7 +32,6 @@ export class StaffController {
 
     const student = await this.findStudent(body);
     const card = this.card(student);
-    if (!student.feePaidAt) throw new ForbiddenException({ message: 'Registration fee not paid', student: card });
     if (body.eventId) {
       const reg = await this.prisma.registration.findUnique({ where: { eventId_studentId: { eventId: body.eventId, studentId: student.userId } } });
       if (!reg) throw new ForbiddenException({ message: 'Not registered for this event', student: card });

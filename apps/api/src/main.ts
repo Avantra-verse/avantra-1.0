@@ -11,6 +11,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true }); // rawBody: Razorpay webhook signature
   const webOrigin = process.env.WEB_ORIGIN!;
 
+  app.useBodyParser('json', { limit: '3mb' }); // challenge sheets; everything else is tiny
   app.set('trust proxy', 1); // behind Render/Railway's proxy: real client IP for rate limits
   app.enableCors({ origin: webOrigin, credentials: true });
   // CSRF guard: browsers attach our cookie on requests from any *.arithi.in page,

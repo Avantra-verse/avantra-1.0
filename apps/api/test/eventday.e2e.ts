@@ -40,9 +40,9 @@ test('check-in scans: gate, event desk, unpaid, duplicates, offline, manual ID',
   assert.deepEqual([first.json.student.avantraId, first.json.student.feePaid, first.json.alreadyCheckedIn], [a.avantraId, true, false]);
   assert.equal((await call('/staff/checkin', { qrToken: a.qrToken }, vol.cookie)).json.alreadyCheckedIn, true, 'second scan same day');
 
-  // Unpaid: refused, but the volunteer sees who it is. Unknown badge: 404. Damaged QR: type the ID.
-  const refused = await call('/staff/checkin', { qrToken: unpaidQr }, vol.cookie);
-  assert.deepEqual([refused.status, refused.json.student.feePaid], [403, false]);
+  // Entry is free: unpaid students get in too (the card shows it). Unknown badge: 404. Damaged QR: type the ID.
+  const free = await call('/staff/checkin', { qrToken: unpaidQr }, vol.cookie);
+  assert.deepEqual([free.status, free.json.student.feePaid], [200, false]);
   assert.equal((await call('/staff/checkin', { qrToken: 'x'.repeat(22) }, vol.cookie)).status, 404);
   assert.equal((await call('/staff/checkin', { avantraId: b.avantraId.toLowerCase() }, vol.cookie)).json.student.avantraId, b.avantraId);
   assert.equal((await call('/staff/checkin', { qrToken: a.qrToken, avantraId: a.avantraId }, vol.cookie)).status, 400, 'one identifier');
