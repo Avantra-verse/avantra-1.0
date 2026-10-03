@@ -140,15 +140,32 @@ export const AvantraId = z
   .toUpperCase()
   .regex(/^AV26-[2-9A-HJ-NP-Z]{5}$/, 'Invalid AVANTRA ID');
 
-// The logged-in student is the team leader; list only the other members.
-export const CreateRegistrationRequest = z.object({
+// A student registers themself for an event (and pays their own fee if it has one).
+export const CreateRegistrationRequest = z.object({ eventId: z.string().min(1) });
+export type CreateRegistrationRequest = z.infer<typeof CreateRegistrationRequest>;
+
+// Teams: created by a confirmed participant, joined by other participants of the same event via code.
+const teamName = z.string().trim().min(2).max(60);
+const projectTitle = z.string().trim().min(3).max(150);
+
+export const CreateTeamRequest = z.object({
   eventId: z.string().min(1),
-  memberAvantraIds: z.array(AvantraId).max(19).default([]),
-  teamName: z.string().trim().min(2).max(60).optional(),
-  projectTitle: z.string().trim().min(3).max(150).optional(), // exhibition only, required there
+  name: teamName,
+  projectTitle: projectTitle.optional(), // exhibition only, required there
   topic: ExhibitionTopic.optional(), // exhibition only, required there
 });
-export type CreateRegistrationRequest = z.infer<typeof CreateRegistrationRequest>;
+export type CreateTeamRequest = z.infer<typeof CreateTeamRequest>;
+
+export const UpdateTeamRequest = z.object({ name: teamName, projectTitle, topic: ExhibitionTopic }).partial();
+export type UpdateTeamRequest = z.infer<typeof UpdateTeamRequest>;
+
+export const InviteCode = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[2-9A-HJ-NP-Z]{6}$/, 'Invite codes are 6 letters/digits');
+export const JoinTeamRequest = z.object({ inviteCode: InviteCode });
+export type JoinTeamRequest = z.infer<typeof JoinTeamRequest>;
 
 // What Razorpay Checkout's handler receives on success. Field names are Razorpay's.
 export const VerifyPaymentRequest = z.object({

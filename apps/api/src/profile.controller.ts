@@ -1,16 +1,13 @@
 import { Body, ConflictException, Controller, ForbiddenException, Get, Post } from '@nestjs/common';
 import { SchoolProfile, StudentProfile } from '@avantra/shared';
-import { Prisma, type User } from '@prisma/client';
-import { randomBytes, randomInt } from 'node:crypto';
+import type { User } from '@prisma/client';
+import { randomBytes } from 'node:crypto';
 import { CurrentUser, Public, Roles } from './auth/session.guard';
+import { isUniqueViolation, randomCode } from './ids';
 import { PrismaService } from './prisma.service';
 import { ZodPipe } from './zod.pipe';
 
-// No 0/O/1/I so volunteers can read IDs aloud and type them without mistakes.
-const ID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-const newAvantraId = () => 'AV26-' + Array.from({ length: 5 }, () => ID_ALPHABET[randomInt(ID_ALPHABET.length)]).join('');
-
-const isUniqueViolation = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
+const newAvantraId = () => 'AV26-' + randomCode(5);
 
 @Controller()
 export class ProfileController {

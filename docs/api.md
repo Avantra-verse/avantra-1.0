@@ -88,15 +88,33 @@ Dev data: `pnpm --filter @avantra/api seed-events` creates the brochure's 9 even
 
 ## Registration and payment (students)
 
+Each student registers **themself** for an event and pays **their own** fee (the ₹199 is per participant). Teams are formed afterwards, between confirmed participants (see Teams).
+
 | Method + path | Body | Success | Notes |
 |---|---|---|---|
-| `POST /registrations` | `CreateRegistrationRequest` `{ eventId, memberAvantraIds?, teamName?, projectTitle?, topic? }` | 201 registration | Caller = team leader; list only the **other** members' AVANTRA IDs. Exhibition needs `projectTitle` + `topic` (`EXHIBITION_TOPICS`). Free event → `CONFIRMED` now; paid → `PENDING_PAYMENT`. 400 = team size / unknown ID / closed. 409 = full, or someone already registered for this event. |
-| `GET /registrations/mine` | none | 200 list | Every registration I'm in, with event, members, latest payment. |
-| `DELETE /registrations/:id` | none | 204 | Leader only, unpaid only. |
-| `POST /registrations/:id/pay` | none | 201 `{ keyId, orderId, amount, currency, description }` | Leader only. Call again to retry a failed payment. 503 until Razorpay keys are set. |
+| `POST /registrations` | `CreateRegistrationRequest` `{ eventId }` | 201 registration | Free event → `CONFIRMED` now; paid → `PENDING_PAYMENT`. 400 = closed. 409 = full, or already registered. |
+| `GET /registrations/mine` | none | 200 list | My registrations with event, latest payment, and `teamMember.team` (null = no team yet). |
+| `DELETE /registrations/:id` | none | 204 | Own, unpaid only. |
+| `POST /registrations/:id/pay` | none | 201 `{ keyId, orderId, amount, currency, description }` | Own fee. Call again to retry a failed payment. 503 until Razorpay keys are set. |
 | `POST /payments/verify` | `VerifyPaymentRequest` (Razorpay's 3 fields) | 200 | Call from Checkout's success handler. |
 
-An unpaid registration holds its spot for 30 minutes. Capacity counts teams.
+An unpaid registration holds its spot for 30 minutes. `capacity` counts participants.
+
+## Teams (one team per student per event)
+
+Only students with a `CONFIRMED` registration for that event can create or join its team. Solo events (`teamMax` 1) get a team of one automatically — no team UI needed for them.
+
+| Method + path | Who | Body | Notes |
+|---|---|---|---|
+| `POST /teams` | confirmed participant | `CreateTeamRequest` `{ eventId, name, projectTitle?, topic? }` | Caller becomes leader. Exhibition needs `projectTitle` + `topic`. Returns team with `inviteCode`. 409 = already in a team. |
+| `POST /teams/join` | confirmed participant | `JoinTeamRequest` `{ inviteCode }` | Case-insensitive. 403 = not registered/paid for that event, 404 = bad code, 409 = full or already in another team. |
+| `GET /teams/:id` | members | none | 404 for non-members (the invite code is never shown to them). |
+| `PATCH /teams/:id` | leader | `UpdateTeamRequest` | name / projectTitle / topic |
+| `POST /teams/:id/invite-code` | leader | none | New code; old one stops working. |
+| `DELETE /teams/:id/members/:registrationId` | leader | none | Removed member keeps their paid registration, just no team. |
+| `POST /teams/:id/leave` | member | none | If the leader leaves, the earliest-joined member becomes leader. Last member out deletes the team. |
+
+Team view: `{ id, name, inviteCode, projectTitle, topic, event, members: [{ registrationId, name, avantraId, isLeader, joinedAt }], complete, full }`. `complete` = at least `teamMin` members. Members are locked once judging starts (409).
 
 ### Razorpay Checkout on the page
 
@@ -112,4 +130,4 @@ new Razorpay({
 }).open();
 ```
 
-Even if the browser closes before `handler` runs, Razorpay's webhook (`POST /payments/webhook`, server-to-server) confirms the registration. Show status from `GET /registrations/mine`, not from the handler alone.
+Even if the browser closes before `handler` runs, Razorpay's webhook (`POST /payments/webhook`, server-to-server) confirms the registration and emails the student. Show status from `GET /registrations/mine`, not from the handler alone.

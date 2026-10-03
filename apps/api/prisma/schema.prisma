@@ -115,18 +115,18 @@ model School {
 }
 
 model Student {
-  userId            String               @id
-  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String         @id
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   schoolId          String? // null = picked "Others"; admin links later
-  school            School?              @relation(fields: [schoolId], references: [id])
+  school            School?        @relation(fields: [schoolId], references: [id])
   otherSchoolName   String? // typed when "Others" is picked
   grade             Int
   guardianEmail     String?
   guardianPhone     String
   guardianConsentAt DateTime // DPDP: verifiable parental consent for minors
-  avantraId         String               @unique // human-readable, printed on badge: AV26-00123
-  qrToken           String               @unique // random, opaque; what the QR encodes
-  registrations     RegistrationMember[]
+  avantraId         String         @unique // human-readable, printed on badge: AV26-00123
+  qrToken           String         @unique // random, opaque; what the QR encodes
+  registrations     Registration[]
   checkIns          CheckIn[]
 
   @@index([schoolId]) // coordinator view: students of my school
@@ -142,39 +142,56 @@ model Event {
   feePaise         Int            @default(0) // exhibition: 19900 per student
   teamMin          Int            @default(1)
   teamMax          Int            @default(1)
-  capacity         Int? // max teams (registrations); null = unlimited
+  capacity         Int? // max participants; null = unlimited
   registrations    Registration[]
+  teams            Team[]
   checkIns         CheckIn[]
 }
 
-// One row per team (or solo entry) in an event.
+// A student's own entry in an event. The fee (if any) is paid per participant.
 model Registration {
-  id           String               @id @default(cuid())
-  eventId      String
-  event        Event                @relation(fields: [eventId], references: [id])
-  teamName     String?
-  projectTitle String? // exhibition only
-  topic        String? // exhibition topic
-  status       RegistrationStatus   @default(PENDING_PAYMENT)
-  members      RegistrationMember[]
-  payments     Payment[]
-  scores       Score[]
-  createdAt    DateTime             @default(now())
+  id         String             @id @default(cuid())
+  eventId    String
+  event      Event              @relation(fields: [eventId], references: [id])
+  studentId  String
+  student    Student            @relation(fields: [studentId], references: [userId])
+  status     RegistrationStatus @default(PENDING_PAYMENT)
+  payments   Payment[]
+  teamMember TeamMember? // null until they create or join a team
+  createdAt  DateTime           @default(now())
 
+  @@unique([eventId, studentId])
   @@index([eventId, status])
+  @@index([studentId])
 }
 
-model RegistrationMember {
-  registrationId String
-  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
-  studentId      String
-  student        Student      @relation(fields: [studentId], references: [userId])
-  eventId        String // copy of registration.eventId so the DB enforces one entry per student per event
-  isLeader       Boolean      @default(false)
+// Teams form between confirmed participants of one event, via invite code. Judged as a unit.
+model Team {
+  id           String       @id @default(cuid())
+  eventId      String
+  event        Event        @relation(fields: [eventId], references: [id])
+  name         String
+  inviteCode   String       @unique // 6 chars, leader can regenerate
+  projectTitle String? // exhibition
+  topic        String? // exhibition
+  members      TeamMember[]
+  scores       Score[]
+  createdAt    DateTime     @default(now())
 
-  @@id([registrationId, studentId])
-  @@unique([eventId, studentId])
-  @@index([studentId])
+  @@index([eventId])
+}
+
+// registrationId is unique: a participant is in at most one team per event,
+// and only someone registered for the event can be in its team.
+model TeamMember {
+  registrationId String       @id
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  teamId         String
+  team           Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  isLeader       Boolean      @default(false)
+  joinedAt       DateTime     @default(now())
+
+  @@index([teamId])
 }
 
 // Razorpay order per payment attempt. Webhook is the source of truth for PAID.
@@ -209,14 +226,14 @@ model CheckIn {
 }
 
 model Score {
-  id             String       @id @default(cuid())
-  registrationId String
-  registration   Registration @relation(fields: [registrationId], references: [id])
-  judgeId        String
-  judge          User         @relation(fields: [judgeId], references: [id])
-  criterion      String
-  points         Int
-  createdAt      DateTime     @default(now())
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  judgeId   String
+  judge     User     @relation(fields: [judgeId], references: [id])
+  criterion String
+  points    Int
+  createdAt DateTime @default(now())
 
-  @@unique([registrationId, judgeId, criterion])
+  @@unique([teamId, judgeId, criterion])
 }
