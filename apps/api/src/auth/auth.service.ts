@@ -1,14 +1,16 @@
 import { BadRequestException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import type {
+  AdminVerifyRequest,
   ForgotPasswordRequest,
   GoogleLoginRequest,
   LoginRequest,
   Me,
+  PasswordLoginRequest,
   RegisterRequest,
   ResetPasswordRequest,
   VerifyEmailRequest,
 } from '@avantra/shared';
-import { CodePurpose, Prisma, type User } from '@prisma/client';
+import { CodePurpose, Prisma, type Role, type User } from '@prisma/client';
 import { OAuth2Client } from 'google-auth-library';
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { MailService } from '../mail.service';
@@ -19,7 +21,9 @@ import { isActive, sha256 } from './session.guard';
 const CODE_TTL_MS = 10 * 60_000;
 const CODE_RESEND_MS = 60_000;
 const CODE_MAX_ATTEMPTS = 5;
-const SESSION_TTL_MS = 30 * 24 * 60 * 60_000;
+const DAY_MS = 24 * 60 * 60_000;
+// Students/coordinators stay logged in for a month; admin and staff sessions last one working day.
+export const sessionTtlMs = (role: Role) => (role === 'STUDENT' || role === 'SCHOOL_COORDINATOR' ? 30 * DAY_MS : DAY_MS / 2);
 
 const INVALID_LOGIN = 'Invalid email or password';
 const INVALID_CODE = 'Invalid or expired code';
@@ -57,11 +61,34 @@ export class AuthService {
 
   // ---- login ----
 
-  async login({ role, email, password }: LoginRequest): Promise<User> {
+  login({ role, email, password }: LoginRequest): Promise<User> {
+    return this.checkPassword(email, password, [role]);
+  }
+
+  staffLogin({ email, password }: PasswordLoginRequest): Promise<User> {
+    return this.checkPassword(email, password, ['VOLUNTEER', 'JUDGE']);
+  }
+
+  // Admin step 1: right password = email a code. No session yet.
+  async adminLogin({ email, password }: PasswordLoginRequest): Promise<void> {
+    await this.checkPassword(email, password, ['ADMIN']);
+    await this.sendCode(email, CodePurpose.ADMIN_LOGIN, 'Your AVANTRA admin login code');
+  }
+
+  // Admin step 2. The code only exists if step 1's password was right.
+  async adminVerify({ email, code }: AdminVerifyRequest): Promise<User> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!(await this.consumeCode(email, CodePurpose.ADMIN_LOGIN, code)) || user?.role !== 'ADMIN' || !isActive(user)) {
+      throw new UnauthorizedException(INVALID_CODE);
+    }
+    return user;
+  }
+
+  private async checkPassword(email: string, password: string, roles: Role[]): Promise<User> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     const ok = await verifyPassword(password, user?.passwordHash ?? (await this.dummyHash));
     // One message for every failure, including wrong tab (role), so it never reveals the account type.
-    if (!user?.passwordHash || !ok || user.role !== role || !isActive(user)) throw new UnauthorizedException(INVALID_LOGIN);
+    if (!user?.passwordHash || !ok || !roles.includes(user.role) || !isActive(user)) throw new UnauthorizedException(INVALID_LOGIN);
     return user;
   }
 
@@ -109,10 +136,10 @@ export class AuthService {
 
   // ---- sessions ----
 
-  async createSession(userId: string): Promise<{ token: string; expiresAt: Date }> {
+  async createSession(user: User): Promise<{ token: string; expiresAt: Date }> {
     const token = randomBytes(32).toString('base64url');
-    const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
-    await this.prisma.session.create({ data: { userId, tokenHash: sha256(token), expiresAt } });
+    const expiresAt = new Date(Date.now() + sessionTtlMs(user.role));
+    await this.prisma.session.create({ data: { userId: user.id, tokenHash: sha256(token), expiresAt } });
     return { token, expiresAt };
   }
 

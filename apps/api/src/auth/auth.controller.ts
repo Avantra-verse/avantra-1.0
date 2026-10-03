@@ -1,10 +1,12 @@
 import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
+  AdminVerifyRequest,
   ForgotPasswordRequest,
   GoogleLoginRequest,
   LoginRequest,
   type Me,
+  PasswordLoginRequest,
   RegisterRequest,
   ResetPasswordRequest,
   VerifyEmailRequest,
@@ -42,6 +44,22 @@ export class AuthController {
     return this.startSession(res, await this.auth.loginWithGoogle(body));
   }
 
+  @Public() @Post('staff/login') @HttpCode(200) @perMinute(10)
+  async staffLogin(@Body(new ZodPipe(PasswordLoginRequest)) body: PasswordLoginRequest, @Res({ passthrough: true }) res: Response) {
+    return this.startSession(res, await this.auth.staffLogin(body));
+  }
+
+  @Public() @Post('admin/login') @HttpCode(202) @perMinute(5)
+  async adminLogin(@Body(new ZodPipe(PasswordLoginRequest)) body: PasswordLoginRequest) {
+    await this.auth.adminLogin(body);
+    return { message: 'We emailed you a 6-digit code.' };
+  }
+
+  @Public() @Post('admin/login/verify') @HttpCode(200) @perMinute(10)
+  async adminVerify(@Body(new ZodPipe(AdminVerifyRequest)) body: AdminVerifyRequest, @Res({ passthrough: true }) res: Response) {
+    return this.startSession(res, await this.auth.adminVerify(body));
+  }
+
   @Public() @Post('password/forgot') @HttpCode(202) @perMinute(5)
   async forgot(@Body(new ZodPipe(ForgotPasswordRequest)) body: ForgotPasswordRequest) {
     await this.auth.forgotPassword(body);
@@ -67,7 +85,7 @@ export class AuthController {
   }
 
   private async startSession(res: Response, user: User): Promise<Me> {
-    const { token, expiresAt } = await this.auth.createSession(user.id);
+    const { token, expiresAt } = await this.auth.createSession(user);
     res.cookie(SESSION_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

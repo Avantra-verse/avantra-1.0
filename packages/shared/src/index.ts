@@ -67,3 +67,31 @@ export const StudentProfile = z
     path: ['schoolId'],
   });
 export type StudentProfile = z.infer<typeof StudentProfile>;
+
+// ---- staff (/staff) and admin (/admin) ----
+
+export const StaffRole = z.enum(['VOLUNTEER', 'JUDGE']);
+export type StaffRole = z.infer<typeof StaffRole>;
+
+// Used by POST /auth/staff/login and step 1 of POST /auth/admin/login.
+export const PasswordLoginRequest = z.object({ email, password: z.string().min(1).max(128) });
+export type PasswordLoginRequest = z.infer<typeof PasswordLoginRequest>;
+
+// Step 2 of admin login: the code emailed after the password was accepted.
+export const AdminVerifyRequest = z.object({ email, code });
+export type AdminVerifyRequest = z.infer<typeof AdminVerifyRequest>;
+
+export const CreateStaffRequest = z.object({
+  role: StaffRole,
+  name,
+  email,
+  password, // admin sets it and hands it over; staff can change it via forgot-password
+  expiresAt: z.coerce.date().optional(), // default: end of the event
+});
+export type CreateStaffRequest = z.infer<typeof CreateStaffRequest>;
+
+export const LinkStudentRequest = z.object({ schoolId: z.string().min(1) });
+export type LinkStudentRequest = z.infer<typeof LinkStudentRequest>;
+
+export const SchoolStatus = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
+export type SchoolStatus = z.infer<typeof SchoolStatus>;
