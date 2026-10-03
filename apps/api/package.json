@@ -8,22 +8,31 @@
     "start:prod": "node dist/main",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test": "node --test --no-warnings \"src/**/*.test.ts\"",
+    "test:e2e": "node --test --no-warnings test/*.e2e.ts"
   },
   "dependencies": {
     "@avantra/shared": "workspace:*",
+    "@nestjs/bullmq": "^12.0.0",
     "@nestjs/common": "^12.1.2",
-    "@nestjs/config": "^12.0.1",
     "@nestjs/core": "^12.1.2",
     "@nestjs/platform-express": "^12.1.2",
+    "@nestjs/throttler": "^6.7.1",
     "@prisma/client": "^6.6.0",
+    "bullmq": "^6.3.11",
+    "google-auth-library": "^11.1.0",
+    "ioredis": "^6.0.0",
+    "nodemailer": "^10.0.13",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^12.0.8",
     "@types/express": "^5.0.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.6.3",
+    "@types/nodemailer": "^8.0.2",
     "prisma": "^6.6.0",
     "typescript": "^5.9.0"
   },

@@ -8,3 +8,4 @@ allowBuilds:
   "@prisma/engines": true
   prisma: true
   "@nestjs/core": true
+  msgpackr-extract: false

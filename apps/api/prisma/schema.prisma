@@ -5,8 +5,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Supabase: pooler for the app, direct for migrations
 }
 
 enum Role {
@@ -15,6 +16,12 @@ enum Role {
   JUDGE
   VOLUNTEER
   ADMIN
+}
+
+enum CodePurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+  ADMIN_LOGIN
 }
 
 enum SchoolStatus {
@@ -44,31 +51,47 @@ enum PaymentStatus {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  phone        String
-  name         String
-  passwordHash String
-  role         Role
-  createdAt    DateTime  @default(now())
-  student      Student?
-  school       School? // set when role = SCHOOL_COORDINATOR
-  sessions     Session[]
-  scans        CheckIn[]
-  scores       Score[]
+  id              String    @id @default(cuid())
+  email           String    @unique // stored lowercased
+  name            String
+  phone           String? // collected on the profile step
+  passwordHash    String? // null for Google-only accounts
+  googleId        String?   @unique
+  role            Role
+  emailVerifiedAt DateTime? // every row is verified; kept for audit
+  disabledAt      DateTime? // admin switch-off
+  expiresAt       DateTime? // staff accounts stop working after this
+  createdAt       DateTime  @default(now())
+  student         Student?
+  school          School? // set when role = SCHOOL_COORDINATOR
+  sessions        Session[]
+  scans           CheckIn[]
+  scores          Score[]
 }
 
-// Refresh-token sessions; access tokens are short-lived JWTs.
+// Opaque token in an httpOnly cookie; only its SHA-256 is stored. Logout = delete row.
 model Session {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String    @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
   expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// One live 6-digit code per email + purpose. Only an HMAC of the code is stored.
+model EmailCode {
+  id        String      @id @default(cuid())
+  email     String
+  purpose   CodePurpose
+  codeHash  String
+  attempts  Int         @default(0)
+  expiresAt DateTime
+  sentAt    DateTime    @default(now())
+
+  @@unique([email, purpose])
 }
 
 model School {
@@ -87,17 +110,19 @@ model School {
 }
 
 model Student {
-  userId        String               @id
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  schoolId      String
-  school        School               @relation(fields: [schoolId], references: [id])
+  userId            String               @id
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId          String? // null = picked "Others"; admin links later
+  school            School?              @relation(fields: [schoolId], references: [id])
+  otherSchoolName   String? // typed when "Others" is picked
   grade             Int
+  guardianEmail     String?
   guardianPhone     String
   guardianConsentAt DateTime // DPDP: verifiable parental consent for minors
-  avantraId     String               @unique // human-readable, printed on badge: AV26-00123
-  qrToken       String               @unique // random, opaque; what the QR encodes
-  registrations RegistrationMember[]
-  checkIns      CheckIn[]
+  avantraId         String               @unique // human-readable, printed on badge: AV26-00123
+  qrToken           String               @unique // random, opaque; what the QR encodes
+  registrations     RegistrationMember[]
+  checkIns          CheckIn[]
 
   @@index([schoolId]) // coordinator view: students of my school
 }
