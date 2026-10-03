@@ -48,7 +48,7 @@ export async function renderCertificate(c: CertificateData): Promise<Uint8Array>
   center('held on 19-20 December 2026 at SSRVM IEMS Sec-20', 246, 13);
 
   // Signature lines; signed copies can be printed, or a signature image drawn here later.
-  for (const [x, label] of [[200, 'Principal, SSRVM IEMS Sec-20'], [642, 'ARITHI Innovation and Technologies']] as const) {
+  for (const [x, label] of [[200, 'Director, SSRVM IEMS Sec-20'], [642, 'Event Manager, AVANTRA 2026']] as const) {
     page.drawLine({ start: { x: x - 110, y: 175 }, end: { x: x + 110, y: 175 }, thickness: 0.75, color: INK });
     page.drawText(label, { x: x - regular.widthOfTextAtSize(label, 10) / 2, y: 160, size: 10, font: regular, color: INK });
   }
