@@ -68,7 +68,7 @@ Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Au
 4. **Event registration** (free, paid students only) → **teams** form per event via 6-char invite codes; solo events get a team of one.
 5. **Check-in** → QR encodes only the opaque `qrToken` (no personal data) → volunteer scans in `/staff` → API records CheckIn.
 6. **Scoring** → judge scans student QR in `/staff` → opens that student's registration in the judge's event → scores per criterion → leaderboard computed by query.
-7. **Certificates** → after event, BullMQ job renders PDFs for CONFIRMED + checked-in students, each with a public verify URL.
+7. **Certificates** → after event, BullMQ job renders PDFs for fee-paid, checked-in students, each with a public verify URL.
 
 ## Non-negotiables (real users, real money, minors)
 
