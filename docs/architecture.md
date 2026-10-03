@@ -64,8 +64,8 @@ Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Au
 
 1. **School sign-up** → School `PENDING` → ARITHI admin approves → appears in student dropdown.
 2. **Student sign-up** → email OTP → picks school → gets `avantraId` (AV26-00123) + random `qrToken`.
-3. **Event registration** → Registration `PENDING_PAYMENT` (or `CONFIRMED` if free).
-4. **Payment** → API creates Razorpay order → Checkout → client callback (signature verified, optimistic) → **webhook `payment.captured` is source of truth** → Payment `PAID`, Registration `CONFIRMED`. Unique `razorpayPaymentId` makes webhook retries harmless.
+3. **AVANTRA fee (₹199, once per student)** → API creates Razorpay order → Checkout → client callback (signature verified, optimistic) → **webhook `payment.captured` is source of truth** → Payment `PAID`, `Student.feePaidAt` set. Unique `razorpayPaymentId` makes webhook retries harmless. Unpaid = not a participant.
+4. **Event registration** (free, paid students only) → **teams** form per event via 6-char invite codes; solo events get a team of one.
 5. **Check-in** → QR encodes only the opaque `qrToken` (no personal data) → volunteer scans in `/staff` → API records CheckIn.
 6. **Scoring** → judge scans student QR in `/staff` → opens that student's registration in the judge's event → scores per criterion → leaderboard computed by query.
 7. **Certificates** → after event, BullMQ job renders PDFs for CONFIRMED + checked-in students, each with a public verify URL.
@@ -74,7 +74,7 @@ Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Au
 
 - **Minors' data (DPDP Act 2023):** students are under 18 → parent/guardian consent checkbox + parent phone at sign-up; collect only what we need.
 - Passwords hashed with argon2id (`node:crypto`). Sessions: random token in an httpOnly cookie (30 days), only its SHA-256 stored in `Session`; logout or password reset deletes it instantly (no JWTs). Unsafe requests from any origin other than the web app are rejected (CSRF).
-- Razorpay webhook signature verified; amounts computed server-side from `Event.feePaise`, never from the client.
+- Razorpay webhook signature verified; the fee amount is a server constant (`AVANTRA_FEE_PAISE`), never taken from the client.
 - Rate-limit auth + OTP endpoints (Redis).
 - Nightly `pg_dump` to R2 via GitHub Action (Supabase free has no backups). Test a restore once before 1 Nov.
 - **School Wi-Fi is a risk:** scanner must work on mobile data; queue scans offline (IndexedDB) and sync. Printed CSV fallback list per desk.

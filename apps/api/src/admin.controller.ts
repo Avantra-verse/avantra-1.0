@@ -66,7 +66,7 @@ export class AdminController {
   unlinked() {
     return this.prisma.student.findMany({
       where: { schoolId: null },
-      select: { userId: true, avantraId: true, otherSchoolName: true, grade: true, user: { select: { name: true, email: true } } },
+      select: { userId: true, avantraId: true, otherSchoolName: true, grade: true, feePaidAt: true, user: { select: { name: true, email: true } } },
       orderBy: { otherSchoolName: 'asc' },
     });
   }

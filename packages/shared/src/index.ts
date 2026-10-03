@@ -98,6 +98,9 @@ export type SchoolStatus = z.infer<typeof SchoolStatus>;
 
 // ---- events, registrations, payments ----
 
+// AVANTRA registration fee, paid once per student. Without it a student can't enter any event.
+export const AVANTRA_FEE_PAISE = 19900; // ₹199
+
 export const EventCategory = z.enum(['EXHIBITION', 'TECHNOLOGY', 'EXPERIENCE', 'WORKSHOP']);
 export type EventCategory = z.infer<typeof EventCategory>;
 
@@ -120,7 +123,6 @@ const eventFields = z.object({
   name,
   category: EventCategory,
   description: z.string().trim().max(2000).optional(),
-  feePaise: z.number().int().min(0).max(1_000_000), // per student; 19900 = ₹199
   teamMin: z.number().int().min(1).max(20),
   teamMax: z.number().int().min(1).max(20),
   capacity: z.number().int().positive().nullable().optional(), // max teams; null = unlimited
@@ -140,7 +142,7 @@ export const AvantraId = z
   .toUpperCase()
   .regex(/^AV26-[2-9A-HJ-NP-Z]{5}$/, 'Invalid AVANTRA ID');
 
-// A student registers themself for an event (and pays their own fee if it has one).
+// A student who paid the AVANTRA fee registers for an event. Free.
 export const CreateRegistrationRequest = z.object({ eventId: z.string().min(1) });
 export type CreateRegistrationRequest = z.infer<typeof CreateRegistrationRequest>;
 

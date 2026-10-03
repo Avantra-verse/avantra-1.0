@@ -17,8 +17,8 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { CreateRegistrationRequest, VerifyPaymentRequest } from '@avantra/shared';
-import type { Event, Prisma, User } from '@prisma/client';
+import { AVANTRA_FEE_PAISE, CreateRegistrationRequest, VerifyPaymentRequest } from '@avantra/shared';
+import type { Event, User } from '@prisma/client';
 import type { Request } from 'express';
 import { CurrentUser, Public, Roles } from './auth/session.guard';
 import { isUniqueViolation } from './ids';
@@ -27,14 +27,6 @@ import { PrismaService } from './prisma.service';
 import { createOrder, hmacMatches, razorpayConfigured } from './razorpay';
 import { createSoloTeamIfNeeded, teamInclude } from './teams.controller';
 import { ZodPipe } from './zod.pipe';
-
-// An unpaid registration holds its spot this long, then stops counting toward capacity.
-const UNPAID_HOLD_MS = 30 * 60_000;
-
-// Registrations that use up a spot: paid/free ones, plus unpaid ones still inside the hold.
-export const activeRegistrations = (): Prisma.RegistrationWhereInput => ({
-  OR: [{ status: 'CONFIRMED' }, { status: 'PENDING_PAYMENT', createdAt: { gt: new Date(Date.now() - UNPAID_HOLD_MS) } }],
-});
 
 @Controller()
 export class RegistrationsController {
@@ -45,62 +37,18 @@ export class RegistrationsController {
     private readonly mail: MailService,
   ) {}
 
-  @Roles('STUDENT') @Get('registrations/mine')
-  mine(@CurrentUser() user: User) {
-    return this.prisma.registration.findMany({
-      where: { studentId: user.id },
-      include: {
-        event: { select: { id: true, slug: true, name: true, category: true, feePaise: true, teamMin: true, teamMax: true } },
-        payments: { select: { status: true, amountPaise: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 1 },
-        teamMember: { select: { isLeader: true, team: { include: teamInclude } } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
+  // ---- AVANTRA fee: ₹199 once per student. Unpaid = not a participant. ----
 
-  @Roles('STUDENT') @Post('registrations')
-  async create(@CurrentUser() user: User, @Body(new ZodPipe(CreateRegistrationRequest)) { eventId }: CreateRegistrationRequest) {
-    if (!(await this.prisma.student.findUnique({ where: { userId: user.id } }))) throw new ForbiddenException('Complete your profile first');
-
-    return this.prisma.$transaction(async (tx) => {
-      // Lock the event row so two people can't both take the last spot.
-      const [event] = await tx.$queryRaw<Event[]>`SELECT * FROM "Event" WHERE id = ${eventId} FOR UPDATE`;
-      if (!event) throw new NotFoundException('Event not found');
-      if (!event.registrationOpen) throw new BadRequestException('Registration for this event is closed');
-      if (event.capacity !== null && (await tx.registration.count({ where: { eventId, ...activeRegistrations() } })) >= event.capacity) {
-        throw new ConflictException('This event is full');
-      }
-      try {
-        const reg = await tx.registration.create({
-          data: { eventId, studentId: user.id, status: event.feePaise === 0 ? 'CONFIRMED' : 'PENDING_PAYMENT' },
-        });
-        if (reg.status === 'CONFIRMED') await createSoloTeamIfNeeded(tx, event, reg.id, user.name);
-        return reg;
-      } catch (e) {
-        if (isUniqueViolation(e)) throw new ConflictException('You are already registered for this event');
-        throw e;
-      }
-    });
-  }
-
-  @Roles('STUDENT') @Delete('registrations/:id') @HttpCode(204)
-  async cancel(@CurrentUser() user: User, @Param('id') id: string) {
-    const reg = await this.myRegistration(user.id, id);
-    if (reg.status !== 'PENDING_PAYMENT') throw new ConflictException('Paid registrations can only be cancelled by the organisers');
-    await this.prisma.registration.delete({ where: { id } });
-  }
-
-  // Start (or retry) payment of the participant's own fee.
-  @Roles('STUDENT') @Post('registrations/:id/pay')
-  async pay(@CurrentUser() user: User, @Param('id') id: string) {
+  @Roles('STUDENT') @Post('payments/fee')
+  async payFee(@CurrentUser() user: User) {
     if (!razorpayConfigured()) throw new ServiceUnavailableException('Payments are not set up yet');
-    const reg = await this.myRegistration(user.id, id);
-    if (reg.status !== 'PENDING_PAYMENT') throw new ConflictException('Nothing to pay');
-    const amountPaise = reg.event.feePaise; // from the DB, never from the client
-    const order = await createOrder(amountPaise, reg.id);
-    await this.prisma.payment.create({ data: { registrationId: reg.id, amountPaise, razorpayOrderId: order.id } });
+    const student = await this.prisma.student.findUnique({ where: { userId: user.id } });
+    if (!student) throw new ForbiddenException('Complete your profile first');
+    if (student.feePaidAt) throw new ConflictException('Registration fee already paid');
+    const order = await createOrder(AVANTRA_FEE_PAISE, student.avantraId);
+    await this.prisma.payment.create({ data: { studentId: user.id, amountPaise: AVANTRA_FEE_PAISE, razorpayOrderId: order.id } });
     // Everything Razorpay Checkout needs on the web page.
-    return { keyId: process.env.RAZORPAY_KEY_ID, orderId: order.id, amount: amountPaise, currency: 'INR', description: reg.event.name };
+    return { keyId: process.env.RAZORPAY_KEY_ID, orderId: order.id, amount: AVANTRA_FEE_PAISE, currency: 'INR', description: 'AVANTRA 2026 registration' };
   }
 
   // Fast path: the browser reports success. The webhook below confirms it independently.
@@ -131,34 +79,80 @@ export class RegistrationsController {
   }
 
   private async markPaid(orderId: string, paymentId: string, amountPaise?: number) {
-    const payment = await this.prisma.payment.findUnique({
-      where: { razorpayOrderId: orderId },
-      include: { registration: { include: { event: true, student: { include: { user: true } } } } },
-    });
-    // ponytail: money arrived for a cancelled/unknown order — logged for a manual refund rather than auto-refunded.
-    if (!payment) return this.logger.error(`Paid order ${orderId} (payment ${paymentId}) has no registration: refund manually`);
+    const payment = await this.prisma.payment.findUnique({ where: { razorpayOrderId: orderId }, include: { student: { include: { user: true } } } });
+    if (!payment) return this.logger.error(`Paid order ${orderId} (payment ${paymentId}) is unknown: check in Razorpay and refund if needed`);
     if (amountPaise !== undefined && amountPaise !== payment.amountPaise) {
       return this.logger.error(`Order ${orderId}: paid ${amountPaise}, expected ${payment.amountPaise}: check manually`);
     }
     if (payment.status === 'PAID') return; // webhook and browser both report the same payment
 
-    const { registration: reg } = payment;
-    await this.prisma.$transaction(async (tx) => {
-      await tx.payment.update({ where: { id: payment.id }, data: { status: 'PAID', razorpayPaymentId: paymentId } });
-      await tx.registration.update({ where: { id: reg.id }, data: { status: 'CONFIRMED' } });
-      await createSoloTeamIfNeeded(tx, reg.event, reg.id, reg.student.user.name);
-    });
-    const teamHint = reg.event.teamMax > 1 ? '\nNext: create a team or join one with an invite code.' : '';
+    // ponytail: two separate orders both paid (two tabs) = double charge; logged for a manual refund.
+    if (payment.student.feePaidAt) this.logger.error(`Student ${payment.student.avantraId} paid twice (order ${orderId}): refund one`);
+    await this.prisma.$transaction([
+      this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'PAID', razorpayPaymentId: paymentId } }),
+      this.prisma.student.update({ where: { userId: payment.studentId }, data: { feePaidAt: payment.student.feePaidAt ?? new Date() } }),
+    ]);
+    if (payment.student.feePaidAt) return;
     await this.mail.send({
-      to: reg.student.user.email,
-      subject: `AVANTRA: ${reg.event.name} registration confirmed`,
-      text: `Payment of ₹${payment.amountPaise / 100} received. You're registered for ${reg.event.name}.${teamHint}\nPayment ID: ${paymentId}`,
+      to: payment.student.user.email,
+      subject: 'AVANTRA 2026: registration confirmed',
+      text:
+        `Payment of ₹${payment.amountPaise / 100} received. You're an AVANTRA 2026 participant.\n` +
+        `Your AVANTRA ID: ${payment.student.avantraId}\n\nNext: register for events and form your teams.\nPayment ID: ${paymentId}`,
     });
   }
 
-  private async myRegistration(userId: string, id: string) {
-    const reg = await this.prisma.registration.findUnique({ where: { id }, include: { event: true } });
-    if (!reg || reg.studentId !== userId) throw new NotFoundException();
-    return reg;
+  // ---- event entries: free, but only for students who paid the fee ----
+
+  @Roles('STUDENT') @Get('registrations/mine')
+  mine(@CurrentUser() user: User) {
+    return this.prisma.registration.findMany({
+      where: { studentId: user.id },
+      include: {
+        event: { select: { id: true, slug: true, name: true, category: true, teamMin: true, teamMax: true } },
+        teamMember: { select: { isLeader: true, team: { include: teamInclude } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  @Roles('STUDENT') @Post('registrations')
+  async create(@CurrentUser() user: User, @Body(new ZodPipe(CreateRegistrationRequest)) { eventId }: CreateRegistrationRequest) {
+    const student = await this.prisma.student.findUnique({ where: { userId: user.id } });
+    if (!student?.feePaidAt) throw new ForbiddenException('Pay the AVANTRA registration fee first');
+
+    return this.prisma.$transaction(async (tx) => {
+      // Lock the event row so two people can't both take the last spot.
+      const [event] = await tx.$queryRaw<Event[]>`SELECT * FROM "Event" WHERE id = ${eventId} FOR UPDATE`;
+      if (!event) throw new NotFoundException('Event not found');
+      if (!event.registrationOpen) throw new BadRequestException('Registration for this event is closed');
+      if (event.capacity !== null && (await tx.registration.count({ where: { eventId } })) >= event.capacity) {
+        throw new ConflictException('This event is full');
+      }
+      try {
+        const reg = await tx.registration.create({ data: { eventId, studentId: user.id } });
+        await createSoloTeamIfNeeded(tx, event, reg.id, user.name);
+        return reg;
+      } catch (e) {
+        if (isUniqueViolation(e)) throw new ConflictException('You are already registered for this event');
+        throw e;
+      }
+    });
+  }
+
+  // Withdraw from an event (the AVANTRA fee is not refunded here). Team events: leave the team first.
+  @Roles('STUDENT') @Delete('registrations/:id') @HttpCode(204)
+  async withdraw(@CurrentUser() user: User, @Param('id') id: string) {
+    const reg = await this.prisma.registration.findUnique({ where: { id }, include: { event: true, teamMember: true } });
+    if (!reg || reg.studentId !== user.id) throw new NotFoundException();
+    const teamId = reg.teamMember?.teamId;
+    if (teamId && reg.event.teamMax > 1) throw new ConflictException('Leave your team first');
+    await this.prisma.$transaction(async (tx) => {
+      if (teamId) {
+        if (await tx.score.count({ where: { teamId } })) throw new ConflictException('Already judged');
+        await tx.team.delete({ where: { id: teamId } }); // solo team of one
+      }
+      await tx.registration.delete({ where: { id } });
+    });
   }
 }

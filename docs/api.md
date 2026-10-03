@@ -52,7 +52,7 @@ fetch(`${API}/auth/login`, {
 | `POST /profile/student` | STUDENT | `StudentProfile` | 201 student | Send `schoolId` **or** `otherSchoolName`, not both. `guardianConsent` must be `true`. Returns `avantraId` (e.g. `AV26-7K3QX`) and `qrToken`. 403 = school not approved. 409 = already done. |
 | `POST /profile/school` | SCHOOL_COORDINATOR | `SchoolProfile` | 201 school | Starts `PENDING` until an admin approves. 409 = school name+city taken, or coordinator already has one. |
 | `GET /profile` | any logged-in | none | 200 `{ student, school }` | Student: avantraId, qrToken (for the QR badge), school. Coordinator: school with `status`. |
-| `GET /coordinator/students` | SCHOOL_COORDINATOR | none | 200 `[{ avantraId, grade, user: { name, createdAt } }]` | Only their own school. Empty until the school is approved. |
+| `GET /coordinator/students` | SCHOOL_COORDINATOR | none | 200 `[{ avantraId, grade, feePaidAt, user: { name, createdAt } }]` | Only their own school. Empty until the school is approved. |
 
 ## Staff and admin login
 
@@ -80,38 +80,38 @@ Admin accounts are created only with `pnpm --filter @avantra/api create-admin <e
 
 | Method + path | Who | Body | Notes |
 |---|---|---|---|
-| `GET /events` | anyone | none | All events + `spotsLeft` (null = unlimited). `feePaise` is **per student** (19900 = ₹199). |
+| `GET /events` | anyone | none | All events + `spotsLeft` (null = unlimited). |
 | `POST /admin/events` | ADMIN | `CreateEventRequest` | 409 = slug taken. |
 | `PATCH /admin/events/:id` | ADMIN | `UpdateEventRequest` (any fields) | e.g. `{ registrationOpen: false }` to close. |
 
-Dev data: `pnpm --filter @avantra/api seed-events` creates the brochure's 9 events (team sizes and ARITHI-event fees are placeholders).
+Dev data: `pnpm --filter @avantra/api seed-events` creates the brochure's 9 events (team sizes are placeholders).
 
-## Registration and payment (students)
+## AVANTRA fee and event registration (students)
 
-Each student registers **themself** for an event and pays **their own** fee (the ₹199 is per participant). Teams are formed afterwards, between confirmed participants (see Teams).
+The ₹199 fee (`AVANTRA_FEE_PAISE` in shared) is paid **once per student** and makes them an AVANTRA participant. Without it they can't register for any event or join a team. Event registrations are then free. Show fee status from `GET /profile` → `student.feePaidAt` (null = unpaid).
 
 | Method + path | Body | Success | Notes |
 |---|---|---|---|
-| `POST /registrations` | `CreateRegistrationRequest` `{ eventId }` | 201 registration | Free event → `CONFIRMED` now; paid → `PENDING_PAYMENT`. 400 = closed. 409 = full, or already registered. |
-| `GET /registrations/mine` | none | 200 list | My registrations with event, latest payment, and `teamMember.team` (null = no team yet). |
-| `DELETE /registrations/:id` | none | 204 | Own, unpaid only. |
-| `POST /registrations/:id/pay` | none | 201 `{ keyId, orderId, amount, currency, description }` | Own fee. Call again to retry a failed payment. 503 until Razorpay keys are set. |
-| `POST /payments/verify` | `VerifyPaymentRequest` (Razorpay's 3 fields) | 200 | Call from Checkout's success handler. |
+| `POST /payments/fee` | none | 201 `{ keyId, orderId, amount, currency, description }` | Opens Razorpay Checkout (below). Call again to retry a failed payment. 403 = no profile yet, 409 = already paid, 503 until Razorpay keys are set. |
+| `POST /payments/verify` | `VerifyPaymentRequest` (Razorpay's 3 fields) | 200 | Call from Checkout's success handler, then re-fetch `/profile`. |
+| `POST /registrations` | `CreateRegistrationRequest` `{ eventId }` | 201 | 403 = fee not paid, 400 = closed, 409 = full or already registered. |
+| `GET /registrations/mine` | none | 200 list | With event and `teamMember.team` (null = no team yet). |
+| `DELETE /registrations/:id` | none | 204 | Withdraw from an event. 409 = leave your team first. The fee is not refunded. |
 
-An unpaid registration holds its spot for 30 minutes. `capacity` counts participants.
+`capacity` counts participants.
 
 ## Teams (one team per student per event)
 
-Only students with a `CONFIRMED` registration for that event can create or join its team. Solo events (`teamMax` 1) get a team of one automatically — no team UI needed for them.
+Only students registered for that event can create or join its team. Solo events (`teamMax` 1) get a team of one automatically — no team UI needed for them.
 
 | Method + path | Who | Body | Notes |
 |---|---|---|---|
-| `POST /teams` | confirmed participant | `CreateTeamRequest` `{ eventId, name, projectTitle?, topic? }` | Caller becomes leader. Exhibition needs `projectTitle` + `topic`. Returns team with `inviteCode`. 409 = already in a team. |
-| `POST /teams/join` | confirmed participant | `JoinTeamRequest` `{ inviteCode }` | Case-insensitive. 403 = not registered/paid for that event, 404 = bad code, 409 = full or already in another team. |
+| `POST /teams` | registered for the event | `CreateTeamRequest` `{ eventId, name, projectTitle?, topic? }` | Caller becomes leader. Exhibition needs `projectTitle` + `topic`. Returns team with `inviteCode`. 409 = already in a team. |
+| `POST /teams/join` | registered for the event | `JoinTeamRequest` `{ inviteCode }` | Case-insensitive. 403 = not registered for that event, 404 = bad code, 409 = full or already in another team. |
 | `GET /teams/:id` | members | none | 404 for non-members (the invite code is never shown to them). |
 | `PATCH /teams/:id` | leader | `UpdateTeamRequest` | name / projectTitle / topic |
 | `POST /teams/:id/invite-code` | leader | none | New code; old one stops working. |
-| `DELETE /teams/:id/members/:registrationId` | leader | none | Removed member keeps their paid registration, just no team. |
+| `DELETE /teams/:id/members/:registrationId` | leader | none | Removed member stays registered for the event, just no team. |
 | `POST /teams/:id/leave` | member | none | If the leader leaves, the earliest-joined member becomes leader. Last member out deletes the team. |
 
 Team view: `{ id, name, inviteCode, projectTitle, topic, event, members: [{ registrationId, name, avantraId, isLeader, joinedAt }], complete, full }`. `complete` = at least `teamMin` members. Members are locked once judging starts (409).
@@ -122,12 +122,12 @@ Team view: `{ id, name, inviteCode, projectTitle, topic, event, members: [{ regi
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 ```
 ```ts
-const o = await api.post(`/registrations/${id}/pay`);
+const o = await api.post('/payments/fee');
 new Razorpay({
   key: o.keyId, order_id: o.orderId, amount: o.amount, currency: o.currency,
   name: 'AVANTRA 2026', description: o.description,
-  handler: (r) => api.post('/payments/verify', r).then(refreshRegistrations),
+  handler: (r) => api.post('/payments/verify', r).then(refreshProfile),
 }).open();
 ```
 
-Even if the browser closes before `handler` runs, Razorpay's webhook (`POST /payments/webhook`, server-to-server) confirms the registration and emails the student. Show status from `GET /registrations/mine`, not from the handler alone.
+Even if the browser closes before `handler` runs, Razorpay's webhook (`POST /payments/webhook`, server-to-server) marks the student paid and emails them. Show status from `GET /profile`, not from the handler alone.

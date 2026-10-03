@@ -167,7 +167,7 @@ export class TeamsController {
       where: { eventId_studentId: { eventId, studentId: userId } },
       include: { event: true, teamMember: true },
     });
-    if (reg?.status !== 'CONFIRMED') throw new ForbiddenException('Register (and pay, if the event has a fee) before joining a team');
+    if (!reg) throw new ForbiddenException('Register for this event before creating or joining a team');
     return reg;
   }
 

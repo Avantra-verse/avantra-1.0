@@ -3,7 +3,6 @@ import { CreateEventRequest, UpdateEventRequest } from '@avantra/shared';
 import { Prisma } from '@prisma/client';
 import { Public, Roles } from './auth/session.guard';
 import { PrismaService } from './prisma.service';
-import { activeRegistrations } from './registrations.controller';
 import { ZodPipe } from './zod.pipe';
 
 @Controller()
@@ -13,7 +12,7 @@ export class EventsController {
   @Public() @Get('events')
   async list() {
     const events = await this.prisma.event.findMany({ orderBy: [{ category: 'asc' }, { name: 'asc' }] });
-    const taken = await this.prisma.registration.groupBy({ by: ['eventId'], where: activeRegistrations(), _count: true });
+    const taken = await this.prisma.registration.groupBy({ by: ['eventId'], _count: true });
     const count = new Map(taken.map((t) => [t.eventId, t._count]));
     return events.map((e) => ({ ...e, spotsLeft: e.capacity === null ? null : Math.max(0, e.capacity - (count.get(e.id) ?? 0)) }));
   }

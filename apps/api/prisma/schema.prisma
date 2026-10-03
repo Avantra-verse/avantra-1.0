@@ -37,12 +37,6 @@ enum EventCategory {
   WORKSHOP
 }
 
-enum RegistrationStatus {
-  PENDING_PAYMENT
-  CONFIRMED
-  CANCELLED
-}
-
 enum PaymentMethod {
   ONLINE // Razorpay
   OFFLINE // cash, recorded by an admin
@@ -126,8 +120,10 @@ model Student {
   guardianConsentAt DateTime // DPDP: verifiable parental consent for minors
   avantraId         String         @unique // human-readable, printed on badge: AV26-00123
   qrToken           String         @unique // random, opaque; what the QR encodes
+  feePaidAt         DateTime? // AVANTRA registration fee (once per student). null = not a participant yet
   registrations     Registration[]
   checkIns          CheckIn[]
+  payments          Payment[]
 
   @@index([schoolId]) // coordinator view: students of my school
 }
@@ -139,7 +135,6 @@ model Event {
   description      String?
   registrationOpen Boolean        @default(true)
   category         EventCategory
-  feePaise         Int            @default(0) // exhibition: 19900 per student
   teamMin          Int            @default(1)
   teamMax          Int            @default(1)
   capacity         Int? // max participants; null = unlimited
@@ -148,20 +143,17 @@ model Event {
   checkIns         CheckIn[]
 }
 
-// A student's own entry in an event. The fee (if any) is paid per participant.
+// A student's entry in an event. Free, but only students who paid the AVANTRA fee can register.
 model Registration {
-  id         String             @id @default(cuid())
+  id         String      @id @default(cuid())
   eventId    String
-  event      Event              @relation(fields: [eventId], references: [id])
+  event      Event       @relation(fields: [eventId], references: [id])
   studentId  String
-  student    Student            @relation(fields: [studentId], references: [userId])
-  status     RegistrationStatus @default(PENDING_PAYMENT)
-  payments   Payment[]
+  student    Student     @relation(fields: [studentId], references: [userId])
   teamMember TeamMember? // null until they create or join a team
-  createdAt  DateTime           @default(now())
+  createdAt  DateTime    @default(now())
 
   @@unique([eventId, studentId])
-  @@index([eventId, status])
   @@index([studentId])
 }
 
@@ -194,11 +186,11 @@ model TeamMember {
   @@index([teamId])
 }
 
-// Razorpay order per payment attempt. Webhook is the source of truth for PAID.
+// One row per payment attempt of the AVANTRA fee. Webhook is the source of truth for PAID.
 model Payment {
   id                String        @id @default(cuid())
-  registrationId    String
-  registration      Registration  @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  studentId         String
+  student           Student       @relation(fields: [studentId], references: [userId], onDelete: Cascade)
   amountPaise       Int
   method            PaymentMethod @default(ONLINE)
   status            PaymentStatus @default(CREATED)
@@ -207,7 +199,7 @@ model Payment {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
-  @@index([registrationId])
+  @@index([studentId])
 }
 
 // eventId null = main gate entry.

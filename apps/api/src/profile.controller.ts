@@ -92,7 +92,7 @@ export class ProfileController {
     if (school?.status !== 'APPROVED') return [];
     return this.prisma.student.findMany({
       where: { schoolId: school.id },
-      select: { avantraId: true, grade: true, user: { select: { name: true, createdAt: true } } },
+      select: { avantraId: true, grade: true, feePaidAt: true, user: { select: { name: true, createdAt: true } } },
       orderBy: { user: { name: 'asc' } },
     });
   }
