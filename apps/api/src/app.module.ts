@@ -12,6 +12,7 @@ import { MailProcessor, MailService } from './mail.service';
 import { PrismaService } from './prisma.service';
 import { ProfileController } from './profile.controller';
 import { RegistrationsController } from './registrations.controller';
+import { StaffController } from './staff.controller';
 import { TeamsController } from './teams.controller';
 
 @Module({
@@ -21,7 +22,7 @@ import { TeamsController } from './teams.controller';
     BullModule.forRoot({ connection: { url: process.env.REDIS_URL } }),
     BullModule.registerQueue({ name: 'mail' }),
   ],
-  controllers: [HealthController, AuthController, ProfileController, AdminController, EventsController, RegistrationsController, TeamsController],
+  controllers: [HealthController, AuthController, ProfileController, AdminController, EventsController, RegistrationsController, TeamsController, StaffController],
   providers: [
     PrismaService,
     AuthService,

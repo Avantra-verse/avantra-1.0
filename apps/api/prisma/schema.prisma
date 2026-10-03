@@ -60,6 +60,8 @@ model User {
   emailVerifiedAt DateTime? // every row is verified; kept for audit
   disabledAt      DateTime? // admin switch-off
   expiresAt       DateTime? // staff accounts stop working after this
+  assignedEventId String? // judges: the one event they score
+  assignedEvent   Event?    @relation("JudgeEvent", fields: [assignedEventId], references: [id])
   createdAt       DateTime  @default(now())
   student         Student?
   school          School? // set when role = SCHOOL_COORDINATOR
@@ -138,6 +140,8 @@ model Event {
   teamMin          Int            @default(1)
   teamMax          Int            @default(1)
   capacity         Int? // max participants; null = unlimited
+  judgingCriteria  String[]       @default(["Innovation", "Scientific understanding", "Presentation", "Practical impact"]) // 0–10 each
+  judges           User[]         @relation("JudgeEvent")
   registrations    Registration[]
   teams            Team[]
   checkIns         CheckIn[]
@@ -202,7 +206,7 @@ model Payment {
   @@index([studentId])
 }
 
-// eventId null = main gate entry.
+// eventId null = main gate entry. scannedAt can be the scanner's time when an offline scan syncs later.
 model CheckIn {
   id          String   @id @default(cuid())
   studentId   String
@@ -213,7 +217,7 @@ model CheckIn {
   scannedBy   User     @relation(fields: [scannedById], references: [id])
   scannedAt   DateTime @default(now())
 
-  @@index([studentId])
+  @@index([studentId, eventId])
   @@index([eventId])
 }
 

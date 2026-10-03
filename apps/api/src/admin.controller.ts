@@ -1,5 +1,5 @@
 import { Body, ConflictException, Controller, Get, HttpCode, NotFoundException, Param, Post, Query } from '@nestjs/common';
-import { CreateStaffRequest, LinkStudentRequest, SchoolStatus } from '@avantra/shared';
+import { AssignJudgeRequest, CreateStaffRequest, LinkStudentRequest, SchoolStatus } from '@avantra/shared';
 import { Prisma } from '@prisma/client';
 import { hashPassword } from './auth/password';
 import { Roles } from './auth/session.guard';
@@ -9,7 +9,16 @@ import { ZodPipe } from './zod.pipe';
 
 // Staff accounts stop working the day after the event unless the admin sets another date.
 const STAFF_EXPIRES = new Date('2026-12-21T23:59:59+05:30');
-const staffSelect = { id: true, name: true, email: true, role: true, expiresAt: true, disabledAt: true, createdAt: true };
+const staffSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  expiresAt: true,
+  disabledAt: true,
+  createdAt: true,
+  assignedEvent: { select: { id: true, name: true } },
+};
 
 @Roles('ADMIN')
 @Controller('admin')
@@ -89,16 +98,32 @@ export class AdminController {
   }
 
   @Post('staff')
-  async createStaff(@Body(new ZodPipe(CreateStaffRequest)) { password, expiresAt, ...rest }: CreateStaffRequest) {
+  async createStaff(@Body(new ZodPipe(CreateStaffRequest)) { password, expiresAt, eventId, ...rest }: CreateStaffRequest) {
+    if (eventId && !(await this.prisma.event.findUnique({ where: { id: eventId } }))) throw new NotFoundException('Event not found');
     try {
       return await this.prisma.user.create({
-        data: { ...rest, passwordHash: await hashPassword(password), expiresAt: expiresAt ?? STAFF_EXPIRES, emailVerifiedAt: new Date() },
+        data: {
+          ...rest,
+          assignedEventId: rest.role === 'JUDGE' ? eventId : null,
+          passwordHash: await hashPassword(password),
+          expiresAt: expiresAt ?? STAFF_EXPIRES,
+          emailVerifiedAt: new Date(),
+        },
         select: staffSelect,
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') throw new ConflictException('Email already in use');
       throw e;
     }
+  }
+
+  // Move a judge to another event.
+  @Post('staff/:id/assign') @HttpCode(200)
+  async assignJudge(@Param('id') id: string, @Body(new ZodPipe(AssignJudgeRequest)) { eventId }: AssignJudgeRequest) {
+    const judge = await this.prisma.user.findUnique({ where: { id } });
+    if (judge?.role !== 'JUDGE') throw new NotFoundException('Judge not found');
+    if (!(await this.prisma.event.findUnique({ where: { id: eventId } }))) throw new NotFoundException('Event not found');
+    return this.prisma.user.update({ where: { id }, data: { assignedEventId: eventId }, select: staffSelect });
   }
 
   // Switch off any non-admin account and log it out everywhere.

@@ -81,13 +81,16 @@ export type PasswordLoginRequest = z.infer<typeof PasswordLoginRequest>;
 export const AdminVerifyRequest = z.object({ email, code });
 export type AdminVerifyRequest = z.infer<typeof AdminVerifyRequest>;
 
-export const CreateStaffRequest = z.object({
-  role: StaffRole,
-  name,
-  email,
-  password, // admin sets it and hands it over; staff can change it via forgot-password
-  expiresAt: z.coerce.date().optional(), // default: end of the event
-});
+export const CreateStaffRequest = z
+  .object({
+    role: StaffRole,
+    name,
+    email,
+    password, // admin sets it and hands it over; staff can change it via forgot-password
+    expiresAt: z.coerce.date().optional(), // default: end of the event
+    eventId: z.string().min(1).optional(), // judges: the event they score
+  })
+  .refine((v) => v.role !== 'JUDGE' || !!v.eventId, { message: 'Judges need an event', path: ['eventId'] });
 export type CreateStaffRequest = z.infer<typeof CreateStaffRequest>;
 
 export const LinkStudentRequest = z.object({ schoolId: z.string().min(1) });
@@ -127,6 +130,7 @@ const eventFields = z.object({
   teamMax: z.number().int().min(1).max(20),
   capacity: z.number().int().positive().nullable().optional(), // max teams; null = unlimited
   registrationOpen: z.boolean().optional(),
+  judgingCriteria: z.array(z.string().trim().min(2).max(60)).min(1).max(10).optional(),
 });
 export const CreateEventRequest = eventFields.refine((e) => e.teamMin <= e.teamMax, {
   message: 'teamMin must be ≤ teamMax',
@@ -176,3 +180,38 @@ export const VerifyPaymentRequest = z.object({
   razorpay_signature: z.string().regex(/^[0-9a-f]{64}$/),
 });
 export type VerifyPaymentRequest = z.infer<typeof VerifyPaymentRequest>;
+
+// ---- event day: QR scans and judging ----
+
+export const MAX_POINTS = 10; // per judging criterion
+
+// A scan identifies a student by the QR (qrToken) or, if the QR won't scan, the typed AVANTRA ID.
+const studentRef = {
+  qrToken: z.string().trim().min(10).max(64).optional(),
+  avantraId: AvantraId.optional(),
+};
+const oneRef = (v: { qrToken?: string; avantraId?: string }) => !!v.qrToken !== !!v.avantraId;
+
+export const CheckInRequest = z
+  .object({
+    ...studentRef,
+    eventId: z.string().min(1).optional(), // omit for the main gate
+    scannedAt: z.coerce.date().optional(), // offline scans syncing later
+  })
+  .refine(oneRef, { message: 'Send qrToken or avantraId', path: ['qrToken'] });
+export type CheckInRequest = z.infer<typeof CheckInRequest>;
+
+export const JudgeLookupRequest = z.object(studentRef).refine(oneRef, { message: 'Send qrToken or avantraId', path: ['qrToken'] });
+export type JudgeLookupRequest = z.infer<typeof JudgeLookupRequest>;
+
+export const SubmitScoresRequest = z.object({
+  teamId: z.string().min(1),
+  scores: z
+    .array(z.object({ criterion: z.string().min(1).max(60), points: z.number().int().min(0).max(MAX_POINTS) }))
+    .min(1)
+    .max(10),
+});
+export type SubmitScoresRequest = z.infer<typeof SubmitScoresRequest>;
+
+export const AssignJudgeRequest = z.object({ eventId: z.string().min(1) });
+export type AssignJudgeRequest = z.infer<typeof AssignJudgeRequest>;

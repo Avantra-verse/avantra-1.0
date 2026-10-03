@@ -73,7 +73,9 @@ Admin accounts are created only with `pnpm --filter @avantra/api create-admin <e
 | `GET /admin/students/unlinked` | none | Students who picked "Others". |
 | `POST /admin/students/:userId/link` | `LinkStudentRequest` `{ schoolId }` | School must be approved. |
 | `GET /admin/staff` | none | Volunteers and judges. |
-| `POST /admin/staff` | `CreateStaffRequest` `{ role, name, email, password, expiresAt? }` | `expiresAt` defaults to 21 Dec 2026. 409 = email taken. |
+| `POST /admin/staff` | `CreateStaffRequest` `{ role, name, email, password, expiresAt?, eventId? }` | Judges need `eventId` (the event they score). `expiresAt` defaults to 21 Dec 2026. 409 = email taken. |
+| `POST /admin/staff/:id/assign` | `AssignJudgeRequest` `{ eventId }` | Move a judge to another event. |
+| `GET /admin/events/:id/leaderboard` | none | Teams ranked by the average of each judge's total. `score` null = not judged yet. |
 | `POST /admin/users/:id/disable` / `enable` | none | Disable logs the user out everywhere. Admins can't be disabled here. |
 
 ## Events
@@ -82,7 +84,7 @@ Admin accounts are created only with `pnpm --filter @avantra/api create-admin <e
 |---|---|---|---|
 | `GET /events` | anyone | none | All events + `spotsLeft` (null = unlimited). |
 | `POST /admin/events` | ADMIN | `CreateEventRequest` | 409 = slug taken. |
-| `PATCH /admin/events/:id` | ADMIN | `UpdateEventRequest` (any fields) | e.g. `{ registrationOpen: false }` to close. |
+| `PATCH /admin/events/:id` | ADMIN | `UpdateEventRequest` (any fields) | e.g. `{ registrationOpen: false }` to close, or `judgingCriteria: [...]` (each 0–10; default: Innovation, Scientific understanding, Presentation, Practical impact). |
 
 Dev data: `pnpm --filter @avantra/api seed-events` creates the brochure's 9 events (team sizes are placeholders).
 
@@ -131,3 +133,17 @@ new Razorpay({
 ```
 
 Even if the browser closes before `handler` runs, Razorpay's webhook (`POST /payments/webhook`, server-to-server) marks the student paid and emails them. Show status from `GET /profile`, not from the handler alone.
+
+## Event day (`/staff` pages, phone-first)
+
+**QR badge:** render `GET /profile` → `student.qrToken` as a QR code, with the `avantraId` printed below it. The token is random and carries no personal data. If a QR won't scan, staff type the AVANTRA ID instead (send `avantraId` instead of `qrToken`).
+
+| Method + path | Who | Body | Success | Notes |
+|---|---|---|---|---|
+| `POST /staff/checkin` | VOLUNTEER, JUDGE, ADMIN | `CheckInRequest` `{ qrToken \| avantraId, eventId?, scannedAt? }` | 200 `{ student: { name, avantraId, grade, school, feePaid }, checkedInAt, alreadyCheckedIn }` | No `eventId` = main gate. 403 + `student` = fee unpaid or not registered for that event (show the name, send them to the desk). 404 = unknown badge. Offline: queue scans and send them later with `scannedAt` (max 48 h old). |
+| `GET /staff/judge/teams` | JUDGE | none | 200 `{ event, teams: [{ id, name, projectTitle, topic, members, scored }] }` | The judge's queue for their assigned event. |
+| `POST /staff/judge/lookup` | JUDGE | `JudgeLookupRequest` `{ qrToken \| avantraId }` | 200 team | Scan any member's badge → their team in the judge's event. 404 = not registered / no team. |
+| `GET /staff/judge/teams/:id` | JUDGE | none | 200 team | Same shape as lookup. |
+| `POST /staff/judge/scores` | JUDGE | `SubmitScoresRequest` `{ teamId, scores: [{ criterion, points }] }` | 200 team | Points 0–`MAX_POINTS` (10). Re-sending corrects the judge's own scores. Once a team has a score, its members are locked. |
+
+Team (judge view): `{ id, name, projectTitle, topic, members: [{ name, avantraId }], criteria, maxPoints, myScores: { [criterion]: points } }`.
