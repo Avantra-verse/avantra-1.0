@@ -8,7 +8,7 @@ import { AppModule } from './app.module';
 const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true }); // rawBody: Razorpay webhook signature
   const webOrigin = process.env.WEB_ORIGIN!;
 
   app.set('trust proxy', 1); // behind Render/Railway's proxy: real client IP for rate limits

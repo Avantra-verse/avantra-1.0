@@ -95,3 +95,65 @@ export type LinkStudentRequest = z.infer<typeof LinkStudentRequest>;
 
 export const SchoolStatus = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
 export type SchoolStatus = z.infer<typeof SchoolStatus>;
+
+// ---- events, registrations, payments ----
+
+export const EventCategory = z.enum(['EXHIBITION', 'TECHNOLOGY', 'EXPERIENCE', 'WORKSHOP']);
+export type EventCategory = z.infer<typeof EventCategory>;
+
+// From the brochure. Exhibition registrations must pick one.
+export const EXHIBITION_TOPICS = [
+  'Artificial Intelligence & Machine Learning',
+  'Robotics',
+  'Smart Infrastructure & Engineering',
+  'Emerging Technology',
+  'IoT & Smart Systems',
+  'HealthTech & Bio-Innovation',
+  'Climate & Sustainability',
+  'Social Innovation & Entrepreneurship',
+  'AgriTech & Food Innovation',
+] as const;
+export const ExhibitionTopic = z.enum(EXHIBITION_TOPICS);
+
+const eventFields = z.object({
+  slug: z.string().regex(/^[a-z0-9-]{2,50}$/, 'lowercase letters, digits and dashes'),
+  name,
+  category: EventCategory,
+  description: z.string().trim().max(2000).optional(),
+  feePaise: z.number().int().min(0).max(1_000_000), // per student; 19900 = ₹199
+  teamMin: z.number().int().min(1).max(20),
+  teamMax: z.number().int().min(1).max(20),
+  capacity: z.number().int().positive().nullable().optional(), // max teams; null = unlimited
+  registrationOpen: z.boolean().optional(),
+});
+export const CreateEventRequest = eventFields.refine((e) => e.teamMin <= e.teamMax, {
+  message: 'teamMin must be ≤ teamMax',
+  path: ['teamMax'],
+});
+export type CreateEventRequest = z.infer<typeof CreateEventRequest>;
+export const UpdateEventRequest = eventFields.partial();
+export type UpdateEventRequest = z.infer<typeof UpdateEventRequest>;
+
+export const AvantraId = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^AV26-[2-9A-HJ-NP-Z]{5}$/, 'Invalid AVANTRA ID');
+
+// The logged-in student is the team leader; list only the other members.
+export const CreateRegistrationRequest = z.object({
+  eventId: z.string().min(1),
+  memberAvantraIds: z.array(AvantraId).max(19).default([]),
+  teamName: z.string().trim().min(2).max(60).optional(),
+  projectTitle: z.string().trim().min(3).max(150).optional(), // exhibition only, required there
+  topic: ExhibitionTopic.optional(), // exhibition only, required there
+});
+export type CreateRegistrationRequest = z.infer<typeof CreateRegistrationRequest>;
+
+// What Razorpay Checkout's handler receives on success. Field names are Razorpay's.
+export const VerifyPaymentRequest = z.object({
+  razorpay_order_id: z.string().min(1).max(100),
+  razorpay_payment_id: z.string().min(1).max(100),
+  razorpay_signature: z.string().regex(/^[0-9a-f]{64}$/),
+});
+export type VerifyPaymentRequest = z.infer<typeof VerifyPaymentRequest>;

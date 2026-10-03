@@ -10,8 +10,9 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "test": "node --test --no-warnings \"src/**/*.test.ts\"",
-    "test:e2e": "node --test --no-warnings test/*.e2e.ts",
-    "create-admin": "node --no-warnings scripts/create-admin.ts"
+    "test:e2e": "node --test --test-concurrency=1 --no-warnings test/*.e2e.ts",
+    "create-admin": "node --no-warnings scripts/create-admin.ts",
+    "seed-events": "node --no-warnings scripts/seed-events.ts"
   },
   "dependencies": {
     "@avantra/shared": "workspace:*",

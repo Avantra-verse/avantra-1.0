@@ -75,3 +75,41 @@ Admin accounts are created only with `pnpm --filter @avantra/api create-admin <e
 | `GET /admin/staff` | none | Volunteers and judges. |
 | `POST /admin/staff` | `CreateStaffRequest` `{ role, name, email, password, expiresAt? }` | `expiresAt` defaults to 21 Dec 2026. 409 = email taken. |
 | `POST /admin/users/:id/disable` / `enable` | none | Disable logs the user out everywhere. Admins can't be disabled here. |
+
+## Events
+
+| Method + path | Who | Body | Notes |
+|---|---|---|---|
+| `GET /events` | anyone | none | All events + `spotsLeft` (null = unlimited). `feePaise` is **per student** (19900 = ₹199). |
+| `POST /admin/events` | ADMIN | `CreateEventRequest` | 409 = slug taken. |
+| `PATCH /admin/events/:id` | ADMIN | `UpdateEventRequest` (any fields) | e.g. `{ registrationOpen: false }` to close. |
+
+Dev data: `pnpm --filter @avantra/api seed-events` creates the brochure's 9 events (team sizes and ARITHI-event fees are placeholders).
+
+## Registration and payment (students)
+
+| Method + path | Body | Success | Notes |
+|---|---|---|---|
+| `POST /registrations` | `CreateRegistrationRequest` `{ eventId, memberAvantraIds?, teamName?, projectTitle?, topic? }` | 201 registration | Caller = team leader; list only the **other** members' AVANTRA IDs. Exhibition needs `projectTitle` + `topic` (`EXHIBITION_TOPICS`). Free event → `CONFIRMED` now; paid → `PENDING_PAYMENT`. 400 = team size / unknown ID / closed. 409 = full, or someone already registered for this event. |
+| `GET /registrations/mine` | none | 200 list | Every registration I'm in, with event, members, latest payment. |
+| `DELETE /registrations/:id` | none | 204 | Leader only, unpaid only. |
+| `POST /registrations/:id/pay` | none | 201 `{ keyId, orderId, amount, currency, description }` | Leader only. Call again to retry a failed payment. 503 until Razorpay keys are set. |
+| `POST /payments/verify` | `VerifyPaymentRequest` (Razorpay's 3 fields) | 200 | Call from Checkout's success handler. |
+
+An unpaid registration holds its spot for 30 minutes. Capacity counts teams.
+
+### Razorpay Checkout on the page
+
+```html
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+```
+```ts
+const o = await api.post(`/registrations/${id}/pay`);
+new Razorpay({
+  key: o.keyId, order_id: o.orderId, amount: o.amount, currency: o.currency,
+  name: 'AVANTRA 2026', description: o.description,
+  handler: (r) => api.post('/payments/verify', r).then(refreshRegistrations),
+}).open();
+```
+
+Even if the browser closes before `handler` runs, Razorpay's webhook (`POST /payments/webhook`, server-to-server) confirms the registration. Show status from `GET /registrations/mine`, not from the handler alone.

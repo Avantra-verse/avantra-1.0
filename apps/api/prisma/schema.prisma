@@ -43,6 +43,11 @@ enum RegistrationStatus {
   CANCELLED
 }
 
+enum PaymentMethod {
+  ONLINE // Razorpay
+  OFFLINE // cash, recorded by an admin
+}
+
 enum PaymentStatus {
   CREATED
   PAID
@@ -128,16 +133,18 @@ model Student {
 }
 
 model Event {
-  id            String         @id @default(cuid())
-  slug          String         @unique
-  name          String
-  category      EventCategory
-  feePaise      Int            @default(0) // exhibition: 19900 per student
-  teamMin       Int            @default(1)
-  teamMax       Int            @default(1)
-  capacity      Int?
-  registrations Registration[]
-  checkIns      CheckIn[]
+  id               String         @id @default(cuid())
+  slug             String         @unique
+  name             String
+  description      String?
+  registrationOpen Boolean        @default(true)
+  category         EventCategory
+  feePaise         Int            @default(0) // exhibition: 19900 per student
+  teamMin          Int            @default(1)
+  teamMax          Int            @default(1)
+  capacity         Int? // max teams (registrations); null = unlimited
+  registrations    Registration[]
+  checkIns         CheckIn[]
 }
 
 // One row per team (or solo entry) in an event.
@@ -162,9 +169,11 @@ model RegistrationMember {
   registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
   studentId      String
   student        Student      @relation(fields: [studentId], references: [userId])
+  eventId        String // copy of registration.eventId so the DB enforces one entry per student per event
   isLeader       Boolean      @default(false)
 
   @@id([registrationId, studentId])
+  @@unique([eventId, studentId])
   @@index([studentId])
 }
 
@@ -172,10 +181,11 @@ model RegistrationMember {
 model Payment {
   id                String        @id @default(cuid())
   registrationId    String
-  registration      Registration  @relation(fields: [registrationId], references: [id])
+  registration      Registration  @relation(fields: [registrationId], references: [id], onDelete: Cascade)
   amountPaise       Int
+  method            PaymentMethod @default(ONLINE)
   status            PaymentStatus @default(CREATED)
-  razorpayOrderId   String        @unique
+  razorpayOrderId   String?       @unique // null for OFFLINE
   razorpayPaymentId String?       @unique // unique = idempotent webhook handling
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt

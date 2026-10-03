@@ -1,46 +1,11 @@
-// End-to-end auth check against a real API + Postgres + Redis (pnpm db:up, then pnpm build && pnpm test:e2e).
-// Codes are read from the API console, which is where emails go when SMTP_HOST is empty.
-import { test, before, after } from 'node:test';
+// End-to-end auth, profile, admin and staff checks against a real API + Postgres + Redis.
+// Run: pnpm db:up, then pnpm build && pnpm test:e2e
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
+import { call, clearLogs, codeFor, logs, signUp, sleep, startApi } from './helpers.ts';
 
-process.loadEnvFile();
-const PORT = 4100;
-const API = `http://localhost:${PORT}`;
-const ORIGIN = process.env.WEB_ORIGIN!;
-let api: ChildProcess;
-let logs = '';
-
-before(async () => {
-  // NODE_TEST_CONTEXT would make the child report to the test runner instead of printing logs.
-  const { NODE_TEST_CONTEXT, ...env } = process.env;
-  api = spawn(process.execPath, ['dist/main.js'], { env: { ...env, PORT: String(PORT), NODE_ENV: 'test' } });
-  api.stdout!.on('data', (d) => (logs += d));
-  api.stderr!.on('data', (d) => (logs += d));
-  for (let i = 0; i < 300 && !logs.includes('successfully started'); i++) await new Promise((r) => setTimeout(r, 100));
-  assert.ok(logs.includes('successfully started'), `API did not start:\n${logs}`);
-});
-after(() => api.kill());
-
-async function call(path: string, body?: object, cookie = '', origin = ORIGIN) {
-  const res = await fetch(API + path, {
-    method: body ? 'POST' : 'GET',
-    headers: { 'content-type': 'application/json', origin, cookie },
-    body: body && JSON.stringify(body),
-  });
-  const text = await res.text();
-  const cookieOut = res.headers.get('set-cookie')?.split(';')[0] ?? '';
-  return { status: res.status, json: text ? JSON.parse(text) : null, cookie: cookieOut };
-}
-
-async function codeFor(email: string): Promise<string> {
-  for (let i = 0; i < 50; i++) {
-    const m = [...logs.matchAll(new RegExp(`to ${email} \\|[\\s\\S]*?code is (\\d{6})`, 'g'))].pop();
-    if (m) return m[1];
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  throw new Error(`no code emailed to ${email}`);
-}
+startApi(4100);
 
 test('sign-up, login, wrong tab, logout, password reset, CSRF', async () => {
   const email = `e2e-${Date.now()}@example.com`;
@@ -55,10 +20,10 @@ test('sign-up, login, wrong tab, logout, password reset, CSRF', async () => {
   assert.equal((await call('/auth/register/verify', { ...signup, code })).status, 400, 'code is single-use');
 
   // Existing email: same 202, no new code.
-  logs = '';
+  clearLogs();
   assert.equal((await call('/auth/register', signup)).status, 202);
-  await new Promise((r) => setTimeout(r, 500));
-  assert.ok(!logs.includes(`to ${email}`), 'no email for an existing account');
+  await sleep(500);
+  assert.ok(!logs().includes(`to ${email}`), 'no email for an existing account');
 
   const me = await call('/auth/me', undefined, verified.cookie);
   assert.equal(me.json.email, email);
@@ -78,7 +43,7 @@ test('sign-up, login, wrong tab, logout, password reset, CSRF', async () => {
   assert.equal((await call('/auth/me', undefined, login.cookie)).status, 401, 'logout kills the session');
 
   // Password reset logs out every device.
-  logs = '';
+  clearLogs();
   assert.equal((await call('/auth/password/forgot', { email })).status, 202);
   const resetCode = await codeFor(email);
   assert.equal((await call('/auth/password/reset', { email, code: resetCode, password: 'second-password-2' })).status, 200);
@@ -87,19 +52,10 @@ test('sign-up, login, wrong tab, logout, password reset, CSRF', async () => {
   assert.equal((await call('/auth/login', { role: 'STUDENT', email, password: 'second-password-2' })).status, 200);
 
   // Another site can't make changes with our cookie.
-  assert.equal((await call('/auth/login', { role: 'STUDENT', email, password: 'second-password-2' }, '', 'https://evil.arithi.in')).status, 403);
+  assert.equal((await call('/auth/login', { role: 'STUDENT', email, password: 'second-password-2' }, '', { origin: 'https://evil.arithi.in' })).status, 403);
   // Bad input is rejected by the shared zod schema.
   assert.equal((await call('/auth/register', { ...signup, email: 'not-an-email' })).status, 400);
 });
-
-async function signUp(role: 'STUDENT' | 'SCHOOL_COORDINATOR', tag: string) {
-  const email = `e2e-${tag}-${Date.now()}@example.com`;
-  const body = { role, name: `Test ${tag}`, email, password: 'a-good-password' };
-  assert.equal((await call('/auth/register', body)).status, 202);
-  const res = await call('/auth/register/verify', { ...body, code: await codeFor(email) });
-  assert.equal(res.status, 200);
-  return { email, cookie: res.cookie };
-}
 
 test('profiles, school approval, coordinator scoping, admin 2-step, staff', async () => {
   // Admin via the one-off script, then password + emailed code.
