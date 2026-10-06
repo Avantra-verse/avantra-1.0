@@ -9,3 +9,8 @@ allowBuilds:
   prisma: true
   "@nestjs/core": true
   msgpackr-extract: false
+  # ffmpeg is only for apps/web/encode-videos.js (run locally); the site build doesn't need its setup script.
+  "@ffmpeg-installer/linux-x64": false
+  "@ffmpeg-installer/linux-arm64": false
+  "@ffmpeg-installer/darwin-x64": false
+  "@ffmpeg-installer/darwin-arm64": false

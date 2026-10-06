@@ -1,0 +1,5 @@
+{
+  "framework": "nextjs",
+  "installCommand": "npx -y pnpm@12.8.1 install --filter avantra-site...",
+  "buildCommand": "npx -y pnpm@12.8.1 run build"
+}
