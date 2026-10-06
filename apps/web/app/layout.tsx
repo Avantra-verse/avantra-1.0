@@ -36,7 +36,7 @@ const instrumentSans = Instrument_Sans({
 });
 
 const description =
-  "A three-day science fair and exhibition hosted by SSRVM IEMS with student clubs from NIT Rourkela.";
+  "A science fair and exhibition hosted by SSRVM IEMS with student clubs from NIT Rourkela.";
 
 export const metadata: Metadata = {
   title: "AVANTRA, a multiverse science fair",

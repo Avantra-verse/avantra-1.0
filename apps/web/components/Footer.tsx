@@ -14,7 +14,7 @@ export default function Footer() {
         <div className="flex flex-col items-center md:items-start gap-4">
           <Link href="/" className="inline-block focus-visible:outline-none">
             <img
-              src="/video/avantra-logo.png"
+              src="/images/avantra-logo.png"
               alt="AVANTRA 2026 Logo"
               className="h-[42px] w-auto object-contain"
             />

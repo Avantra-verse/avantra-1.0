@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import styles from "./registration.module.css";
+
+// Registration isn't connected to the AVANTRA API yet. Until it is, the form can't be submitted,
+// so nobody sees a success message for an account that was never created.
+const REGISTRATION_OPEN = false;
 
 interface FormData {
   fullName: string;
@@ -138,6 +141,7 @@ export default function RegistrationPage() {
   // Form Submit Handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!REGISTRATION_OPEN) return;
     const validationErrors = validateAll(formData);
     setErrors(validationErrors);
 
@@ -430,15 +434,7 @@ export default function RegistrationPage() {
                         aria-invalid={!!errors.terms}
                       />
                       <span>
-                        I agree to the{" "}
-                        <a href="#terms" className={styles.link}>
-                          Terms
-                        </a>{" "}
-                        and{" "}
-                        <a href="#privacy" className={styles.link}>
-                          Privacy Policy
-                        </a>
-                        .
+                        I agree to the Terms and Privacy Policy.
                       </span>
                     </label>
                     {errors.terms && (
@@ -449,17 +445,9 @@ export default function RegistrationPage() {
                   </div>
 
                   {/* Field 6: Submit Button */}
-                  <button type="submit" className={styles.submitBtn}>
-                    Create account
+                  <button type="submit" className={styles.submitBtn} disabled={!REGISTRATION_OPEN}>
+                    {REGISTRATION_OPEN ? "Create account" : "Registration opens soon"}
                   </button>
-
-                  {/* Field 7: Footer line */}
-                  <div className={styles.footerLine}>
-                    Already have an account?{" "}
-                    <Link href="/login" className={styles.link}>
-                      Log in
-                    </Link>
-                  </div>
                 </form>
               </>
             )}
