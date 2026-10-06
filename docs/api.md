@@ -43,6 +43,12 @@ fetch(`${API}/auth/login`, {
 2. `cp apps/api/.env.example apps/api/.env`, set `CODE_SECRET`
 3. `pnpm --filter @avantra/api db:deploy`, then `pnpm dev:api`
 4. Sign-up codes are printed in the API console (no real email in dev).
+5. Web: create `apps/web/.env.local` with `NEXT_PUBLIC_API_URL=http://localhost:4000`, then `pnpm dev:web` (http://localhost:3000).
+   Without that variable the account pages show "opens soon", which is what the live site shows until the API is deployed.
+
+Account pages in `apps/web`: `/registration` (sign-up + email code), `/login`, `/forgot-password`, `/profile` (first-time
+details), `/dashboard` (AVANTRA ID + QR, or the coordinator's school and students). API calls go through `apps/web/lib/api.ts`;
+shared building blocks (Meena's registration styles) are in `apps/web/components/account/Account.tsx`.
 
 ## Profiles (after sign-up, when `profileComplete` is false)
 

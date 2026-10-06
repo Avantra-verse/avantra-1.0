@@ -391,6 +391,20 @@
   opacity: 0.85;
 }
 
+/* Same look when the "link" is a button (e.g. "send a new code"). */
+button.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Submit Button */
 .submitBtn {
   width: 100%;
