@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
+import { Archivo, Gaegu, Instrument_Serif, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
@@ -10,6 +10,28 @@ const archivo = Archivo({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-archivo",
+  display: "swap",
+});
+
+const gaegu = Gaegu({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-gaegu",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  weight: ["400"],
+  style: ["italic"],
+  subsets: ["latin"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+
+const instrumentSans = Instrument_Sans({
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  variable: "--font-instrument-sans",
   display: "swap",
 });
 
@@ -38,8 +60,18 @@ export const viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={archivo.variable}>
-      <body>
+    <html
+      lang="en"
+      className={`${archivo.variable} ${gaegu.variable} ${instrumentSerif.variable} ${instrumentSans.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500&family=Mukta:wght@400;500;600&family=Yatra+One&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body suppressHydrationWarning>
         <a href="#main" className="skip-link">
           Skip to content
         </a>

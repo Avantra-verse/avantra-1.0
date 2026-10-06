@@ -7,7 +7,9 @@ export default function PageTransition({ children }: { children: React.ReactNode
   const pathname = usePathname();
   const reduce = useReducedMotion();
 
-  if (reduce) return <>{children}</>;
+  const isRoomRoute = pathname === "/about" || pathname === "/contact";
+
+  if (reduce || isRoomRoute) return <>{children}</>;
 
   return (
     <AnimatePresence mode="wait">

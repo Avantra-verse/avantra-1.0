@@ -10,12 +10,15 @@ const LINKS = [
   { href: "/venue", label: "Venue" },
   { href: "/sponsors", label: "Sponsors" },
   { href: "/contact", label: "Contact" },
+  { href: "/registration", label: "Registration" },
 ];
 
 export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
+
+  if (pathname === "/" || pathname === "/about" || pathname === "/contact") return null;
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/8 bg-void/70 backdrop-blur-xl">
