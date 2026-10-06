@@ -74,7 +74,7 @@ function StudentForm({ name, onDone }: { name: string; onDone: () => void }) {
       section: f.section.trim() || undefined,
       schoolId: !others && f.school ? f.school : undefined,
       otherSchoolName: others ? f.otherSchoolName : undefined,
-      guardianPhone: f.guardianPhone.replace(/\D/g, "").slice(-10),
+      guardianPhone: f.guardianPhone.trim() ? f.guardianPhone.replace(/\D/g, "").slice(-10) : undefined,
       guardianEmail: f.guardianEmail.trim() || undefined,
       guardianConsent: f.consent || undefined,
     });
@@ -126,7 +126,7 @@ function StudentForm({ name, onDone }: { name: string; onDone: () => void }) {
         )}
         <Field name="phone" label="Your phone" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile" value={f.phone} onChange={set} error={errors.phone} />
         <div className={styles.twoColRow}>
-          <Field name="guardianPhone" label="Parent's phone" type="tel" inputMode="numeric" placeholder="10-digit mobile" value={f.guardianPhone} onChange={set} error={errors.guardianPhone} />
+          <Field name="guardianPhone" label="Parent's phone (optional)" type="tel" inputMode="numeric" placeholder="10-digit mobile" value={f.guardianPhone} onChange={set} error={errors.guardianPhone} />
           <Field name="guardianEmail" label="Parent's email (optional)" type="email" value={f.guardianEmail} onChange={set} error={errors.guardianEmail} />
         </div>
         <div className={styles.checkboxGroup}>

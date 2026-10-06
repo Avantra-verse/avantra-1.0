@@ -59,7 +59,7 @@ const studentProfileFields = z.object({
   schoolId: z.string().min(1).optional(), // an APPROVED school
   otherSchoolName: z.string().trim().min(3).max(200).optional(), // "Others"
   guardianEmail: email.optional(),
-  guardianPhone: phone,
+  guardianPhone: phone.optional(),
   guardianConsent: z.literal(true),
 });
 const oneSchool = (v: { schoolId?: string; otherSchoolName?: string }) => !!v.schoolId !== !!v.otherSchoolName;

@@ -119,7 +119,7 @@ model Student {
   grade             Int
   section           String?
   guardianEmail     String?
-  guardianPhone     String
+  guardianPhone     String?
   guardianConsentAt DateTime // DPDP: verifiable parental consent for minors
   avantraId         String         @unique // human-readable, printed on badge: AV26-00123
   qrToken           String         @unique // random, opaque; what the QR encodes
