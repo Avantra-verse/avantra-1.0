@@ -55,7 +55,7 @@ shared building blocks (Meena's registration styles) are in `apps/web/components
 | Method + path | Who | Body | Success | Notes |
 |---|---|---|---|---|
 | `GET /schools` | anyone | none | 200 `[{ id, name, city }]` | Approved schools only, for the dropdown. Add an "Others" option yourself. |
-| `POST /profile/student` | STUDENT | `StudentProfile` | 201 student | Send `schoolId` **or** `otherSchoolName`, not both. `guardianConsent` must be `true`. Optional `section` (e.g. `"B"`). Returns `avantraId` (e.g. `AV26-7K3QX`) and `qrToken`. 403 = school not approved. 409 = already done. |
+| `POST /profile/student` | STUDENT | `StudentProfile` | 201 student | Send `schoolId` **or** `otherSchoolName`, not both. `guardianConsent` must be `true`. Optional `section` and `guardianPhone` (e.g. `"B"`). Returns `avantraId` (e.g. `AV26-7K3QX`) and `qrToken`. 403 = school not approved. 409 = already done. |
 | `POST /profile/school` | SCHOOL_COORDINATOR | `SchoolProfile` | 201 school | Starts `PENDING` until an admin approves. 409 = school name+city taken, or coordinator already has one. |
 | `GET /profile` | any logged-in | none | 200 `{ student, school }` | Student: avantraId, qrToken (for the QR badge), school. Coordinator: school with `status`. |
 | `GET /coordinator/students` | SCHOOL_COORDINATOR | none | 200 `[{ avantraId, grade, feePaidAt, user: { name, createdAt } }]` | Only their own school. Empty until the school is approved. |
