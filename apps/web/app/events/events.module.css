@@ -1,0 +1,151 @@
+/* Events page. Colours and type come from the registration page (.registrationPage sets the tokens). */
+.page {
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 70px; /* clear the fixed top bar */
+}
+
+.fee {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  margin-bottom: 26px;
+  border: 2px solid rgba(154, 212, 251, 0.35);
+  border-radius: 16px;
+}
+
+.category {
+  font-family: "Yatra One", Georgia, serif;
+  font-size: 1.35rem;
+  color: var(--sky);
+  margin: 28px 0 10px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.event {
+  padding: 18px;
+  border: 2px solid #4a6f88;
+  border-radius: 16px;
+  background: var(--bg);
+}
+
+.event[data-registered="true"] {
+  border-color: var(--sky);
+}
+
+.eventHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.eventName {
+  font-family: "Yatra One", Georgia, serif;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.meta {
+  color: var(--mute);
+  font-size: 0.95rem;
+}
+
+.description {
+  margin: 8px 0 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 14px;
+}
+
+/* Smaller sibling of .submitBtn for buttons inside a list. */
+.btn {
+  padding: 8px 20px;
+  font-family: "Yatra One", Georgia, serif;
+  font-size: 1rem;
+  color: #fff;
+  background: var(--red);
+  border: 2px solid var(--sky);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  background: var(--red-hi);
+  box-shadow: 0 0 16px rgba(154, 212, 251, 0.45);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--red);
+  box-shadow: none;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 3px;
+}
+
+.done {
+  color: var(--sky);
+  font-weight: 600;
+}
+
+.team {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(243, 236, 228, 0.16);
+}
+
+.code {
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 1.15rem;
+  letter-spacing: 0.12em;
+  color: var(--sky);
+}
+
+.members {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+
+.members li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(243, 236, 228, 0.16);
+}
+
+.forms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 10px;
+}
+
+@media (max-width: 640px) {
+  .forms {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
@@ -92,6 +93,9 @@ function StudentCard({ name, s }: { name: string; s: Student }) {
         <br />
         Entry and all other events are free.
       </p>
+      <Link href="/events" className={styles.submitBtn} style={{ display: "block", textAlign: "center", marginTop: 18, textDecoration: "none" }}>
+        Events &amp; teams
+      </Link>
     </>
   );
 }

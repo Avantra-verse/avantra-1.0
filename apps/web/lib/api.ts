@@ -41,3 +41,33 @@ export type Me = { id: string; email: string; name: string; role: Role; profileC
 
 // null = not logged in
 export const getMe = () => api<Me>("/auth/me").catch((e) => (e instanceof ApiError && e.status === 401 ? null : Promise.reject(e)));
+
+// ₹199 Science Exhibition fee through Razorpay Checkout. Resolves once the API has confirmed the
+// payment; rejects with an ApiError if it fails. Closing the popup just resolves `false`.
+export async function payExhibitionFee(me: Me): Promise<boolean> {
+  const o = await api<{ keyId: string; orderId: string; amount: number; currency: string; description: string }>("/payments/fee", {});
+  const w = window as unknown as { Razorpay?: new (opts: object) => { open(): void } };
+  if (!w.Razorpay) {
+    await new Promise<void>((ok, fail) => {
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.onload = () => ok();
+      s.onerror = () => fail(new ApiError(0, "Couldn't open the payment window. Check your connection and try again."));
+      document.body.append(s);
+    });
+  }
+  return new Promise((ok, fail) =>
+    new w.Razorpay!({
+      key: o.keyId,
+      order_id: o.orderId,
+      amount: o.amount,
+      currency: o.currency,
+      name: "AVANTRA 2026",
+      description: o.description,
+      prefill: { name: me.name, email: me.email },
+      theme: { color: "#9d0006" },
+      handler: (r: object) => api("/payments/verify", r).then(() => ok(true), fail),
+      modal: { ondismiss: () => ok(false) },
+    }).open(),
+  );
+}
