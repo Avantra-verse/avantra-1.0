@@ -5,6 +5,12 @@ import assert from 'node:assert/strict';
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 
 process.loadEnvFile();
+// Tests get their own database so they never fill the dev one with junk (created and migrated on first run),
+// and their own Redis db so a running dev API doesn't grab their emails off the queue.
+process.env.DATABASE_URL = process.env.DIRECT_URL = process.env.TEST_DATABASE_URL ?? 'postgresql://avantra:avantra@localhost:5432/avantra_test';
+process.env.REDIS_URL = process.env.TEST_REDIS_URL ?? 'redis://localhost:6379/1';
+const migrated = spawnSync('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], { encoding: 'utf8', shell: true });
+assert.equal(migrated.status, 0, `Test database migration failed:\n${migrated.stdout}${migrated.stderr}`);
 const ORIGIN = process.env.WEB_ORIGIN!;
 let API = '';
 let output = '';
