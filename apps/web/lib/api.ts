@@ -9,6 +9,7 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public fields: Record<string, string> = {}, // field name -> message, from validation errors
+    public body: Record<string, unknown> | null = null, // the whole error response, for extras like `student`
   ) {
     super(message);
   }
@@ -33,7 +34,7 @@ export async function api<T = unknown>(path: string, body?: unknown, method = bo
   const fields: Record<string, string> = {};
   for (const issue of data?.issues ?? []) fields[issue.path] ??= issue.message;
   const message = typeof data?.message === "string" ? data.message : "Something went wrong. Please try again.";
-  throw new ApiError(res.status, message, fields);
+  throw new ApiError(res.status, message, fields, data);
 }
 
 export type Role = "STUDENT" | "SCHOOL_COORDINATOR" | "JUDGE" | "VOLUNTEER" | "ADMIN";

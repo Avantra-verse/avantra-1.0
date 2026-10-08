@@ -50,6 +50,11 @@ Account pages in `apps/web`: `/registration` (sign-up + email code), `/login`, `
 details), `/dashboard` (AVANTRA ID + QR, or the coordinator's school and students). API calls go through `apps/web/lib/api.ts`;
 shared building blocks (Meena's registration styles) are in `apps/web/components/account/Account.tsx`.
 
+Other pages: `/events` (register, fee, teams), `/wall`, `/wall/leaderboard`, `/verify/[code]` (public certificate check),
+`/staff/login` + `/staff` (check-in for volunteers; judges also get a Judging tab), `/admin/login` + `/admin` (overview and
+downloads, schools, desk, staff, results and certificates, Wall). Badge scanning uses the browser's `BarcodeDetector`
+(Chrome on Android); where it's missing, staff type the AVANTRA ID.
+
 ## Profiles (after sign-up, when `profileComplete` is false)
 
 | Method + path | Who | Body | Success | Notes |
@@ -81,7 +86,7 @@ Admin accounts are created only with `pnpm --filter @avantra/api create-admin <e
 | `GET /admin/staff` | none | Volunteers and judges. |
 | `POST /admin/staff` | `CreateStaffRequest` `{ role, name, email, password, expiresAt?, eventId? }` | Judges need `eventId` (the event they score). `expiresAt` defaults to 21 Dec 2026. 409 = email taken. |
 | `POST /admin/staff/:id/assign` | `AssignJudgeRequest` `{ eventId }` | Move a judge to another event. |
-| `GET /admin/events/:id/leaderboard` | none | Teams ranked by the average of each judge's total. `score` null = not judged yet. |
+| `GET /admin/events/:id/leaderboard` | none | Teams ranked by the average of each judge's total. `score` null = not judged yet. `rank` = the winner place set with `/admin/teams/:id/rank`. |
 | `POST /admin/users/:id/disable` / `enable` | none | Disable logs the user out everywhere. Admins can't be disabled here. |
 
 ## Events

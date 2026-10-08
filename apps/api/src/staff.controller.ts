@@ -118,6 +118,7 @@ export class StaffController {
         projectTitle: t.projectTitle,
         members: t.members.map((m) => ({ name: m.registration.student.user.name, avantraId: m.registration.student.avantraId })),
         judges: totals.length,
+        rank: t.rank,
         score: totals.length ? Math.round((totals.reduce((a, b) => a + b, 0) / totals.length) * 100) / 100 : null,
       };
     });
