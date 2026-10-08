@@ -77,10 +77,6 @@ export type StaffRole = z.infer<typeof StaffRole>;
 export const PasswordLoginRequest = z.object({ email, password: z.string().min(1).max(128) });
 export type PasswordLoginRequest = z.infer<typeof PasswordLoginRequest>;
 
-// Step 2 of admin login: the code emailed after the password was accepted.
-export const AdminVerifyRequest = z.object({ email, code });
-export type AdminVerifyRequest = z.infer<typeof AdminVerifyRequest>;
-
 export const CreateStaffRequest = z
   .object({
     role: StaffRole,

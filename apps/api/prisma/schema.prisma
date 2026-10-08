@@ -21,7 +21,7 @@ enum Role {
 enum CodePurpose {
   VERIFY_EMAIL
   RESET_PASSWORD
-  ADMIN_LOGIN
+  ADMIN_LOGIN // no longer used (admin login is password only); kept to avoid a migration
 }
 
 enum SchoolStatus {

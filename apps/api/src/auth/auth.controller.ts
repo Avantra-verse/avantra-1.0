@@ -1,7 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
-  AdminVerifyRequest,
   ForgotPasswordRequest,
   GoogleLoginRequest,
   LoginRequest,
@@ -49,15 +48,9 @@ export class AuthController {
     return this.startSession(res, await this.auth.staffLogin(body));
   }
 
-  @Public() @Post('admin/login') @HttpCode(202) @perMinute(5)
-  async adminLogin(@Body(new ZodPipe(PasswordLoginRequest)) body: PasswordLoginRequest) {
-    await this.auth.adminLogin(body);
-    return { message: 'We emailed you a 6-digit code.' };
-  }
-
-  @Public() @Post('admin/login/verify') @HttpCode(200) @perMinute(10)
-  async adminVerify(@Body(new ZodPipe(AdminVerifyRequest)) body: AdminVerifyRequest, @Res({ passthrough: true }) res: Response) {
-    return this.startSession(res, await this.auth.adminVerify(body));
+  @Public() @Post('admin/login') @HttpCode(200) @perMinute(5)
+  async adminLogin(@Body(new ZodPipe(PasswordLoginRequest)) body: PasswordLoginRequest, @Res({ passthrough: true }) res: Response) {
+    return this.startSession(res, await this.auth.adminLogin(body));
   }
 
   @Public() @Post('password/forgot') @HttpCode(202) @perMinute(5)

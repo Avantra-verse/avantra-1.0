@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import type {
-  AdminVerifyRequest,
   ForgotPasswordRequest,
   GoogleLoginRequest,
   LoginRequest,
@@ -69,19 +68,9 @@ export class AuthService {
     return this.checkPassword(email, password, ['VOLUNTEER', 'JUDGE']);
   }
 
-  // Admin step 1: right password = email a code. No session yet.
-  async adminLogin({ email, password }: PasswordLoginRequest): Promise<void> {
-    await this.checkPassword(email, password, ['ADMIN']);
-    await this.sendCode(email, CodePurpose.ADMIN_LOGIN, 'Your AVANTRA admin login code');
-  }
-
-  // Admin step 2. The code only exists if step 1's password was right.
-  async adminVerify({ email, code }: AdminVerifyRequest): Promise<User> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!(await this.consumeCode(email, CodePurpose.ADMIN_LOGIN, code)) || user?.role !== 'ADMIN' || !isActive(user)) {
-      throw new UnauthorizedException(INVALID_CODE);
-    }
-    return user;
+  // Password only, like staff. Email codes are for sign-up and password resets.
+  adminLogin({ email, password }: PasswordLoginRequest): Promise<User> {
+    return this.checkPassword(email, password, ['ADMIN']);
   }
 
   private async checkPassword(email: string, password: string, roles: Role[]): Promise<User> {

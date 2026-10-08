@@ -57,16 +57,14 @@ test('sign-up, login, wrong tab, logout, password reset, CSRF', async () => {
   assert.equal((await call('/auth/register', { ...signup, email: 'not-an-email' })).status, 400);
 });
 
-test('profiles, school approval, coordinator scoping, admin 2-step, staff', async () => {
+test('profiles, school approval, coordinator scoping, admin login, staff', async () => {
   // Admin via the one-off script, then password + emailed code.
   const adminEmail = `e2e-admin-${Date.now()}@example.com`;
   const out = spawnSync(process.execPath, ['--no-warnings', 'scripts/create-admin.ts', adminEmail, 'Test Admin'], { encoding: 'utf8' });
   const adminPw = out.stdout.match(/shown once\): (\S+)/)?.[1];
   assert.ok(adminPw, out.stderr);
   assert.equal((await call('/auth/admin/login', { email: adminEmail, password: 'wrong-password' })).status, 401);
-  assert.equal((await call('/auth/admin/verify', { email: adminEmail, code: '123456' })).status, 404, 'no route like that');
-  assert.equal((await call('/auth/admin/login', { email: adminEmail, password: adminPw })).status, 202);
-  const adminRes = await call('/auth/admin/login/verify', { email: adminEmail, code: await codeFor(adminEmail) });
+  const adminRes = await call('/auth/admin/login', { email: adminEmail, password: adminPw });
   assert.equal(adminRes.status, 200);
   const admin = adminRes.cookie;
   assert.equal((await call('/auth/login', { role: 'STUDENT', email: adminEmail, password: adminPw })).status, 401, 'admin cannot use public login');

@@ -70,8 +70,9 @@ downloads, schools, desk, staff, results and certificates, Wall). Badge scanning
 | Method + path | Body | Success | Notes |
 |---|---|---|---|
 | `POST /auth/staff/login` | `PasswordLoginRequest` `{ email, password }` | 200 `Me` + cookie | Volunteers and judges only. Sessions last 12 h. |
-| `POST /auth/admin/login` | `PasswordLoginRequest` | 202 | Right password → emails a code. Show the code screen. |
-| `POST /auth/admin/login/verify` | `AdminVerifyRequest` `{ email, code }` | 200 `Me` + cookie | Sessions last 12 h. |
+| `POST /auth/admin/login` | `PasswordLoginRequest` | 200 `Me` + cookie | Sessions last 12 h. `/admin/login` isn't linked from anywhere. |
+
+No login needs an email code; codes are only for sign-up and password resets.
 
 Admin accounts are created only with `pnpm --filter @avantra/api create-admin <email> "<name>"` (prints a one-time password).
 

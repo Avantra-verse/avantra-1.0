@@ -76,14 +76,13 @@ export async function student(tag: string) {
   return { ...s, avantraId: res.json.avantraId as string };
 }
 
-// Admin via the create-admin script, then password + emailed code. Returns the session cookie.
+// Admin via the create-admin script, then password login. Returns the session cookie.
 export async function admin() {
   const email = unique('admin');
   const out = spawnSync(process.execPath, ['--no-warnings', 'scripts/create-admin.ts', email, 'Test Admin'], { encoding: 'utf8' });
   const password = out.stdout.match(/shown once\): (\S+)/)?.[1];
   assert.ok(password, out.stderr);
-  assert.equal((await call('/auth/admin/login', { email, password })).status, 202);
-  const res = await call('/auth/admin/login/verify', { email, code: await codeFor(email) });
+  const res = await call('/auth/admin/login', { email, password });
   assert.equal(res.status, 200);
   return { email, password, cookie: res.cookie };
 }
