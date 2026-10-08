@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import {
   ForgotPasswordRequest,
   GoogleLoginRequest,
@@ -16,7 +16,8 @@ import { ZodPipe } from '../zod.pipe';
 import { AuthService } from './auth.service';
 import { CurrentUser, Public, readCookie, SESSION_COOKIE } from './session.guard';
 
-const perMinute = (limit: number) => Throttle({ default: { limit, ttl: 60_000 } });
+// `limit` per email address (or session) a minute; 300 a minute per IP, enough for a whole venue on one Wi-Fi.
+const perMinute = (limit: number) => Throttle({ default: { limit, ttl: 60_000 }, ip: { limit: 300, ttl: 60_000 } });
 
 @Controller('auth')
 export class AuthController {
@@ -72,7 +73,7 @@ export class AuthController {
     res.clearCookie(SESSION_COOKIE, { path: '/' });
   }
 
-  @Get('me')
+  @SkipThrottle() @Get('me') // every page load calls it; a cheap indexed lookup
   me(@CurrentUser() user: User): Promise<Me> {
     return this.auth.me(user.id);
   }

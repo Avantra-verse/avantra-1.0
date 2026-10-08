@@ -1,4 +1,5 @@
 import { BadRequestException, Body, ConflictException, Controller, Get, NotFoundException, Param, Patch, Post } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { CreateEventRequest, UpdateEventRequest } from '@avantra/shared';
 import { Prisma } from '@prisma/client';
 import { Public, Roles } from './auth/session.guard';
@@ -9,7 +10,7 @@ import { ZodPipe } from './zod.pipe';
 export class EventsController {
   constructor(private readonly prisma: PrismaService) {}
 
-  @Public() @Get('events')
+  @Public() @SkipThrottle() @Get('events')
   async list() {
     const events = await this.prisma.event.findMany({ orderBy: [{ category: 'asc' }, { name: 'asc' }] });
     const taken = await this.prisma.registration.groupBy({ by: ['eventId'], _count: true });

@@ -19,7 +19,7 @@ import {
   Query,
   StreamableFile,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import {
   answerMatches,
   AvantraId,
@@ -46,6 +46,7 @@ const FROZEN_KEY = 'wall.frozenAt'; // ISO time; absent = live
 
 type Player = { studentId: string; name: string; grade: number; section: string | null; avantraId: string; schoolId: string | null; school: string | null; points: number; solved: number; lastSolvedAt: Date };
 type SchoolRow = { schoolId: string; school: string; points: number; solved: number; players: number; lastSolvedAt: Date };
+type Board = { players: Player[]; schools: SchoolRow[] };
 
 // Ranking: points, then more challenges solved, then whoever got there first.
 const byRank = (a: { points: number; solved: number; lastSolvedAt: Date }, b: typeof a) =>
@@ -59,15 +60,16 @@ const publicName = (name: string) => {
 
 @Controller()
 export class WallController {
-  // ponytail: whole-board recompute, cached 5 s per API instance; the big screen and every phone share it.
-  // Keyed by "live" or the freeze time.
-  private boards = new Map<string, { at: number; players: Player[]; schools: SchoolRow[] }>();
+  // ponytail: whole-board recompute at most every 5 s per API instance, shared by the big screen and every phone.
+  // Answers don't clear it (at peak that meant one full recompute per correct answer); a student's own points
+  // are read live and ranked against it. Concurrent requests share one in-flight query. Keyed by "live" or the freeze time.
+  private boards = new Map<string, { at: number; board: Promise<Board> }>();
 
   constructor(private readonly prisma: PrismaService) {}
 
   // ---- public: the big screen and the /wall page ----
 
-  @Public() @Get('wall/leaderboard')
+  @Public() @SkipThrottle() @Get('wall/leaderboard') // served from the 5 s cache
   async leaderboard() {
     const frozenAt = await this.frozenAt();
     const { players, schools } = await this.standings(frozenAt);
@@ -113,7 +115,6 @@ export class WallController {
       await tx.wallAttempt.create({ data: { challengeId: c.id, studentId: user.id, answer, correct } });
       if (correct) await tx.wallSolve.create({ data: { challengeId: c.id, studentId: user.id } });
     });
-    this.boards.clear();
     return {
       correct,
       pointsEarned: correct ? c.points : 0,
@@ -314,25 +315,47 @@ export class WallController {
   // A student always sees their own points live. While frozen, ranks (theirs and their school's) are as at the freeze.
   private async standing(studentId: string) {
     const frozenAt = await this.frozenAt();
-    const me = (await this.standings()).players.find((p) => p.studentId === studentId);
+    const [me] = await this.prisma.$queryRaw<{ points: number; solved: number; lastSolvedAt: Date | null; schoolId: string | null }[]>`
+      SELECT COALESCE(SUM(c.points), 0)::int AS points, COUNT(w."challengeId")::int AS solved, MAX(w."solvedAt") AS "lastSolvedAt",
+             (SELECT "schoolId" FROM "Student" WHERE "userId" = ${studentId}) AS "schoolId"
+      FROM "WallSolve" w JOIN "WallChallenge" c ON c.id = w."challengeId"
+      WHERE w."studentId" = ${studentId}`;
     const { players, schools } = await this.standings(frozenAt);
-    const i = players.findIndex((p) => p.studentId === studentId);
-    const s = me?.schoolId ? schools.findIndex((x) => x.schoolId === me.schoolId) : -1;
+    let rank: number | null = null;
+    let total = players.length;
+    if (frozenAt) {
+      const i = players.findIndex((p) => p.studentId === studentId);
+      if (i >= 0) rank = i + 1;
+    } else if (me.solved) {
+      // Live: rank my up-to-the-second score against the (up to 5 s old) board.
+      const mine = { points: me.points, solved: me.solved, lastSolvedAt: me.lastSolvedAt! };
+      const others = players.filter((p) => p.studentId !== studentId);
+      rank = others.filter((p) => byRank(p, mine) < 0).length + 1;
+      total = others.length + 1;
+    }
+    const s = me.schoolId ? schools.findIndex((x) => x.schoolId === me.schoolId) : -1;
     return {
-      points: me?.points ?? 0,
-      solved: me?.solved ?? 0,
-      rank: i >= 0 ? i + 1 : null,
-      players: players.length,
+      points: me.points,
+      solved: me.solved,
+      rank,
+      players: total,
       school: s >= 0 ? { name: schools[s].school, rank: s + 1, points: schools[s].points } : null,
       frozenAt,
     };
   }
 
   // Disabled accounts don't rank. "Others" students rank individually but not for a school until an admin links them.
-  private async standings(asOf: Date | null = null, fresh = false) {
+  private standings(asOf: Date | null = null, fresh = false): Promise<Board> {
     const key = asOf?.toISOString() ?? 'live';
     const cached = this.boards.get(key);
-    if (!fresh && cached && Date.now() - cached.at < 5_000) return cached;
+    if (!fresh && cached && Date.now() - cached.at < 5_000) return cached.board;
+    const board = this.computeBoard(asOf);
+    this.boards.set(key, { at: Date.now(), board });
+    board.catch(() => this.boards.delete(key)); // a failed query isn't cached
+    return board;
+  }
+
+  private async computeBoard(asOf: Date | null): Promise<Board> {
     const upTo = asOf?.toISOString() ?? '9999-12-31T00:00:00Z'; // solvedAt is stored as UTC
     const players = await this.prisma.$queryRaw<Player[]>`
       SELECT s."userId" AS "studentId", u.name, s.grade, s.section, s."avantraId", s."schoolId", COALESCE(sc.name, s."otherSchoolName") AS school,
@@ -355,8 +378,6 @@ export class WallController {
       if (p.lastSolvedAt > row.lastSolvedAt) row.lastSolvedAt = p.lastSolvedAt;
       bySchool.set(p.schoolId, row);
     }
-    const board = { at: Date.now(), players, schools: [...bySchool.values()].sort(byRank) };
-    this.boards.set(key, board);
-    return board;
+    return { players, schools: [...bySchool.values()].sort(byRank) };
   }
 }

@@ -1,4 +1,5 @@
 import { Body, ConflictException, Controller, ForbiddenException, Get, Post } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { SchoolProfile, StudentProfile } from '@avantra/shared';
 import type { User } from '@prisma/client';
 import { CurrentUser, Public, Roles } from './auth/session.guard';
@@ -11,7 +12,7 @@ export class ProfileController {
   constructor(private readonly prisma: PrismaService) {}
 
   // School dropdown on the student profile step. School names are public.
-  @Public() @Get('schools')
+  @Public() @SkipThrottle() @Get('schools')
   schools() {
     return this.prisma.school.findMany({
       where: { status: 'APPROVED' },
