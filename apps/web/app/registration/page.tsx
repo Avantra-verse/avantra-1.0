@@ -1,24 +1,43 @@
 "use client";
 
-// Sign-up: details -> 6-digit code emailed -> account created and logged in -> profile step.
+// Sign-up: pick Student or School (?as=…, so Back works) -> details -> 6-digit code emailed -> account created and logged in -> profile step.
 // The account only exists once the code is verified (POST /auth/register, then /auth/register/verify).
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterRequest } from "@avantra/shared";
 import { api, ApiError, apiReady } from "@/lib/api";
-import { AccountShell, Chips, Field, FooterLink, FormError, OpensSoon, ROLE_OPTIONS, styles } from "@/components/account/Account";
+import { AccountShell, Field, FooterLink, FormError, OpensSoon, ROLE_OPTIONS, styles } from "@/components/account/Account";
 
 type Role = (typeof ROLE_OPTIONS)[number]["value"];
+const AS: Record<string, Role> = { student: "STUDENT", coordinator: "SCHOOL_COORDINATOR" };
+const BLURB: Record<Role, string> = {
+  STUDENT: "Get your entry badge and pay the exhibition fee.",
+  SCHOOL_COORDINATOR: "Register your school and follow your students.",
+};
 
 export default function RegistrationPage() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>("STUDENT");
+  const [role, setRole] = useState<Role | null>(null);
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", terms: false });
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"details" | "code">("details");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    const read = () => setRole(AS[new URLSearchParams(window.location.search).get("as") ?? ""] ?? null);
+    read();
+    window.addEventListener("popstate", read);
+    return () => window.removeEventListener("popstate", read);
+  }, []);
+
+  function pick(r: Role | null) {
+    const as = Object.keys(AS).find((k) => AS[k] === r);
+    window.history.pushState(null, "", as ? `?as=${as}` : window.location.pathname);
+    setRole(r);
+    setErrors({});
+  }
 
   const set = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
@@ -109,12 +128,31 @@ export default function RegistrationPage() {
             </button>
           </div>
         </>
-      ) : (
+      ) : !role ? (
         <>
           <h1 className={styles.heading}>Join Avantra</h1>
-          <p className={styles.subtext}>Create your account to register for AVANTRA 2026.</p>
+          <p className={styles.subtext}>Who&apos;s signing up?</p>
+          <div className={styles.roleGrid}>
+            {ROLE_OPTIONS.map((o) => (
+              <button key={o.value} type="button" className={styles.roleCard} onClick={() => pick(o.value)}>
+                <span className={styles.chipTitle}>{o.title}</span>
+                <span className={styles.roleSub}>{o.sub}</span>
+                <span className={styles.chipSubtext}>{BLURB[o.value]}</span>
+              </button>
+            ))}
+          </div>
+          <FooterLink text="Already have an account?" href="/login" link="Log in" />
+        </>
+      ) : (
+        <>
+          <h1 className={styles.heading}>{role === "STUDENT" ? "Join as a student" : "Register your school"}</h1>
+          <p className={styles.subtext}>
+            {role === "STUDENT" ? "Create your account for AVANTRA 2026." : "Create your coordinator account first. You add the school details next."}{" "}
+            <button type="button" className={styles.link} onClick={() => pick(null)}>
+              Not you? Go back
+            </button>
+          </p>
           <form className={styles.form} onSubmit={send} noValidate>
-            <Chips name="role" legend="I am a" value={role} onChange={setRole} options={ROLE_OPTIONS} />
             <Field name="name" label="Full name" autoComplete="name" value={form.name} onChange={set} error={errors.name} />
             <Field name="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={set} error={errors.email} />
             <div className={styles.twoColRow}>

@@ -103,6 +103,7 @@ test('profiles, school approval, coordinator scoping, admin login, staff', async
   assert.equal((await call(`/admin/students/${row.userId}/link`, { schoolId: school.json.id }, admin)).status, 200);
   const mine = (await call('/coordinator/students', undefined, coord.cookie)).json;
   assert.deepEqual(mine.map((s: { avantraId: string }) => s.avantraId), [created.json.avantraId]);
+  assert.equal(mine[0]._count.checkIns, 0); // gate check-ins, shown on the coordinator dashboard
 
   // Staff: admin creates a volunteer; it logs in on /staff only and can't reach admin.
   const volEmail = `e2e-vol-${Date.now()}@example.com`;

@@ -26,7 +26,12 @@ export class ProfileController {
     const { student, school } = await this.prisma.user.findUniqueOrThrow({
       where: { id: user.id },
       select: {
-        student: { include: { school: { select: { id: true, name: true, city: true } } } },
+        student: {
+          include: {
+            school: { select: { id: true, name: true, city: true } },
+            _count: { select: { checkIns: { where: { eventId: null } } } }, // days through the gate
+          },
+        },
         school: { select: { id: true, name: true, city: true, address: true, status: true } },
       },
     });
@@ -74,7 +79,14 @@ export class ProfileController {
     if (school?.status !== 'APPROVED') return [];
     return this.prisma.student.findMany({
       where: { schoolId: school.id },
-      select: { avantraId: true, grade: true, feePaidAt: true, user: { select: { name: true, createdAt: true } } },
+      select: {
+        avantraId: true,
+        grade: true,
+        section: true,
+        feePaidAt: true,
+        user: { select: { name: true, createdAt: true } },
+        _count: { select: { checkIns: { where: { eventId: null } } } }, // gate scans; event scans have an eventId
+      },
       orderBy: { user: { name: 'asc' } },
     });
   }

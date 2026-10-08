@@ -62,8 +62,8 @@ downloads, schools, desk, staff, results and certificates, Wall). Badge scanning
 | `GET /schools` | anyone | none | 200 `[{ id, name, city }]` | Approved schools only, for the dropdown. Add an "Others" option yourself. |
 | `POST /profile/student` | STUDENT | `StudentProfile` | 201 student | Send `schoolId` **or** `otherSchoolName`, not both. `guardianConsent` must be `true`. Optional `section` and `guardianPhone` (e.g. `"B"`). Returns `avantraId` (e.g. `AV26-7K3QX`) and `qrToken`. 403 = school not approved. 409 = already done. |
 | `POST /profile/school` | SCHOOL_COORDINATOR | `SchoolProfile` | 201 school | Starts `PENDING` until an admin approves. 409 = school name+city taken, or coordinator already has one. |
-| `GET /profile` | any logged-in | none | 200 `{ student, school }` | Student: avantraId, qrToken (for the QR badge), school. Coordinator: school with `status`. |
-| `GET /coordinator/students` | SCHOOL_COORDINATOR | none | 200 `[{ avantraId, grade, feePaidAt, user: { name, createdAt } }]` | Only their own school. Empty until the school is approved. |
+| `GET /profile` | any logged-in | none | 200 `{ student, school }` | Student: avantraId, qrToken (for the QR badge), school, `_count.checkIns` (days through the gate). Coordinator: school with `status`. |
+| `GET /coordinator/students` | SCHOOL_COORDINATOR | none | 200 `[{ avantraId, grade, section, feePaidAt, user: { name, createdAt }, _count: { checkIns } }]` | Only their own school. Empty until the school is approved. `_count.checkIns` = gate check-ins (at most one a day). |
 
 ## Staff and admin login
 
@@ -152,7 +152,9 @@ Even if the browser closes before `handler` runs, Razorpay's webhook (`POST /pay
 
 | Method + path | Who | Body | Success | Notes |
 |---|---|---|---|---|
-| `POST /staff/checkin` | VOLUNTEER, JUDGE, ADMIN | `CheckInRequest` `{ qrToken \| avantraId, eventId?, scannedAt? }` | 200 `{ student: { name, avantraId, grade, school, feePaid }, checkedInAt, alreadyCheckedIn }` | No `eventId` = main gate. Entry is free, so unpaid students get in too (`feePaid` is just shown). 403 + `student` = not registered for that event (show the name, send them to the desk). 404 = unknown badge. Offline: queue scans and send them later with `scannedAt` (max 48 h old). |
+| `POST /staff/checkin` | VOLUNTEER, ADMIN | `CheckInRequest` `{ qrToken \| avantraId, eventId?, scannedAt? }` | 200 `{ student: { name, avantraId, grade, school, feePaid }, checkedInAt, alreadyCheckedIn }` | No `eventId` = main gate. Entry is free, so unpaid students get in too (`feePaid` is just shown). 403 + `student` = not registered for that event (show the name, send them to the desk). 404 = unknown badge. Offline: queue scans and send them later with `scannedAt` (max 48 h old). |
+| `GET /staff/my-scans` | VOLUNTEER, ADMIN | none | 200 `{ total, recent: [{ at, place, student }] }` | The caller's own check-ins in the last 12 h; `recent` = latest 20, `place` = event name or `Main gate`. |
+| `GET /staff/students?q=` | VOLUNTEER, ADMIN | none | 200 `[{ name, avantraId, grade, school, feePaid, checkedInAt }]` | Look-up without checking in: AVANTRA ID (with or without `AV26-`) or part of the name, max 20. `checkedInAt` = gate scan in the last 12 h, else null. 400 = under 2 letters. |
 | `GET /staff/judge/teams` | JUDGE | none | 200 `{ event, teams: [{ id, name, projectTitle, topic, members, scored }] }` | The judge's queue for their assigned event. |
 | `POST /staff/judge/lookup` | JUDGE | `JudgeLookupRequest` `{ qrToken \| avantraId }` | 200 team | Scan any member's badge → their team in the judge's event. 404 = not registered / no team. |
 | `GET /staff/judge/teams/:id` | JUDGE | none | 200 team | Same shape as lookup. |

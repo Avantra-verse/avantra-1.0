@@ -259,6 +259,65 @@
   margin: 12px 0 16px;
 }
 
+/* Judging: one card per criterion, tap a score. */
+.criterion {
+  border: 2px solid rgba(154, 212, 251, 0.25);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.criterionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.points {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 4px;
+}
+
+.point {
+  min-height: 44px;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--bg);
+  border: 2px solid #4a6f88;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.point[aria-checked="true"] {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--sky);
+}
+
+.point:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 2px;
+}
+
+/* Total + save stay on screen while the judge scrolls through the criteria. */
+.saveBar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 0 4px;
+  background: var(--panel);
+  border-top: 1px solid rgba(243, 236, 228, 0.16);
+}
+
 .criteria label {
   display: flex;
   justify-content: space-between;
@@ -271,8 +330,93 @@
   text-align: right;
 }
 
+.tiles + * {
+  margin-top: 14px;
+}
+
 @media (max-width: 640px) {
   .hideSmall {
     display: none;
+  }
+
+  .page {
+    padding: 76px 12px 32px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .tiles {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .tile {
+    padding: 10px 12px;
+  }
+
+  .tileValue {
+    font-size: 1.35rem;
+  }
+
+  .tab {
+    padding: 7px 13px;
+  }
+
+  .points {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  /* .stack tables turn into one card per row: first cell is the title, the rest wrap below it. */
+  .stack thead {
+    display: none;
+  }
+
+  .stack,
+  .stack tbody {
+    display: block;
+  }
+
+  .stack tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    padding: 12px 0;
+    border-top: 1px solid rgba(243, 236, 228, 0.16);
+  }
+
+  .stack tr:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .stack td {
+    padding: 0;
+    border: 0;
+    text-align: left;
+  }
+
+  .stack td:first-child {
+    flex-basis: 100%;
+    font-weight: 700;
+  }
+
+  .stack td:first-child div {
+    font-weight: 400;
+  }
+
+  .stack td[data-label]::before {
+    content: attr(data-label) ": ";
+    color: var(--mute);
+  }
+
+  .stack .inline {
+    justify-content: flex-start !important;
+  }
+
+  .stack .select {
+    max-width: 100%;
   }
 }

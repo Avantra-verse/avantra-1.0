@@ -9,7 +9,7 @@ import { CreateStaffRequest, WalkInRequest } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
-import { fileUrl, rupees, useAction, useLoad } from "./ui";
+import { fileUrl, rupees, Tile, useAction, useLoad } from "./ui";
 import { Events } from "./events";
 import { Wall } from "./wall";
 
@@ -89,15 +89,6 @@ type Stats = {
   events: { id: string; name: string; capacity: number | null; registrations: number; teams: number; deskScans: number }[];
 };
 
-function Tile({ value, label }: { value: React.ReactNode; label: string }) {
-  return (
-    <div className={t.tile}>
-      <span className={t.tileValue}>{value}</span>
-      <span className={t.tileLabel}>{label}</span>
-    </div>
-  );
-}
-
 function Overview() {
   const { data: s, error, reload } = useLoad<Stats>("/admin/stats");
   if (!s) return error ? <FormError message={error} /> : <p className={t.mute}>Loading…</p>;
@@ -121,7 +112,7 @@ function Overview() {
       <section className={t.panel} aria-labelledby="by-event">
         <h2 id="by-event">Events</h2>
         <div className={t.scroll}>
-          <table className={t.table}>
+          <table className={`${t.table} ${t.stack}`}>
             <thead>
               <tr>
                 <th>Event</th>
@@ -134,12 +125,12 @@ function Overview() {
               {s.events.map((e) => (
                 <tr key={e.id}>
                   <td>{e.name}</td>
-                  <td className={t.num}>
+                  <td className={t.num} data-label="Registered">
                     {e.registrations}
                     {e.capacity !== null && <span className={t.mute}> / {e.capacity}</span>}
                   </td>
-                  <td className={t.num}>{e.teams}</td>
-                  <td className={t.num}>{e.deskScans}</td>
+                  <td className={t.num} data-label="Teams">{e.teams}</td>
+                  <td className={t.num} data-label="Desk scans">{e.deskScans}</td>
                 </tr>
               ))}
             </tbody>
@@ -214,7 +205,7 @@ function Schools() {
           <p className={t.mute}>Nothing here.</p>
         ) : (
           <div className={t.scroll}>
-            <table className={t.table}>
+            <table className={`${t.table} ${t.stack}`}>
               <thead>
                 <tr>
                   <th>School</th>
@@ -234,7 +225,7 @@ function Schools() {
                       {s.coordinator.name}
                       <div className={t.mute}>{s.coordinator.email}{s.coordinator.phone && ` · ${s.coordinator.phone}`}</div>
                     </td>
-                    <td className={t.num}>{s._count.students}</td>
+                    <td className={t.num} data-label="Students">{s._count.students}</td>
                     <td className={t.num}>
                       {s.status === "PENDING" ? (
                         <div className={t.inline} style={{ justifyContent: "flex-end" }}>
@@ -261,7 +252,7 @@ function Schools() {
           <p className={t.mute}>None.</p>
         ) : (
           <div className={t.scroll}>
-            <table className={t.table}>
+            <table className={`${t.table} ${t.stack}`}>
               <thead>
                 <tr>
                   <th>Student</th>
@@ -276,7 +267,7 @@ function Schools() {
                       {u.user.name} <span className={t.mute}>· Class {u.grade}</span>
                       <div className={`${t.mute} ${t.mono}`}>{u.avantraId}</div>
                     </td>
-                    <td>{u.otherSchoolName}</td>
+                    <td data-label="Typed school">{u.otherSchoolName}</td>
                     <td>
                       <div className={t.inline}>
                         <select className={t.select} value={pick[u.userId] ?? ""} onChange={(e) => setPick((p) => ({ ...p, [u.userId]: e.target.value }))} aria-label={`School for ${u.user.name}`}>
@@ -536,7 +527,7 @@ function Staff() {
           <p className={t.mute}>No one yet.</p>
         ) : (
           <div className={t.scroll}>
-            <table className={t.table}>
+            <table className={`${t.table} ${t.stack}`}>
               <thead>
                 <tr>
                   <th>Name</th>

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, ForbiddenException, Get, HttpCode, NotFoundException, Param, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, HttpCode, NotFoundException, Param, Post, Query } from '@nestjs/common';
 import { CheckInRequest, JudgeLookupRequest, MAX_POINTS, SubmitScoresRequest } from '@avantra/shared';
 import type { User } from '@prisma/client';
 import { CurrentUser, Roles } from './auth/session.guard';
@@ -24,7 +24,7 @@ export class StaffController {
   constructor(private readonly prisma: PrismaService) {}
 
   // Gate (no eventId) or event desk. Returns who it is so the volunteer can match face to badge.
-  @Roles('VOLUNTEER', 'JUDGE', 'ADMIN') @Post('staff/checkin') @HttpCode(200)
+  @Roles('VOLUNTEER', 'ADMIN') @Post('staff/checkin') @HttpCode(200)
   async checkIn(@CurrentUser() staff: User, @Body(new ZodPipe(CheckInRequest)) body: CheckInRequest) {
     const now = Date.now();
     const at = body.scannedAt ?? new Date(now);
@@ -45,6 +45,37 @@ export class StaffController {
     if (earlier) return { student: card, checkedInAt: earlier.scannedAt, alreadyCheckedIn: true };
     await this.prisma.checkIn.create({ data: { studentId: student.userId, eventId, scannedById: staff.id, scannedAt: at } });
     return { student: card, checkedInAt: at, alreadyCheckedIn: false };
+  }
+
+  // A volunteer's own scans in the last 12 h (same window as "already checked in"): count + latest 20.
+  @Roles('VOLUNTEER', 'ADMIN') @Get('staff/my-scans')
+  async myScans(@CurrentUser() staff: User) {
+    const where = { scannedById: staff.id, scannedAt: { gt: new Date(Date.now() - SAME_DAY_MS) } };
+    const [total, recent] = await Promise.all([
+      this.prisma.checkIn.count({ where }),
+      this.prisma.checkIn.findMany({
+        where,
+        orderBy: { scannedAt: 'desc' },
+        take: 20,
+        select: { scannedAt: true, event: { select: { name: true } }, student: { select: studentCard } },
+      }),
+    ]);
+    return { total, recent: recent.map((r) => ({ at: r.scannedAt, place: r.event?.name ?? 'Main gate', student: this.card(r.student) })) };
+  }
+
+  // Look a student up without checking them in: AVANTRA ID (with or without "AV26-") or part of the name.
+  @Roles('VOLUNTEER', 'ADMIN') @Get('staff/students')
+  async findStudents(@Query('q') q = '') {
+    const text = q.trim();
+    if (text.length < 2) throw new BadRequestException('Type at least 2 letters');
+    const id = text.toUpperCase();
+    const rows = await this.prisma.student.findMany({
+      where: { OR: [{ avantraId: id.startsWith('AV26-') ? id : `AV26-${id}` }, { user: { name: { contains: text, mode: 'insensitive' } } }] },
+      select: { ...studentCard, checkIns: { where: { eventId: null, scannedAt: { gt: new Date(Date.now() - SAME_DAY_MS) } }, select: { scannedAt: true }, take: 1 } },
+      orderBy: { user: { name: 'asc' } },
+      take: 20,
+    });
+    return rows.map((r) => ({ ...this.card(r), checkedInAt: r.checkIns[0]?.scannedAt ?? null }));
   }
 
   // Judge's queue: every team in their event, and whether they've scored it yet.

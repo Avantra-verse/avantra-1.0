@@ -1,8 +1,9 @@
 "use client";
 
 // Small helpers shared by the admin sections.
-import { useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { api, API_URL, ApiError } from "@/lib/api";
+import t from "../staff/tools.module.css";
 
 // GET a path, with a reload after changes.
 export function useLoad<T>(path: string | null) {
@@ -49,3 +50,41 @@ export function useAction() {
 export const fileUrl = (path: string) => API_URL + path;
 
 export const rupees = (paise: number) => `₹${(paise / 100).toLocaleString("en-IN")}`;
+
+export function Tile({ value, label }: { value: ReactNode; label: string }) {
+  return (
+    <div className={t.tile}>
+      <span className={t.tileValue}>{value}</span>
+      <span className={t.tileLabel}>{label}</span>
+    </div>
+  );
+}
+
+// Tab bar whose choice survives a refresh (#hash). `tabs` must be a module-level constant.
+export function useTabs<K extends string>(tabs: Record<K, string>, first: NoInfer<K>) {
+  const [tab, setTab] = useState<K>(first);
+  useEffect(() => {
+    const saved = window.location.hash.slice(1);
+    if (saved in tabs) setTab(saved as K);
+  }, [tabs]);
+  const bar = (
+    <div className={t.tabs} role="tablist">
+      {(Object.keys(tabs) as K[]).map((k) => (
+        <button
+          key={k}
+          type="button"
+          role="tab"
+          aria-selected={tab === k}
+          className={t.tab}
+          onClick={() => {
+            setTab(k);
+            window.history.replaceState(null, "", `#${k}`);
+          }}
+        >
+          {tabs[k]}
+        </button>
+      ))}
+    </div>
+  );
+  return { tab, bar };
+}

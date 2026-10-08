@@ -39,6 +39,13 @@ test('check-in scans: gate, event desk, unpaid, duplicates, offline, manual ID',
   assert.equal(first.status, 200);
   assert.deepEqual([first.json.student.avantraId, first.json.student.feePaid, first.json.alreadyCheckedIn], [a.avantraId, true, false]);
   assert.equal((await call('/staff/checkin', { qrToken: a.qrToken }, vol.cookie)).json.alreadyCheckedIn, true, 'second scan same day');
+  assert.equal((await call('/profile', undefined, a.cookie)).json.student._count.checkIns, 1, 'dashboard counts gate days, not repeat scans');
+  const mine = (await call('/staff/my-scans', undefined, vol.cookie)).json;
+  assert.deepEqual([mine.total, mine.recent[0].student.avantraId, mine.recent[0].place], [1, a.avantraId, 'Main gate'], 'repeat scan is not a new scan');
+  const byId = (await call(`/staff/students?q=${a.avantraId.slice(5).toLowerCase()}`, undefined, vol.cookie)).json;
+  assert.ok(byId[0].checkedInAt, 'lookup by ID shows the gate check-in');
+  assert.equal((await call('/staff/students?q=x', undefined, vol.cookie)).status, 400);
+  assert.equal((await call('/staff/students?q=ab', undefined, a.cookie)).status, 403, 'students cannot look others up');
 
   // Entry is free: unpaid students get in too (the card shows it). Unknown badge: 404. Damaged QR: type the ID.
   const free = await call('/staff/checkin', { qrToken: unpaidQr }, vol.cookie);

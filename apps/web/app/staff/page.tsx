@@ -1,6 +1,6 @@
 "use client";
 
-// Event day, phone-first. Volunteers check students in at the gate or an event desk; judges also score teams.
+// Event day, phone-first. Volunteers check students in at the gate or an event desk; judges only score teams.
 // Badges are scanned with the phone camera (or the AVANTRA ID is typed). If the venue Wi-Fi drops, check-ins are
 // saved on the phone and sent with their scan time when the connection is back.
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -10,6 +10,7 @@ import { AvantraId, MAX_POINTS } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, styles as account } from "@/components/account/Account";
 import t from "./tools.module.css";
+import { useAction, useLoad, useTabs } from "../admin/ui";
 
 type Card = { name: string; avantraId: string; grade: number; school: string | null; feePaid: boolean };
 type Ref = { qrToken: string } | { avantraId: string };
@@ -19,7 +20,6 @@ export default function StaffPage() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
   const [failed, setFailed] = useState("");
-  const [tab, setTab] = useState<"checkin" | "judge">("checkin");
 
   useEffect(() => {
     if (!apiReady) return;
@@ -59,20 +59,125 @@ export default function StaffPage() {
                 <button type="button" className={account.link} onClick={logout}>Log out</button>
               </span>
             </div>
-            {me.role === "JUDGE" && (
-              <div className={t.tabs} role="tablist">
-                {(["checkin", "judge"] as const).map((k) => (
-                  <button key={k} type="button" role="tab" aria-selected={tab === k} className={t.tab} onClick={() => setTab(k)}>
-                    {k === "checkin" ? "Check-in" : "Judging"}
-                  </button>
-                ))}
-              </div>
-            )}
-            {tab === "judge" && me.role === "JUDGE" ? <Judging /> : <CheckIn />}
+            {me.role === "JUDGE" ? <Judging /> : <Tools />}
           </>
         )}
       </div>
     </div>
+  );
+}
+
+const VOLUNTEER_TABS = { checkin: "Check-in", scans: "My scans", find: "Find student" } as const;
+
+function Tools() {
+  const { tab, bar } = useTabs(VOLUNTEER_TABS, "checkin");
+  return (
+    <>
+      {bar}
+      {tab === "checkin" && <CheckIn />}
+      {tab === "scans" && <MyScans />}
+      {tab === "find" && <FindStudent />}
+    </>
+  );
+}
+
+const time = (iso: string) => new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
+
+function MyScans() {
+  const { data, error, reload } = useLoad<{ total: number; recent: { at: string; place: string; student: Card }[] }>("/staff/my-scans");
+  return (
+    <section className={t.panel} aria-labelledby="my-scans">
+      <div className={t.head}>
+        <h2 id="my-scans">My scans</h2>
+        <button type="button" className={t.ghost} onClick={reload}>Refresh</button>
+      </div>
+      <FormError message={error} />
+      {data && (
+        <>
+          <p style={{ margin: "0 0 4px" }}>
+            <strong style={{ fontSize: "1.6rem", color: "var(--sky)" }}>{data.total}</strong> check-ins in the last 12 hours
+          </p>
+          <p className={t.mute}>Scans still waiting to send (no internet) show up here once they&apos;re sent.</p>
+          {data.recent.length > 0 && (
+            <table className={`${t.table} ${t.stack}`}>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Time</th>
+                  <th>Where</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recent.map((r) => (
+                  <tr key={r.at + r.student.avantraId}>
+                    <td>
+                      {r.student.name} <span className={`${t.mute} ${t.mono}`}>{r.student.avantraId}</span>
+                    </td>
+                    <td>{time(r.at)}</td>
+                    <td className={t.mute}>{r.place}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+type Found = Card & { checkedInAt: string | null };
+
+function FindStudent() {
+  const [q, setQ] = useState("");
+  const [found, setFound] = useState<Found[] | null>(null);
+  const act = useAction();
+
+  async function search(e: React.FormEvent) {
+    e.preventDefault();
+    if (q.trim().length < 2) return act.setError("Type at least 2 letters.");
+    const r = await act.run(() => api<Found[]>(`/staff/students?q=${encodeURIComponent(q.trim())}`));
+    if (r) setFound(r);
+  }
+
+  return (
+    <section className={t.panel} aria-labelledby="find">
+      <h2 id="find">Find a student</h2>
+      <p className={t.mute}>Look someone up without checking them in.</p>
+      <form className={t.inline} onSubmit={search} noValidate>
+        <Field name="q" label="Name or AVANTRA ID" type="search" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button type="submit" className={t.btn} disabled={act.busy} style={{ marginBottom: 4 }}>Search</button>
+      </form>
+      <FormError message={act.error} />
+      {found && found.length === 0 && <p className={t.mute}>No one found.</p>}
+      {found && found.length > 0 && (
+        <table className={`${t.table} ${t.stack}`} style={{ marginTop: 14 }}>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>AVANTRA ID</th>
+              <th>Fee</th>
+              <th>Gate today</th>
+            </tr>
+          </thead>
+          <tbody>
+            {found.map((f) => (
+              <tr key={f.avantraId}>
+                <td>
+                  {f.name}
+                  <div className={t.mute}>Class {f.grade}{f.school ? ` · ${f.school}` : ""}</div>
+                </td>
+                <td className={t.mono}>{f.avantraId}</td>
+                <td>
+                  <span className={`${t.pill} ${f.feePaid ? t.on : t.off}`}>{f.feePaid ? "paid" : "not paid"}</span>
+                </td>
+                <td>{f.checkedInAt ? `checked in ${time(f.checkedInAt)}` : <span className={t.mute}>not checked in</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
   );
 }
 
@@ -344,6 +449,7 @@ function Judging() {
   const [team, setTeam] = useState<JudgeTeam | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState("");
 
   const load = useCallback(() => api<typeof queue>("/staff/judge/teams").then(setQueue).catch((e: ApiError) => setError(e.message)), []);
   useEffect(() => {
@@ -353,6 +459,7 @@ function Judging() {
   async function open(get: () => Promise<JudgeTeam>) {
     setBusy(true);
     setError("");
+    setSaved("");
     try {
       setTeam(await get());
     } catch (e) {
@@ -362,7 +469,17 @@ function Judging() {
     }
   }
 
-  if (team) return <ScoreTeam team={team} onDone={() => { setTeam(null); load(); }} />;
+  if (team)
+    return (
+      <ScoreTeam
+        team={team}
+        onDone={(didSave) => {
+          if (didSave) setSaved(`Saved scores for ${team.name}.`);
+          setTeam(null);
+          load();
+        }}
+      />
+    );
   return (
     <>
       <section className={t.panel} aria-labelledby="find">
@@ -370,6 +487,7 @@ function Judging() {
         <p className={t.mute}>Scan any team member&apos;s badge to open their team.</p>
         <BadgeInput onRef={(ref) => open(() => api<JudgeTeam>("/staff/judge/lookup", ref))} busy={busy} label="Or type a member's AVANTRA ID" />
         <FormError message={error} />
+        {saved && <p role="status" className={`${t.result} ${t.ok}`} style={{ marginBottom: 0 }}>{saved}</p>}
       </section>
       {queue && (
         <section className={t.panel} aria-labelledby="queue">
@@ -379,7 +497,7 @@ function Judging() {
           {queue.teams.length === 0 ? (
             <p className={t.mute}>No teams in this event yet.</p>
           ) : (
-            <table className={t.table}>
+            <table className={`${t.table} ${t.stack}`}>
               <tbody>
                 {queue.teams.map((x) => (
                   <tr key={x.id}>
@@ -404,63 +522,84 @@ function Judging() {
   );
 }
 
-function ScoreTeam({ team, onDone }: { team: JudgeTeam; onDone: () => void }) {
-  const [scores, setScores] = useState<Record<string, string>>(() => Object.fromEntries(team.criteria.map((c) => [c, team.myScores[c]?.toString() ?? ""])));
+function ScoreTeam({ team, onDone }: { team: JudgeTeam; onDone: (saved: boolean) => void }) {
+  const [scores, setScores] = useState<Record<string, number | undefined>>(() => Object.fromEntries(team.criteria.map((c) => [c, team.myScores[c]])));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const max = team.maxPoints ?? MAX_POINTS;
+  const done = team.criteria.filter((c) => scores[c] !== undefined).length;
+  const total = team.criteria.reduce((sum, c) => sum + (scores[c] ?? 0), 0);
+  const editing = team.criteria.some((c) => team.myScores[c] !== undefined);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const list = team.criteria.map((criterion) => ({ criterion, points: Number(scores[criterion]) }));
-    if (list.some((s) => scores[s.criterion] === "" || !Number.isInteger(s.points) || s.points < 0 || s.points > max)) {
-      return setError(`Give every criterion a whole number from 0 to ${max}.`);
+    const missing = team.criteria.find((c) => scores[c] === undefined);
+    if (missing) {
+      setError(`Give a score for ${missing}.`);
+      document.getElementById(`crit-${team.criteria.indexOf(missing)}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
     }
     setBusy(true);
     try {
-      await api("/staff/judge/scores", { teamId: team.id, scores: list });
-      onDone();
+      await api("/staff/judge/scores", { teamId: team.id, scores: team.criteria.map((criterion) => ({ criterion, points: scores[criterion] })) });
+      onDone(true);
     } catch (err) {
       setError((err as ApiError).message);
       setBusy(false);
     }
   }
 
-  const total = team.criteria.reduce((sum, c) => sum + (Number(scores[c]) || 0), 0);
   return (
     <section className={t.panel} aria-labelledby="team">
+      <button type="button" className={account.link} onClick={() => onDone(false)} style={{ marginBottom: 10 }}>
+        &larr; All teams
+      </button>
       <h2 id="team">{team.name}</h2>
-      {team.projectTitle && <p style={{ margin: "0 0 4px" }}>{team.projectTitle}</p>}
+      {team.projectTitle && <p style={{ margin: "0 0 4px", fontWeight: 700 }}>{team.projectTitle}</p>}
       {team.topic && <p className={t.mute} style={{ margin: 0 }}>{team.topic}</p>}
       <p className={t.mute}>{team.members.map((m) => m.name).join(", ")}</p>
       <form onSubmit={save} noValidate>
         <div className={t.criteria}>
-          {team.criteria.map((c) => (
-            <label key={c}>
-              <span>{c}</span>
-              <input
-                className={t.small}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={max}
-                value={scores[c]}
-                onChange={(e) => { setScores((s) => ({ ...s, [c]: e.target.value })); setError(""); }}
-                aria-label={`${c}, out of ${max}`}
-              />
-            </label>
+          {team.criteria.map((c, i) => (
+            <div key={c} id={`crit-${i}`} className={t.criterion}>
+              <div className={t.criterionHead}>
+                <span id={`crit-${i}-name`}>{c}</span>
+                <strong>
+                  {scores[c] ?? "–"}
+                  <span className={t.mute}> / {max}</span>
+                </strong>
+              </div>
+              <div className={t.points} role="radiogroup" aria-labelledby={`crit-${i}-name`}>
+                {Array.from({ length: max + 1 }, (_, n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    role="radio"
+                    aria-checked={scores[c] === n}
+                    className={t.point}
+                    onClick={() => {
+                      setScores((s) => ({ ...s, [c]: n }));
+                      setError("");
+                    }}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
-        <p className={t.mute}>
-          Total {total} / {team.criteria.length * max}
-        </p>
         <FormError message={error} />
-        <div className={t.inline}>
+        <div className={t.saveBar}>
+          <span>
+            <strong style={{ fontSize: "1.3rem", color: "var(--sky)" }}>{total}</strong>
+            <span className={t.mute}> / {team.criteria.length * max}</span>
+            <span className={t.mute} style={{ display: "block" }}>
+              {done} of {team.criteria.length} scored
+            </span>
+          </span>
           <button type="submit" className={t.btn} disabled={busy}>
-            {busy ? "Saving…" : "Save scores"}
-          </button>
-          <button type="button" className={t.ghost} onClick={onDone}>
-            Back
+            {busy ? "Saving…" : editing ? "Update scores" : "Save scores"}
           </button>
         </div>
       </form>
