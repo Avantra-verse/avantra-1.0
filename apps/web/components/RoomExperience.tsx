@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { ContactRequest } from "@avantra/shared";
+import { api, ApiError, apiReady } from "@/lib/api";
 import styles from "./RoomExperience.module.css";
 
 interface RoomExperienceProps {
@@ -158,7 +160,9 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
   const fixedContent = (
     <div ref={containerRef}>
       <header className={styles.header}>
-        <img src="/images/avantra-logo.png" alt="Avantra" />
+        <Link href="/" aria-label="AVANTRA home">
+          <img src="/images/avantra-logo.png" alt="Avantra" />
+        </Link>
         <em>December 2026, dates soon</em>
         <nav className={styles.nav}>
           <button ref={nARef} id="nA" className={styles.on} onClick={() => go(0)}>
@@ -205,7 +209,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
                       <b>When</b>December 2026, dates soon
                     </div>
                     <div className={styles.card}>
-                      <b>Where</b>Host school, TBA
+                      <b>Where</b>SSRVM IEMS
                     </div>
                     <div className={styles.card}>
                       <b>How long</b>2 days
@@ -228,7 +232,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
                   </div>
                   <div>
                     <h3>Host school</h3>
-                    <p>To be announced.</p>
+                    <p>SSRVM IEMS hosts AVANTRA 2026 and provides the venue.</p>
                     <h3>Rules</h3>
                     <p>Published before registration opens.</p>
                   </div>
@@ -304,27 +308,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
               Back to About
             </button>
           </div>
-          <form className={styles.formCard} onSubmit={(e) => e.preventDefault()}>
-            <div className={styles.field}>
-              <label>Your name</label>
-              <input type="text" placeholder="" />
-            </div>
-            <div className={styles.field}>
-              <label>School</label>
-              <input type="text" placeholder="" />
-            </div>
-            <div className={styles.field}>
-              <label>Email</label>
-              <input type="email" placeholder="" />
-            </div>
-            <div className={styles.field}>
-              <label>Message</label>
-              <textarea rows={3} placeholder=""></textarea>
-            </div>
-            <button type="submit" className={styles.sendBtn}>
-              Send message
-            </button>
-          </form>
+          <ContactForm />
         </div>
       </section>
     </div>
@@ -335,5 +319,96 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
       {mounted && createPortal(fixedContent, document.body)}
       <div className={styles.spacer} />
     </div>
+  );
+}
+
+const emptyContact = { name: "", school: "", email: "", message: "", website: "" };
+
+// "Write to the team": POST /contact emails the team, with reply-to set to the sender.
+function ContactForm() {
+  const [form, setForm] = useState(emptyContact);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
+
+  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    setErrors((x) => ({ ...x, [e.target.name]: "", form: "" }));
+  };
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    const parsed = ContactRequest.safeParse({ ...form, school: form.school || undefined, website: form.website || undefined });
+    if (!parsed.success) {
+      const found: Record<string, string> = {};
+      for (const i of parsed.error.issues) found[String(i.path[0])] ??= i.message;
+      setErrors(found);
+      document.getElementById(`contact-${Object.keys(found)[0]}`)?.focus();
+      return;
+    }
+    setState("sending");
+    try {
+      await api("/contact", parsed.data);
+      setState("sent");
+      setForm(emptyContact);
+    } catch (err) {
+      const ae = err as ApiError;
+      setErrors({ ...ae.fields, form: ae.status === 429 ? "Too many messages. Wait a minute and try again." : ae.message });
+      setState("idle");
+    }
+  }
+
+  if (state === "sent")
+    return (
+      <div className={styles.formCard} role="status">
+        <p className={styles.formNote}>Thanks, your message is with the team. We&apos;ll reply to your email.</p>
+        <button type="button" className={styles.sendBtn} onClick={() => setState("idle")}>
+          Send another
+        </button>
+      </div>
+    );
+
+  const field = (name: "name" | "school" | "email", label: string, type = "text", autoComplete?: string) => (
+    <div className={styles.field}>
+      <label htmlFor={`contact-${name}`}>{label}</label>
+      <input
+        id={`contact-${name}`}
+        name={name}
+        type={type}
+        autoComplete={autoComplete}
+        value={form[name]}
+        onChange={set}
+        aria-invalid={!!errors[name]}
+        aria-describedby={errors[name] ? `contact-${name}-error` : undefined}
+      />
+      {errors[name] && <span id={`contact-${name}-error`} className={styles.fieldError}>{errors[name]}</span>}
+    </div>
+  );
+
+  return (
+    <form className={styles.formCard} onSubmit={send} noValidate>
+      {field("name", "Your name", "text", "name")}
+      {field("school", "School (optional)", "text", "organization")}
+      {field("email", "Email", "email", "email")}
+      <div className={styles.field}>
+        <label htmlFor="contact-message">Message</label>
+        <textarea
+          id="contact-message"
+          name="message"
+          rows={3}
+          value={form.message}
+          onChange={set}
+          aria-invalid={!!errors.message}
+          aria-describedby={errors.message ? "contact-message-error" : undefined}
+        ></textarea>
+        {errors.message && <span id="contact-message-error" className={styles.fieldError}>{errors.message}</span>}
+      </div>
+      {/* Trap for bots: hidden from people and screen readers. */}
+      <input className={styles.trap} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" value={form.website} onChange={set} />
+      {errors.form && <p className={styles.fieldError} role="alert">{errors.form}</p>}
+      {!apiReady && <p className={styles.formNote}>Messages open soon.</p>}
+      <button type="submit" className={styles.sendBtn} disabled={state === "sending" || !apiReady}>
+        {state === "sending" ? "Sending…" : "Send message"}
+      </button>
+    </form>
   );
 }

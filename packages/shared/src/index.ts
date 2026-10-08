@@ -220,6 +220,16 @@ export type AssignJudgeRequest = z.infer<typeof AssignJudgeRequest>;
 export const WalkInRequest = studentProfileFields.extend({ name, email, note: z.string().trim().max(200).optional() }).refine(oneSchool, oneSchoolError);
 export type WalkInRequest = z.infer<typeof WalkInRequest>;
 
+// Public "Write to the team" form. `website` is a hidden trap field: people leave it empty, bots fill it in.
+export const ContactRequest = z.object({
+  name: z.string().trim().min(2, 'Enter your name').max(100),
+  school: z.string().trim().max(150).optional(),
+  email,
+  message: z.string().trim().min(5, 'Write a little more').max(2000),
+  website: z.string().max(200).optional(),
+});
+export type ContactRequest = z.infer<typeof ContactRequest>;
+
 // Cash fee for a student who signed up online.
 export const MarkPaidRequest = z.object({ note: z.string().trim().max(200).optional() }); // e.g. receipt number
 export type MarkPaidRequest = z.infer<typeof MarkPaidRequest>;

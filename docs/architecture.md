@@ -121,6 +121,7 @@ A real event day is well under the first row. If more headroom is wanted, give t
 - [ ] API on an always-on plan (Railway Hobby), not a sleeping free tier. `DATABASE_URL` = Supabase pooler with `?pgbouncer=true&connection_limit=10`.
 - [ ] Razorpay live keys and the webhook URL `https://api.avantra.arithi.in/payments/webhook` with its secret.
 - [ ] `SENTRY_DSN` set; UptimeRobot on `/health`.
+- [ ] `CONTACT_TO` = the inbox for the website contact form (until set, messages go to every admin account).
 - [ ] Backup secrets in GitHub (see `backup.yml`); run it once by hand and restore it into a scratch database.
 - [ ] `create-admin` with a real mailbox; long password in a password manager.
 

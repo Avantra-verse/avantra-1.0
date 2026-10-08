@@ -199,7 +199,7 @@ export default function Multiverse() {
             </div>
             <div className="fact" style={{ "--c": "#9fd4ff" } as React.CSSProperties}>
               <dt>Where</dt>
-              <dd>Host school, to be announced</dd>
+              <dd>SSRVM IEMS, the host school</dd>
             </div>
             <div className="fact" style={{ "--c": "#f4ead9" } as React.CSSProperties}>
               <dt>How long</dt>

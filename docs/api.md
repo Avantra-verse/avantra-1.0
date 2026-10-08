@@ -90,6 +90,12 @@ Admin accounts are created only with `pnpm --filter @avantra/api create-admin <e
 | `GET /admin/events/:id/leaderboard` | none | Teams ranked by the average of each judge's total. `score` null = not judged yet. `rank` = the winner place set with `/admin/teams/:id/rank`. |
 | `POST /admin/users/:id/disable` / `enable` | none | Disable logs the user out everywhere. Admins can't be disabled here. |
 
+## Contact form (public)
+
+| Method + path | Body | Success | Notes |
+|---|---|---|---|
+| `POST /contact` | `ContactRequest` `{ name, school?, email, message, website? }` | 202 | "Write to the team" on /contact. Emailed to `CONTACT_TO`, or to every admin until that's set, with reply-to = the sender. `website` is a hidden trap field: filled = silently dropped. 3 a minute per sender. |
+
 ## Events
 
 | Method + path | Who | Body | Notes |

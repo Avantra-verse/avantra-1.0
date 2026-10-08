@@ -49,6 +49,10 @@
   background: linear-gradient(#171210, transparent);
 }
 
+.header > a {
+  display: flex;
+}
+
 .header img {
   height: 48px;
   border-radius: 6px;
@@ -500,6 +504,26 @@
 .field textarea:focus {
   border-color: var(--blue);
   box-shadow: 0 0 8px rgba(159, 211, 255, 0.3);
+}
+
+.fieldError {
+  color: #ff8a8a;
+  font-size: 13px;
+  margin: 0;
+}
+
+.formNote {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }
 
 .sendBtn {

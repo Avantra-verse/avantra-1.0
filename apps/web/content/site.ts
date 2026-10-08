@@ -6,7 +6,7 @@ export interface SiteConfig {
   partners: { name: string; role: string }[];
   days: { title: string; description: string }[];
   rules: string[];
-  venue: { name: string; address: string; directions: string };
+  venue: { name: string; address: string; directions: string; mapUrl: string };
   prizes: { title: string; description: string }[];
   sponsors: { name: string; tier: string }[];
   contact: { org: string; email: string; phone: string }[];
@@ -39,8 +39,9 @@ export const siteConfig: SiteConfig = {
   ],
   venue: {
     name: "SSRVM IEMS",
-    address: "To be confirmed by the organizing committee.",
-    directions: "Directions and map will be published closer to the event.",
+    address: "Ispat English Medium School, Sector 20, Rourkela, Odisha",
+    directions: "Tap below for directions on Google Maps.",
+    mapUrl: "https://maps.app.goo.gl/5UULyULJRH4CXrgS6",
   },
   prizes: [
     { title: "Certificates", description: "Certificates of participation and achievement will be issued to all exhibitors and event winners." },

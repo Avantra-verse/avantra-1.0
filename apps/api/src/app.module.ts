@@ -6,6 +6,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AdminController } from './admin.controller';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
+import { ContactController } from './contact.controller';
 import { CertificatesController } from './certificates.controller';
 import { EventsController } from './events.controller';
 import { readCookie, SESSION_COOKIE, SessionGuard, sha256 } from './auth/session.guard';
@@ -44,7 +45,7 @@ const person = (req: Record<string, any>): string => {
     BullModule.forRoot({ connection: { url: process.env.REDIS_URL } }),
     BullModule.registerQueue({ name: 'mail' }),
   ],
-  controllers: [HealthController, AuthController, ProfileController, AdminController, EventsController, RegistrationsController, TeamsController, StaffController, ReportsController, CertificatesController, WallController],
+  controllers: [HealthController, ContactController, AuthController, ProfileController, AdminController, EventsController, RegistrationsController, TeamsController, StaffController, ReportsController, CertificatesController, WallController],
   providers: [
     PrismaService,
     AuthService,

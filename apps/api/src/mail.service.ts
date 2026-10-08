@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { Job, Queue } from 'bullmq';
 import { createTransport, type Transporter } from 'nodemailer';
 
-type Mail = { to: string; subject: string; text: string };
+type Mail = { to: string; subject: string; text: string; replyTo?: string };
 
 // Emails go through a BullMQ queue so requests return fast and failed sends retry.
 @Injectable()
@@ -30,7 +30,7 @@ export class MailProcessor extends WorkerHost {
 
   async process({ data }: Job<Mail>) {
     if (!this.smtp) {
-      this.logger.log(`to ${data.to} | ${data.subject}\n${data.text}`);
+      this.logger.log(`to ${data.to}${data.replyTo ? ` (reply-to ${data.replyTo})` : ''} | ${data.subject}\n${data.text}`);
       return;
     }
     await this.smtp.sendMail({ from: process.env.MAIL_FROM, ...data });

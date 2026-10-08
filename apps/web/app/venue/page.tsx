@@ -7,7 +7,7 @@ export default function Venue() {
     <div className="mx-auto max-w-6xl px-6 pb-32">
       <PageHeader
         title="Venue and directions"
-        lead="Where AVANTRA takes place, and what exhibitors and winners take home."
+        lead="AVANTRA 2026 is hosted by SSRVM IEMS. Where it takes place, and what exhibitors and winners take home."
       />
 
       <Reveal>
@@ -22,6 +22,14 @@ export default function Venue() {
             <p className="t-body mt-3 max-w-[46ch] text-secondary">
               {siteConfig.venue.directions}
             </p>
+            <a
+              href={siteConfig.venue.mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="t-body mt-6 inline-block text-starlight underline underline-offset-4"
+            >
+              Open in Google Maps
+            </a>
           </section>
 
           <section>

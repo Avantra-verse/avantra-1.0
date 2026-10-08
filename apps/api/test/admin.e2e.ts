@@ -86,3 +86,25 @@ test('ranks and certificates: only attendees, idempotent issue, public verify + 
   assert.ok(pdf.text.startsWith('%PDF-'));
   assert.equal((await call('/certificates/ZZZZZZZZZZ')).status, 404);
 });
+
+test('contact form: emailed to the admins with reply-to the sender, bots and bad input rejected', async () => {
+  const { email: adminEmail } = await admin();
+  const from = `visitor-${Date.now()}@example.com`;
+  const sent = await call('/contact', { name: 'Priya Visitor', school: 'Test School', email: from, message: 'When does registration open?' });
+  assert.equal(sent.status, 202);
+  let mail = '';
+  for (let i = 0; i < 50 && !mail; i++) {
+    mail = logs().split('[Mail]').find((m) => m.includes(`(reply-to ${from})`)) ?? '';
+    if (!mail) await sleep(100);
+  }
+  assert.ok(mail.includes(adminEmail), 'goes to the admins while CONTACT_TO is empty');
+  assert.ok(mail.includes('When does registration open?') && mail.includes('School: Test School'));
+
+  const bot = `bot-${Date.now()}@example.com`;
+  assert.equal((await call('/contact', { name: 'Bot', email: bot, message: 'Buy now buy now', website: 'http://spam.example' })).status, 202);
+  await sleep(500);
+  assert.ok(!logs().includes(bot), 'trap field filled = nothing sent');
+
+  const bad = await call('/contact', { name: 'X', email: 'nope', message: 'hi' });
+  assert.equal(bad.status, 400);
+});
