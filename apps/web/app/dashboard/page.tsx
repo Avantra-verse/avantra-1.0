@@ -97,7 +97,7 @@ function StudentCard({ name, s }: { name: string; s: Student }) {
 }
 
 const STATUS = {
-  PENDING: "Waiting for approval by the AVANTRA team.",
+  PENDING: "Waiting for approval by the AVANTRA team. We'll email you when it's approved, so you can close this page.",
   APPROVED: "Approved. Students can now pick your school when they sign up.",
   REJECTED: "Not approved. Contact the AVANTRA team.",
 };
