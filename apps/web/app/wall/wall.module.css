@@ -1,0 +1,187 @@
+/* Engagement Wall. Tokens come from .registrationPage (registration.module.css). */
+.score {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.stat {
+  padding: 12px 6px;
+  border: 2px solid rgba(154, 212, 251, 0.35);
+  border-radius: 14px;
+}
+
+.statValue {
+  display: block;
+  font-family: "Yatra One", Georgia, serif;
+  font-size: 1.7rem;
+  line-height: 1.1;
+  color: var(--sky);
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: var(--mute);
+}
+
+.meta {
+  color: var(--mute);
+  font-size: 0.95rem;
+  margin: 0 0 6px;
+}
+
+.question {
+  font-size: 1.25rem;
+  line-height: 1.45;
+  margin: 6px 0 18px;
+  white-space: pre-wrap;
+}
+
+.options {
+  display: grid;
+  gap: 10px;
+}
+
+.option {
+  text-align: left;
+  padding: 12px 16px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 2px solid #4a6f88;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.option:hover:not(:disabled) {
+  border-color: var(--sky);
+  box-shadow: 0 0 14px rgba(154, 212, 251, 0.3);
+}
+
+.option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 2px;
+}
+
+.win {
+  text-align: center;
+}
+
+.winPoints {
+  font-family: "Yatra One", Georgia, serif;
+  font-size: 4.5rem;
+  line-height: 1;
+  color: var(--red-hi);
+  text-shadow: -2px -2px 0 var(--sky), 2px -2px 0 var(--sky), -2px 2px 0 var(--sky), 2px 2px 0 var(--sky);
+  margin: 10px 0 4px;
+  animation: pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .winPoints {
+    animation: none;
+  }
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 18px;
+  margin-top: 16px;
+}
+
+/* ---- big-screen leaderboard ---- */
+.board {
+  position: relative;
+  z-index: 1;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 90px 28px 40px;
+}
+
+.boardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-bottom: 20px;
+}
+
+.frozen {
+  padding: 10px 18px;
+  border: 2px solid var(--sky);
+  border-radius: 999px;
+  color: var(--sky);
+  font-family: "Yatra One", Georgia, serif;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th {
+  text-align: left;
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  color: var(--sky);
+  padding: 0 10px 8px;
+}
+
+.table td {
+  padding: 9px 10px;
+  border-top: 1px solid rgba(243, 236, 228, 0.16);
+}
+
+.table .num {
+  text-align: right;
+}
+
+.table tr:nth-child(-n + 3) td:first-child {
+  color: var(--red-hi);
+  font-family: "Yatra One", Georgia, serif;
+}
+
+.sub {
+  color: var(--mute);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 900px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+  .table {
+    font-size: 1rem;
+  }
+  .hideSmall {
+    display: none;
+  }
+}

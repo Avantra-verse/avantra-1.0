@@ -13,7 +13,7 @@ export function AccountShell({ tagline, children }: { tagline: string; children:
   return (
     <div className={styles.registrationPage}>
       <div className={styles.starfieldLayer} aria-hidden="true" />
-      <main className={styles.wrapper}>
+      <div className={styles.wrapper}>
         <div className={styles.grid}>
           <div className={styles.leftColumn}>
             <div className={styles.portalWrapper}>
@@ -30,7 +30,7 @@ export function AccountShell({ tagline, children }: { tagline: string; children:
           </div>
           <div className={styles.card}>{children}</div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

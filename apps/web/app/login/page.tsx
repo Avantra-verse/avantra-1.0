@@ -31,7 +31,10 @@ export default function LoginPage() {
     setBusy(true);
     try {
       const me = await api<Me>("/auth/login", parsed.data);
-      router.push(me.profileComplete ? "/dashboard" : "/profile");
+      // ?next=/wall?code=… brings a student back to the chit they scanned. Same-site paths only.
+      const next = new URLSearchParams(window.location.search).get("next");
+      const safe = next && /^\/(?![/\\])/.test(next) ? next : "/dashboard";
+      router.push(me.profileComplete ? safe : "/profile");
     } catch (err) {
       // The API gives the same message for a wrong password, unknown email or the wrong tab, on purpose.
       setErrors({ form: (err as ApiError).message });
