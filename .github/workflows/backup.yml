@@ -1,0 +1,26 @@
+# Nightly database backup to Cloudflare R2 (Supabase free has none). Also runs on demand (Actions tab → Run workflow).
+# Secrets: DIRECT_URL (the direct Postgres URL, port 5432), R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET.
+# Restore: download the file, then `gunzip -c avantra-<date>.sql.gz | psql "<database url>"`.
+name: backup
+
+on:
+  schedule:
+    - cron: '30 20 * * *' # 02:00 IST
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump and upload
+        env:
+          DATABASE: ${{ secrets.DIRECT_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -euo pipefail
+          file="avantra-$(date -u +%Y-%m-%dT%H%M).sql.gz"
+          docker run --rm postgres:17 pg_dump --no-owner --no-privileges "$DATABASE" | gzip > "$file"
+          test "$(stat -c%s "$file")" -gt 1000 # an empty dump means something went wrong
+          aws s3 cp "$file" "s3://${{ secrets.R2_BUCKET }}/db/$file" --endpoint-url "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"

@@ -1,4 +1,5 @@
 import './env';
+import './instrument'; // before anything else, so errors everywhere are caught
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';

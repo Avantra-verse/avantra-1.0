@@ -1,6 +1,7 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AdminController } from './admin.controller';
 import { AuthController } from './auth/auth.controller';
@@ -30,6 +31,7 @@ const person = (req: Record<string, any>): string => {
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     // ponytail: in-memory rate limits, per API instance. Switch to Redis storage if we ever run 2+ instances.
     ThrottlerModule.forRoot({
       throttlers: [
@@ -48,6 +50,7 @@ const person = (req: Record<string, any>): string => {
     AuthService,
     MailService,
     MailProcessor,
+    { provide: APP_FILTER, useClass: SentryGlobalFilter }, // reports unexpected errors when SENTRY_DSN is set
     { provide: APP_GUARD, useClass: ThrottlerGuard }, // runs first
     { provide: APP_GUARD, useClass: SessionGuard },
   ],
