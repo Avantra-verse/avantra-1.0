@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 export default function Footer() {
   const pathname = usePathname();
-  if (pathname === "/about" || pathname === "/contact") return null;
+  if (pathname === "/" || pathname === "/about" || pathname === "/contact") return null; // these pages have their own footer
   return (
     <footer className="relative z-30 border-t border-[#9ad2fb]/20 bg-[#07070e] py-16 px-6">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-between gap-8 text-center md:text-left">
@@ -52,12 +52,6 @@ export default function Footer() {
             className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
           >
             CONTACT
-          </Link>
-          <Link
-            href="/events"
-            className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
-          >
-            EVENTS
           </Link>
           <Link
             href="/registration"

@@ -61,6 +61,7 @@ export default function LoginPage() {
           </form>
           <FooterLink text="Forgot your password?" href="/forgot-password" link="Reset it" />
           <FooterLink text="New to Avantra?" href="/registration" link="Create an account" />
+          <FooterLink text="Volunteer or judge?" href="/staff/login" link="Staff log in" />
         </>
       )}
     </AccountShell>

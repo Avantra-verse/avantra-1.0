@@ -169,6 +169,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
           <button ref={nCRef} id="nC" onClick={() => go(getMax())}>
             Contact
           </button>
+          <Link href="/login">Log in</Link>
           <Link href="/registration">Registration</Link>
         </nav>
       </header>

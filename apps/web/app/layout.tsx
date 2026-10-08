@@ -67,7 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500&family=Mukta:wght@400;500;600&family=Yatra+One&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=Gaegu:wght@400;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500&family=Mukta:wght@400;500;600&family=Yatra+One&display=swap"
           rel="stylesheet"
         />
       </head>

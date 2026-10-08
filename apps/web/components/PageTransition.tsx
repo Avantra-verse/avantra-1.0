@@ -7,7 +7,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
   const pathname = usePathname();
   const reduce = useReducedMotion();
 
-  const isRoomRoute = pathname === "/about" || pathname === "/contact";
+  const isRoomRoute = pathname === "/" || pathname === "/about" || pathname === "/contact";
 
   if (reduce || isRoomRoute) return <>{children}</>;
 
