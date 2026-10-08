@@ -105,14 +105,12 @@ export async function drawScoreCard(name: string, s: Omit<WallMe, "open">) {
   ctx.roundRect(60, bandTop, W - 120, 250, 28);
   ctx.fill();
   ctx.textAlign = "left";
+  // The brand's lockup on its own cream background (arithi-brand: each colourway only on its own background,
+  // and the wordmark is never retyped, so no text fallback).
   if (arithi) {
-    const h = 96;
+    const h = 104;
     const w = Math.min((arithi.width / arithi.height) * h, 520);
-    ctx.drawImage(arithi, 100, bandTop + 36, w, (arithi.height / arithi.width) * w);
-  } else {
-    ctx.font = display(84);
-    ctx.fillStyle = WHITE;
-    ctx.fillText("ARITHI", 100, bandTop + 112);
+    ctx.drawImage(arithi, 100, bandTop + 34, w, (arithi.height / arithi.width) * w);
   }
   ctx.font = body(400)(30);
   ctx.fillStyle = SOFT;

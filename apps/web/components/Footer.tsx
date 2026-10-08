@@ -54,6 +54,12 @@ export default function Footer() {
             CONTACT
           </Link>
           <Link
+            href="/events"
+            className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
+          >
+            EVENTS
+          </Link>
+          <Link
             href="/registration"
             className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
           >

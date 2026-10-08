@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/venue", label: "Venue" },
   { href: "/sponsors", label: "Sponsors" },
   { href: "/contact", label: "Contact" },
+  { href: "/events", label: "Events" },
   { href: "/registration", label: "Registration" },
 ];
 
