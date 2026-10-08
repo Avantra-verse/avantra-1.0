@@ -1,9 +1,11 @@
 "use client";
 
 // Event day, phone-first. Volunteers check students in at the gate or an event desk; judges also score teams.
-// Badges are scanned with the phone camera where the browser can read QR codes, otherwise the AVANTRA ID is typed.
+// Badges are scanned with the phone camera (or the AVANTRA ID is typed). If the venue Wi-Fi drops, check-ins are
+// saved on the phone and sent with their scan time when the connection is back.
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import jsQR from "jsqr";
 import { AvantraId, MAX_POINTS } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, styles as account } from "@/components/account/Account";
@@ -80,12 +82,12 @@ function toAvantraId(raw: string) {
   return AvantraId.safeParse(/^[A-Z0-9]{5}$/.test(s) ? `AV26-${s}` : s);
 }
 
-// Reads a badge: camera (BarcodeDetector) when available, typed AVANTRA ID always.
+// Reads a badge: camera when the phone has one, typed AVANTRA ID always.
 function BadgeInput({ onRef, busy, label }: { onRef: (r: Ref) => void; busy: boolean; label: string }) {
   const [id, setId] = useState("");
   const [error, setError] = useState("");
   const [scanning, setScanning] = useState(false);
-  const canScan = typeof window !== "undefined" && "BarcodeDetector" in window && !!navigator.mediaDevices;
+  const canScan = typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
 
   function typed(e: React.FormEvent) {
     e.preventDefault();
@@ -118,7 +120,7 @@ function BadgeInput({ onRef, busy, label }: { onRef: (r: Ref) => void; busy: boo
           Check
         </button>
       </form>
-      {!canScan && <p className={t.mute}>This browser can&apos;t read QR codes with the camera; type the ID printed under the QR.</p>}
+      {!canScan && <p className={t.mute}>No camera available here; type the ID printed under the QR.</p>}
     </>
   );
 }
@@ -135,7 +137,20 @@ function Camera({ onCode, onClose }: { onCode: (text: string) => void; onClose: 
     let stream: MediaStream | null = null;
     let timer = 0;
     let stopped = false;
-    const detector = new (window as unknown as { BarcodeDetector: new (o: object) => Detector }).BarcodeDetector({ formats: ["qr_code"] });
+    // Chrome on Android reads QR codes natively; elsewhere (iPhone Safari, desktop) jsQR reads a downscaled frame.
+    const w = window as unknown as { BarcodeDetector?: new (o: object) => Detector };
+    const native = w.BarcodeDetector ? new w.BarcodeDetector({ formats: ["qr_code"] }) : null;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+    const read = async (v: HTMLVideoElement): Promise<string | null> => {
+      if (native) return (await native.detect(v).catch(() => []))[0]?.rawValue ?? null;
+      if (!v.videoWidth) return null;
+      const scale = Math.min(1, 640 / v.videoWidth);
+      canvas.width = Math.round(v.videoWidth * scale);
+      canvas.height = Math.round(v.videoHeight * scale);
+      ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+      return jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height)?.data || null;
+    };
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: "environment" } })
       .then(async (s) => {
@@ -145,8 +160,8 @@ function Camera({ onCode, onClose }: { onCode: (text: string) => void; onClose: 
         await video.current!.play();
         const tick = async () => {
           if (stopped) return;
-          const found = await detector.detect(video.current!).catch(() => []);
-          if (found[0]?.rawValue) done.current(found[0].rawValue);
+          const text = await read(video.current!);
+          if (text) done.current(text);
           else timer = window.setTimeout(tick, 250);
         };
         tick();
@@ -169,15 +184,67 @@ function Camera({ onCode, onClose }: { onCode: (text: string) => void; onClose: 
   );
 }
 
+// Offline check-ins, kept on this phone until they reach the API (it accepts scans up to 48 h old).
+type Queued = { id: string; qrToken?: string; avantraId?: string; eventId?: string; scannedAt: string; where: string };
+const QUEUE_KEY = "avantra.checkinQueue";
+function readQueue(): Queued[] {
+  try {
+    return JSON.parse(localStorage.getItem(QUEUE_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+function writeQueue(q: Queued[]) {
+  try {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+  } catch {
+    // storage full or blocked: nothing more we can do on this phone
+  }
+}
+// Still offline, logged out, or the server is struggling: keep the scan and try later.
+const retryLater = (status: number) => status === 0 || status === 401 || status === 429 || status >= 500;
+
 function CheckIn() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [eventId, setEventId] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ tone: "ok" | "warn" | "bad"; title: string; card?: Card; note?: string } | null>(null);
+  const [waiting, setWaiting] = useState(0);
+  const [problems, setProblems] = useState<string[]>([]);
+  const syncing = useRef(false);
+
+  const sync = useCallback(async () => {
+    if (syncing.current) return;
+    syncing.current = true;
+    try {
+      for (const item of readQueue()) {
+        const { id, where, ...body } = item;
+        try {
+          await api("/staff/checkin", body);
+        } catch (e) {
+          const err = e as ApiError;
+          if (retryLater(err.status)) break;
+          const who = (err.body?.student as Card | undefined)?.name ?? item.avantraId ?? "A scanned badge";
+          setProblems((p) => [...p, `${who} (${where}): ${err.status === 404 ? "unknown badge" : err.message}`]);
+        }
+        writeQueue(readQueue().filter((q) => q.id !== id));
+      }
+    } finally {
+      syncing.current = false;
+      setWaiting(readQueue().length);
+    }
+  }, []);
 
   useEffect(() => {
     api<EventRow[]>("/events").then(setEvents).catch(() => {});
-  }, []);
+    sync();
+    const timer = setInterval(sync, 20_000);
+    window.addEventListener("online", sync);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("online", sync);
+    };
+  }, [sync]);
 
   async function check(ref: Ref) {
     setBusy(true);
@@ -187,6 +254,17 @@ function CheckIn() {
       setResult(r.alreadyCheckedIn ? { tone: "warn", title: "Already checked in", card: r.student, note: `First scan today at ${at}.` } : { tone: "ok", title: "Checked in ✓", card: r.student });
     } catch (e) {
       const err = e as ApiError;
+      if (err.status === 0) {
+        const where = events.find((x) => x.id === eventId)?.name ?? "Main gate";
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        writeQueue([...readQueue(), { id, ...ref, eventId: eventId || undefined, scannedAt: new Date().toISOString(), where }]);
+        setWaiting(readQueue().length);
+        return setResult({
+          tone: "warn",
+          title: "Saved offline",
+          note: "No connection. The scan is kept on this phone and sent automatically when the connection is back. Their registration can't be checked until then.",
+        });
+      }
       setResult({
         tone: "bad",
         title: err.status === 404 ? "Unknown badge" : err.message,
@@ -214,6 +292,23 @@ function CheckIn() {
           <strong>{result.title}</strong>
           {result.card && <CardLine card={result.card} />}
           {result.note && <p style={{ margin: "6px 0 0" }}>{result.note}</p>}
+        </div>
+      )}
+      {waiting > 0 && (
+        <p className={t.mute} role="status" style={{ marginTop: 14 }}>
+          {waiting} {waiting === 1 ? "scan" : "scans"} saved on this phone, waiting for a connection.{" "}
+          <button type="button" className={account.link} onClick={sync}>Send now</button>
+        </p>
+      )}
+      {problems.length > 0 && (
+        <div className={`${t.result} ${t.bad}`} role="alert">
+          <strong>Offline scans that didn&apos;t go through</strong>
+          <ul style={{ margin: "6px 0", paddingLeft: 18 }}>
+            {problems.map((p, i) => (
+              <li key={i}>{p}</li>
+            ))}
+          </ul>
+          <button type="button" className={account.link} onClick={() => setProblems([])}>Clear</button>
         </div>
       )}
     </section>
