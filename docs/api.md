@@ -104,7 +104,7 @@ Admin accounts are created only with `pnpm --filter @avantra/api create-admin <e
 | `POST /admin/events` | ADMIN | `CreateEventRequest` | 409 = slug taken. |
 | `PATCH /admin/events/:id` | ADMIN | `UpdateEventRequest` (any fields) | e.g. `{ registrationOpen: false }` to close, or `judgingCriteria: [...]` (each 0–10; default: Innovation, Scientific understanding, Presentation, Practical impact). |
 
-Dev data: `pnpm --filter @avantra/api seed-events` creates the brochure's 9 events (team sizes are placeholders).
+Dev data: `pnpm --filter @avantra/api seed-events` creates the brochure's 9 events. Teams are 3: required for the exhibition (`teamMin` = `teamMax` = 3), optional for the other team events (1 to 3). Run it again to apply new sizes to an existing database.
 
 ## Exhibition fee and event registration (students)
 
@@ -115,7 +115,7 @@ Entry to AVANTRA, every event and the Engagement Wall are **free** for any stude
 | `POST /payments/fee` | none | 201 `{ keyId, orderId, amount, currency, description }` | Opens Razorpay Checkout (below). Call again to retry a failed payment. 403 = no profile yet, 409 = already paid, 503 until Razorpay keys are set. |
 | `POST /payments/verify` | `VerifyPaymentRequest` (Razorpay's 3 fields) | 200 | Call from Checkout's success handler, then re-fetch `/profile`. |
 | `POST /registrations` | `CreateRegistrationRequest` `{ eventId }` | 201 | 403 = no profile, or exhibition fee not paid; 400 = closed, 409 = full or already registered. |
-| `GET /registrations/mine` | none | 200 list | With event and `teamMember.team` (null = no team yet). |
+| `GET /registrations/mine` | none | 200 list | With event and `teamMember.team` (null = no team yet). The team carries `joinRequests: [{ registrationId, createdAt, registration.student { avantraId, user.name } }]`, oldest first. |
 | `DELETE /registrations/:id` | none | 204 | Withdraw from an event. 409 = leave your team first. The fee is not refunded. |
 
 `capacity` counts participants.
@@ -123,6 +123,8 @@ Entry to AVANTRA, every event and the Engagement Wall are **free** for any stude
 ## Teams (one team per student per event)
 
 Only students registered for that event can create or join its team. Solo events (`teamMax` 1) get a team of one automatically — no team UI needed for them.
+
+Three ways into a team: type its invite code, scan its QR (the page draws the QR from `/events?join=<inviteCode>` and calls `POST /teams/join` when opened), or ask a team that has room and wait for its leader.
 
 | Method + path | Who | Body | Notes |
 |---|---|---|---|
@@ -133,6 +135,10 @@ Only students registered for that event can create or join its team. Solo events
 | `POST /teams/:id/invite-code` | leader | none | New code; old one stops working. |
 | `DELETE /teams/:id/members/:registrationId` | leader | none | Removed member stays registered for the event, just no team. |
 | `POST /teams/:id/leave` | member | none | If the leader leaves, the earliest-joined member becomes leader. Last member out deletes the team. |
+| `GET /teams?eventId=` | registered for the event | none | Teams with room, not yet judged: `[{ id, name, projectTitle, members, leaderName, school, requested }]`. `members` is a count; `requested` = the caller is waiting on this team. No invite codes. 403 = not registered. |
+| `POST /teams/:id/requests` | registered for the event, not in a team | none | 204. Ask to join. Asking again is fine. 409 = team full, already in a team, or 5 requests already waiting. |
+| `POST /teams/:id/requests/:registrationId/accept` | leader | none | 200 team view. The student becomes a member and their other requests are dropped. 404 = request gone, 409 = team full, judged, or they joined another team. |
+| `DELETE /teams/:id/requests/:registrationId` | leader, or the student who asked | none | 204. Decline, or take your own request back. |
 
 Team view: `{ id, name, inviteCode, projectTitle, topic, event, members: [{ registrationId, name, avantraId, isLeader, joinedAt }], complete, full }`. `complete` = at least `teamMin` members. Members are locked once judging starts (409).
 

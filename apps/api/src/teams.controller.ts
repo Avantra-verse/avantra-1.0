@@ -11,6 +11,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { CreateTeamRequest, JoinTeamRequest, UpdateTeamRequest } from '@avantra/shared';
 import type { Event, Prisma, User } from '@prisma/client';
@@ -34,6 +35,19 @@ export const teamInclude = {
     },
   },
 } satisfies Prisma.TeamInclude;
+
+// Who is waiting to join. Shown to the team in GET /registrations/mine.
+export const joinRequestsInclude = {
+  orderBy: { createdAt: 'asc' },
+  select: {
+    registrationId: true,
+    createdAt: true,
+    registration: { select: { student: { select: { avantraId: true, user: { select: { name: true } } } } } },
+  },
+} satisfies Prisma.Team$joinRequestsArgs;
+
+// Stops one student from asking every team in the event.
+const MAX_OPEN_REQUESTS = 5;
 
 // Solo events (team size 1): every confirmed participant gets a team of one, so judging always scores teams.
 export async function createSoloTeamIfNeeded(tx: Prisma.TransactionClient, event: Event, registrationId: string, name: string) {
@@ -84,14 +98,87 @@ export class TeamsController {
       if (reg.teamMember.teamId === team.id) return this.get(user, team.id);
       throw new ConflictException('You are already in a team for this event. Leave it first.');
     }
-    await this.prisma.$transaction(async (tx) => {
-      // Lock the team so two people can't both take its last place.
-      await tx.$queryRaw`SELECT id FROM "Team" WHERE id = ${team.id} FOR UPDATE`;
-      await this.assertNotJudged(tx, team.id);
-      if ((await tx.teamMember.count({ where: { teamId: team.id } })) >= team.event.teamMax) throw new ConflictException('This team is full');
-      await tx.teamMember.create({ data: { teamId: team.id, registrationId: reg.id } });
-    });
+    await this.prisma.$transaction((tx) => this.addMember(tx, team.id, team.event.teamMax, reg.id));
     return this.get(user, team.id);
+  }
+
+  // Teams that still have room, for "ask to join". Only for students registered for that event.
+  // ponytail: no paging; ~500 teams at 1,500 students is one small response. Page it if an event passes a few thousand teams.
+  @Get()
+  async open(@CurrentUser() user: User, @Query('eventId') eventId = '') {
+    const reg = await this.confirmedRegistration(user.id, eventId);
+    const teams = await this.prisma.team.findMany({
+      where: { eventId, scores: { none: {} } },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        projectTitle: true,
+        members: {
+          select: {
+            isLeader: true,
+            registration: { select: { student: { select: { otherSchoolName: true, school: { select: { name: true } }, user: { select: { name: true } } } } } },
+          },
+        },
+        joinRequests: { where: { registrationId: reg.id }, select: { teamId: true } },
+      },
+    });
+    return teams
+      .filter((t) => t.members.length < reg.event.teamMax)
+      .map((t) => {
+        const leader = t.members.find((m) => m.isLeader)?.registration.student;
+        return {
+          id: t.id,
+          name: t.name,
+          projectTitle: t.projectTitle,
+          members: t.members.length,
+          leaderName: leader?.user.name ?? null,
+          school: leader?.school?.name ?? leader?.otherSchoolName ?? null,
+          requested: t.joinRequests.length > 0,
+        };
+      });
+  }
+
+  @Post(':id/requests') @HttpCode(204)
+  async request(@CurrentUser() user: User, @Param('id') id: string) {
+    const team = await this.prisma.team.findUnique({ where: { id }, include: { event: true, _count: { select: { members: true } } } });
+    if (!team) throw new NotFoundException();
+    const reg = await this.confirmedRegistration(user.id, team.eventId);
+    if (reg.teamMember) throw new ConflictException('You are already in a team for this event. Leave it first.');
+    if (team._count.members >= team.event.teamMax) throw new ConflictException('This team is full');
+    const key = { teamId: id, registrationId: reg.id };
+    const open = await this.prisma.teamJoinRequest.findMany({ where: { registrationId: reg.id }, select: { teamId: true } });
+    if (open.some((r) => r.teamId === id)) return;
+    if (open.length >= MAX_OPEN_REQUESTS) throw new ConflictException(`You can have ${MAX_OPEN_REQUESTS} requests waiting at a time. Cancel one first.`);
+    await this.prisma.teamJoinRequest.upsert({ where: { teamId_registrationId: key }, create: key, update: {} });
+  }
+
+  @Post(':id/requests/:registrationId/accept') @HttpCode(200)
+  async accept(@CurrentUser() user: User, @Param('id') id: string, @Param('registrationId') registrationId: string) {
+    const team = await this.leaderTeam(user.id, id);
+    const key = { teamId_registrationId: { teamId: id, registrationId } };
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        if (!(await tx.teamJoinRequest.findUnique({ where: key }))) throw new NotFoundException('That request is no longer waiting');
+        await this.addMember(tx, id, team.event.teamMax, registrationId);
+      });
+    } catch (e) {
+      if (!isUniqueViolation(e)) throw e;
+      // They started their own team after asking.
+      await this.prisma.teamJoinRequest.deleteMany({ where: { registrationId } });
+      throw new ConflictException('They are already in another team');
+    }
+    return this.get(user, id);
+  }
+
+  // The leader declines, or the student takes their own request back.
+  @Delete(':id/requests/:registrationId') @HttpCode(204)
+  async dropRequest(@CurrentUser() user: User, @Param('id') id: string, @Param('registrationId') registrationId: string) {
+    const key = { teamId_registrationId: { teamId: id, registrationId } };
+    const req = await this.prisma.teamJoinRequest.findUnique({ where: key, select: { registration: { select: { studentId: true } } } });
+    if (!req) throw new NotFoundException();
+    if (req.registration.studentId !== user.id) await this.leaderTeam(user.id, id);
+    await this.prisma.teamJoinRequest.delete({ where: key });
   }
 
   @Get(':id')
@@ -183,6 +270,15 @@ export class TeamsController {
     const team = await this.memberTeam(userId, id);
     if (!team.iAmLeader) throw new ForbiddenException('Only the team leader can do this');
     return team;
+  }
+
+  // Joining by code and an accepted request both end here. Locks the team so two people can't both take its last place.
+  private async addMember(tx: Prisma.TransactionClient, teamId: string, teamMax: number, registrationId: string) {
+    await tx.$queryRaw`SELECT id FROM "Team" WHERE id = ${teamId} FOR UPDATE`;
+    await this.assertNotJudged(tx, teamId);
+    if ((await tx.teamMember.count({ where: { teamId } })) >= teamMax) throw new ConflictException('This team is full');
+    await tx.teamMember.create({ data: { teamId, registrationId } });
+    await tx.teamJoinRequest.deleteMany({ where: { registrationId } }); // their requests to other teams are over
   }
 
   // Once a judge has scored the team, its members are fixed.

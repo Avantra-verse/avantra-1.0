@@ -65,7 +65,7 @@ Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Au
 1. **School sign-up** → School `PENDING` → ARITHI admin approves → appears in student dropdown.
 2. **Student sign-up** → email OTP → picks school → gets `avantraId` (AV26-00123) + random `qrToken`.
 3. **Science Exhibition fee (₹199, once per student; everything else is free)** → API creates Razorpay order → Checkout → client callback (signature verified, optimistic) → **webhook `payment.captured` is source of truth** → Payment `PAID`, `Student.feePaidAt` set. Unique `razorpayPaymentId` makes webhook retries harmless. Unpaid = can't register for the exhibition; entry, other events and the Engagement Wall are free.
-4. **Event registration** (free, paid students only) → **teams** form per event via 6-char invite codes; solo events get a team of one.
+4. **Event registration** (free, paid students only) → **teams** of 3 form per event (required for the exhibition, optional elsewhere) via 6-char invite code, its QR, or a join request the leader accepts; solo events get a team of one.
 5. **Check-in** → QR encodes only the opaque `qrToken` (no personal data) → volunteer scans in `/staff` → API records CheckIn.
 6. **Scoring** → judge scans student QR in `/staff` → opens that student's registration in the judge's event → scores per criterion → leaderboard computed by query.
 7. **Certificates** → after the event, PDFs for every checked-in registrant, each with a public verify URL.

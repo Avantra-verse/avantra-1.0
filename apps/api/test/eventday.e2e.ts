@@ -115,3 +115,48 @@ test('judging: scan to team, score per criterion, re-score, team locks, leaderbo
   assert.equal((await call('/staff/judge/lookup', { qrToken: a.qrToken }, j2.cookie)).status, 404);
   assert.equal((await call(`/staff/judge/teams/${t1.json.id}`, undefined, j2.cookie)).status, 404);
 });
+
+test('join requests: ask a team with room, leader accepts or declines, requester cancels, full team', async () => {
+  const { cookie: adminCookie } = await admin();
+  const ev = await call('/admin/events', { slug: `e2e-req-${Date.now()}`, name: 'E2E Requests', category: 'TECHNOLOGY', teamMin: 1, teamMax: 2 }, adminCookie);
+  const eventId = ev.json.id;
+  const [a, b, c, outsider] = [await paidStudent('ra'), await paidStudent('rb'), await paidStudent('rc'), await paidStudent('rd')];
+  const regIds: string[] = [];
+  for (const s of [a, b, c]) regIds.push((await call('/registrations', { eventId }, s.cookie)).json.id);
+  const [, bReg, cReg] = regIds;
+  const team = (await call('/teams', { eventId, name: 'Gamma' }, a.cookie)).json;
+  const del = (path: string, cookie: string) => call(path, undefined, cookie, { method: 'DELETE' });
+  const openTeams = async (cookie: string) => (await call(`/teams?eventId=${eventId}`, undefined, cookie)).json;
+
+  // Only students registered for the event see its teams or ask them. The invite code is never listed.
+  assert.equal((await call(`/teams?eventId=${eventId}`, undefined, outsider.cookie)).status, 403);
+  assert.equal((await call(`/teams/${team.id}/requests`, {}, outsider.cookie)).status, 403);
+  assert.deepEqual((await openTeams(b.cookie)).map((t: { name: string; members: number; requested: boolean }) => [t.name, t.members, t.requested]), [['Gamma', 1, false]]);
+  assert.equal((await openTeams(b.cookie))[0].inviteCode, undefined);
+
+  assert.equal((await call(`/teams/${team.id}/requests`, {}, b.cookie)).status, 204);
+  assert.equal((await call(`/teams/${team.id}/requests`, {}, b.cookie)).status, 204, 'asking twice is fine');
+  assert.equal((await call(`/teams/${team.id}/requests`, {}, c.cookie)).status, 204);
+  assert.equal((await openTeams(b.cookie))[0].requested, true);
+
+  // The team sees who is waiting, oldest first.
+  const mine = (await call('/registrations/mine', undefined, a.cookie)).json.find((r: { eventId: string }) => r.eventId === eventId);
+  assert.deepEqual(mine.teamMember.team.joinRequests.map((r: { registrationId: string }) => r.registrationId), [bReg, cReg]);
+
+  // Only the leader accepts. A requester can take their own request back, nobody else's.
+  assert.equal((await call(`/teams/${team.id}/requests/${cReg}/accept`, {}, b.cookie)).status, 404);
+  assert.equal((await del(`/teams/${team.id}/requests/${cReg}`, b.cookie)).status, 404);
+  assert.equal((await del(`/teams/${team.id}/requests/${cReg}`, c.cookie)).status, 204);
+  assert.equal((await call(`/teams/${team.id}/requests`, {}, c.cookie)).status, 204);
+
+  const accepted = await call(`/teams/${team.id}/requests/${bReg}/accept`, {}, a.cookie);
+  assert.equal(accepted.status, 200, accepted.text);
+  assert.equal(accepted.json.members.length, 2);
+  assert.equal(accepted.json.full, true);
+
+  // Full team: gone from the list, can't be asked, and a waiting request can't be accepted.
+  assert.deepEqual(await openTeams(c.cookie), []);
+  assert.equal((await call(`/teams/${team.id}/requests/${cReg}/accept`, {}, a.cookie)).status, 409);
+  assert.equal((await del(`/teams/${team.id}/requests/${cReg}`, a.cookie)).status, 204, 'leader declines');
+  assert.equal((await call(`/teams/${team.id}/requests`, {}, c.cookie)).status, 409);
+});

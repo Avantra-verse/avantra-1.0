@@ -152,15 +152,16 @@ model Event {
 
 // A student's entry in an event. Free, but only students who paid the AVANTRA fee can register.
 model Registration {
-  id                  String      @id @default(cuid())
+  id                  String            @id @default(cuid())
   eventId             String
-  event               Event       @relation(fields: [eventId], references: [id])
+  event               Event             @relation(fields: [eventId], references: [id])
   studentId           String
-  student             Student     @relation(fields: [studentId], references: [userId])
+  student             Student           @relation(fields: [studentId], references: [userId])
   teamMember          TeamMember? // null until they create or join a team
-  certificateCode     String?     @unique // set when the admin issues certificates; public verify link uses it
+  joinRequests        TeamJoinRequest[]
+  certificateCode     String?           @unique // set when the admin issues certificates; public verify link uses it
   certificateIssuedAt DateTime?
-  createdAt           DateTime    @default(now())
+  createdAt           DateTime          @default(now())
 
   @@unique([eventId, studentId])
   @@index([studentId])
@@ -168,17 +169,18 @@ model Registration {
 
 // Teams form between confirmed participants of one event, via invite code. Judged as a unit.
 model Team {
-  id           String       @id @default(cuid())
+  id           String            @id @default(cuid())
   eventId      String
-  event        Event        @relation(fields: [eventId], references: [id])
+  event        Event             @relation(fields: [eventId], references: [id])
   name         String
-  inviteCode   String       @unique // 6 chars, leader can regenerate
+  inviteCode   String            @unique // 6 chars, leader can regenerate
   projectTitle String? // exhibition
   topic        String? // exhibition
   rank         Int? // 1, 2, 3 = winners, set by an admin after judging
   members      TeamMember[]
+  joinRequests TeamJoinRequest[]
   scores       Score[]
-  createdAt    DateTime     @default(now())
+  createdAt    DateTime          @default(now())
 
   @@index([eventId])
 }
@@ -194,6 +196,19 @@ model TeamMember {
   joinedAt       DateTime     @default(now())
 
   @@index([teamId])
+}
+
+// Someone registered for the event asking to join a team without its code.
+// The leader accepts (they become a member) or declines (the row is deleted).
+model TeamJoinRequest {
+  teamId         String
+  team           Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  registrationId String
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@id([teamId, registrationId])
+  @@index([registrationId])
 }
 
 // One row per payment attempt of the AVANTRA fee. Webhook is the source of truth for PAID.

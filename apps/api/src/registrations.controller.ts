@@ -25,7 +25,7 @@ import { isUniqueViolation } from './ids';
 import { MailService } from './mail.service';
 import { PrismaService } from './prisma.service';
 import { createOrder, hmacMatches, razorpayConfigured } from './razorpay';
-import { createSoloTeamIfNeeded, teamInclude } from './teams.controller';
+import { createSoloTeamIfNeeded, joinRequestsInclude, teamInclude } from './teams.controller';
 import { ZodPipe } from './zod.pipe';
 
 // Same email for online (webhook) and cash (admin desk) payments.
@@ -113,7 +113,7 @@ export class RegistrationsController {
       where: { studentId: user.id },
       include: {
         event: { select: { id: true, slug: true, name: true, category: true, teamMin: true, teamMax: true } },
-        teamMember: { select: { isLeader: true, team: { include: teamInclude } } },
+        teamMember: { select: { isLeader: true, team: { include: { ...teamInclude, joinRequests: joinRequestsInclude } } } },
       },
       orderBy: { createdAt: 'desc' },
     });
