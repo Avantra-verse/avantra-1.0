@@ -17,7 +17,7 @@ export default function Location() {
             Host school to be announced
           </h2>
           <p className="text-base sm:text-lg text-[#a9a7ba] leading-relaxed">
-            ARITHI INNOVATION & TECHNOLOGIES PRIVATE LIMITED is the event partner, running the festival, its events and registration.
+            ARITHI INNOVATION & TECHNOLOGIES is the event partner, running the festival, its events and registration.
           </p>
 
           <div className="pt-4">

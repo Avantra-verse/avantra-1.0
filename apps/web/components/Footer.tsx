@@ -64,7 +64,7 @@ export default function Footer() {
 
       <div className="max-w-6xl mx-auto mt-12 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-[#85839a] gap-4">
         <p>© 2026 AVANTRA Festival. All rights reserved.</p>
-        <p>Arithi Innovation & Technologies Private Limited</p>
+        <p>Arithi Innovation & Technologies</p>
       </div>
     </footer>
   );

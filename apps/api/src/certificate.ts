@@ -53,7 +53,7 @@ export async function renderCertificate(c: CertificateData): Promise<Uint8Array>
     page.drawText(label, { x: x - regular.widthOfTextAtSize(label, 10) / 2, y: 160, size: 10, font: regular, color: INK });
   }
 
-  center('Organised by SSRVM IEMS Sec-20   |   Event Partner: ARITHI Innovation and Technologies Pvt. Ltd.', 110, 11);
+  center('Organised by SSRVM IEMS Sec-20   |   Event Partner: ARITHI Innovation and Technologies', 110, 11);
   center(`Certificate ID ${c.code}   |   Verify at ${c.verifyUrl}`, 70, 9, regular, rgb(0.4, 0.4, 0.45));
   return pdf.save();
 }

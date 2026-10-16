@@ -207,7 +207,7 @@ export default function Multiverse() {
             </div>
           </dl>
           <p className="partner">
-            <b>ARITHI INNOVATION &amp; TECHNOLOGIES PRIVATE LIMITED</b> is the event partner, running the festival, its events and registration.
+            <b>ARITHI INNOVATION &amp; TECHNOLOGIES</b> is the event partner, running the festival, its events and registration.
           </p>
         </section>
       </div>

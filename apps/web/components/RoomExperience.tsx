@@ -226,7 +226,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
                   <div>
                     <h3>Who runs it</h3>
                     <p>
-                      <b>ARITHI INNOVATION &amp; TECHNOLOGIES PRIVATE LIMITED</b> runs the festival, its events and
+                      <b>ARITHI INNOVATION &amp; TECHNOLOGIES</b> runs the festival, its events and
                       registration.
                     </p>
                   </div>
