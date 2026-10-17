@@ -304,7 +304,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
             </h2>
             <p>Registration opens with the line-up. Ask anything before then.</p>
             <p>
-              Or email <a href="mailto:avantra@arithi.in">avantra@arithi.in</a>
+              Or email <a href="mailto:contact@arithi.in">contact@arithi.in</a>
             </p>
             <button className={styles.bk} id="bk" onClick={() => go(0)}>
               Back to About

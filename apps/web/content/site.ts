@@ -48,7 +48,7 @@ export const siteConfig: SiteConfig = {
   ],
   sponsors: [],
   contact: [
-    { org: "ARITHI", email: "contact@arithi.example", phone: "" },
+    { org: "ARITHI", email: "contact@arithi.in", phone: "" },
     { org: "SSRVM IEMS", email: "info@ssrvmiems.example", phone: "" },
   ],
   gallery: [],
