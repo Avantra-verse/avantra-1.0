@@ -46,7 +46,6 @@ export default function Multiverse() {
         <nav aria-label="Main">
           <Link href="/about" data-hover>About</Link>
           <Link href="/venue" data-hover>Venue</Link>
-          <Link href="/sponsors" data-hover>Sponsors</Link>
           <Link href="/contact" data-hover>Contact</Link>
           <Link className="keep" href="/login" data-hover>Log in</Link>
           <Link className="keep" href="/registration" data-hover>Registration</Link>
@@ -199,7 +198,7 @@ export default function Multiverse() {
             </div>
             <div className="fact" style={{ "--c": "#9fd4ff" } as React.CSSProperties}>
               <dt>Where</dt>
-              <dd>SSRVM IEMS, the host school</dd>
+              <dd><b>SSRVM IEMS Sec-20</b>, the host school</dd>
             </div>
             <div className="fact" style={{ "--c": "#f4ead9" } as React.CSSProperties}>
               <dt>How long</dt>
@@ -227,7 +226,6 @@ export default function Multiverse() {
           <nav aria-label="Footer">
             <Link href="/about">About</Link>
             <Link href="/venue">Venue</Link>
-            <Link href="/sponsors">Sponsors</Link>
             <Link href="/contact">Contact</Link>
             <Link href="/login">Log in</Link>
             <Link href="/registration">Registration</Link>

@@ -8,7 +8,6 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 const LINKS = [
   { href: "/about", label: "About" },
   { href: "/venue", label: "Venue" },
-  { href: "/sponsors", label: "Sponsors" },
   { href: "/contact", label: "Contact" },
   { href: "/login", label: "Log in" },
   { href: "/registration", label: "Registration" },

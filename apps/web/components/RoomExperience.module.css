@@ -464,6 +464,11 @@
   margin-top: 12px;
 }
 
+.cw p a {
+  color: #fff;
+  text-decoration: underline;
+}
+
 .formCard {
   margin-left: auto;
   width: min(460px, 100%);

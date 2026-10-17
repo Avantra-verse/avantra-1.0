@@ -169,7 +169,6 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
             About
           </button>
           <Link href="/venue">Venue</Link>
-          <Link href="/sponsors">Sponsors</Link>
           <button ref={nCRef} id="nC" onClick={() => go(getMax())}>
             Contact
           </button>
@@ -209,7 +208,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
                       <b>When</b>December 2026, dates soon
                     </div>
                     <div className={styles.card}>
-                      <b>Where</b>SSRVM IEMS
+                      <b>Where</b>SSRVM IEMS Sec-20
                     </div>
                     <div className={styles.card}>
                       <b>How long</b>2 days
@@ -232,7 +231,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
                   </div>
                   <div>
                     <h3>Host school</h3>
-                    <p>SSRVM IEMS hosts AVANTRA 2026 and provides the venue.</p>
+                    <p><b>SSRVM IEMS Sec-20</b> hosts AVANTRA 2026 and provides the venue.</p>
                     <h3>Rules</h3>
                     <p>Published before registration opens.</p>
                   </div>
@@ -304,6 +303,9 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
               Write to <span className={styles.ser}>the team</span>
             </h2>
             <p>Registration opens with the line-up. Ask anything before then.</p>
+            <p>
+              Or email <a href="mailto:avantra@arithi.in">avantra@arithi.in</a>
+            </p>
             <button className={styles.bk} id="bk" onClick={() => go(0)}>
               Back to About
             </button>

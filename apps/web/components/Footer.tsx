@@ -42,12 +42,6 @@ export default function Footer() {
             VENUE
           </Link>
           <Link
-            href="/sponsors"
-            className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
-          >
-            SPONSORS
-          </Link>
-          <Link
             href="/contact"
             className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
           >

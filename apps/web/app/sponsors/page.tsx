@@ -1,8 +1,10 @@
+import { notFound } from "next/navigation";
 import { siteConfig } from "@/content/site";
 import PageHeader from "@/components/PageHeader";
 import Reveal from "@/components/Reveal";
 
 export default function Sponsors() {
+  notFound(); // hidden until sponsors are confirmed; delete this line to bring the page back
   return (
     <div className="mx-auto max-w-6xl px-6 pb-32">
       <PageHeader

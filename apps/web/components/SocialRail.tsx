@@ -22,18 +22,6 @@ export default function SocialRail() {
       <div className="w-4 h-[1px] bg-white/10" />
 
       <Link
-        href="/sponsors"
-        className="group relative flex items-center justify-center p-2 focus-visible:outline-none"
-        aria-label="Sponsors Page"
-      >
-        <span className="text-[10px] font-bold tracking-widest text-[#a9a7ba] [writing-mode:vertical-lr] rotate-180 group-hover:text-[#ff2fb5] transition-colors duration-200">
-          SPONSORS
-        </span>
-      </Link>
-
-      <div className="w-4 h-[1px] bg-white/10" />
-
-      <Link
         href="/about"
         className="group relative flex items-center justify-center p-2 focus-visible:outline-none"
         aria-label="About Page"
