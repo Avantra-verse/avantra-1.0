@@ -1,10 +1,10 @@
-import { notFound } from "next/navigation";
+// Hidden until sponsors are confirmed: the leading "_" keeps this folder out of routing.
+// Rename app/_sponsors back to app/sponsors to publish /sponsors.
 import { siteConfig } from "@/content/site";
 import PageHeader from "@/components/PageHeader";
 import Reveal from "@/components/Reveal";
 
 export default function Sponsors() {
-  notFound(); // hidden until sponsors are confirmed; delete this line to bring the page back
   return (
     <div className="mx-auto max-w-6xl px-6 pb-32">
       <PageHeader
