@@ -587,3 +587,56 @@
     display: none;
   }
 }
+
+/* Phone caption: readable copy of the current wall (the 3D room is ~22% scale on a portrait phone). */
+.caps {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .caps {
+    display: block;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: 14;
+    pointer-events: none;
+  }
+  .cap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 16px 18px;
+    border: 2px solid #9fd3ff;
+    border-radius: 12px;
+    background: rgba(23, 18, 16, 0.92);
+    color: #f6efe9;
+    font: 400 16px/1.5 var(--font-instrument-sans), "Instrument Sans", system-ui, sans-serif;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .cap.on {
+    opacity: 1;
+    transform: none;
+  }
+  .cap h2 {
+    margin: 0 0 6px;
+    font: 700 34px/1.05 var(--font-gaegu), Gaegu, cursive;
+  }
+  .cap p {
+    margin: 6px 0 0;
+    color: #d8cbc2;
+  }
+  .cap b {
+    display: block;
+    color: #ff3347;
+    font: 700 21px/1.2 var(--font-gaegu), Gaegu, cursive;
+  }
+  .cap .facts {
+    color: #9fd3ff;
+    font-size: 15px;
+  }
+}

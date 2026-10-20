@@ -25,6 +25,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
   const dot1Ref = useRef<HTMLButtonElement>(null);
   const dot2Ref = useRef<HTMLButtonElement>(null);
 
+  const capRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)];
   const nARef = useRef<HTMLButtonElement>(null);
   const nCRef = useRef<HTMLButtonElement>(null);
 
@@ -137,6 +138,8 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
       if (dot1Ref.current) dot1Ref.current.classList.toggle(styles.on, face === 1);
       if (dot2Ref.current) dot2Ref.current.classList.toggle(styles.on, face === 2);
 
+      capRefs.forEach((r, i) => r.current?.classList.toggle(styles.on, face === i && f < 0.4));
+
       if (nARef.current) nARef.current.classList.toggle(styles.on, cur < 0.68);
       if (nCRef.current) nCRef.current.classList.toggle(styles.on, cur >= 0.68);
 
@@ -183,6 +186,34 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
         <button ref={dot0Ref} aria-label="About" onClick={() => go(0.04 * getMax())}></button>
         <button ref={dot1Ref} aria-label="Experiences" onClick={() => go(0.4 * getMax())}></button>
         <button ref={dot2Ref} aria-label="Contact" onClick={() => go(0.68 * getMax())}></button>
+      </div>
+
+      {/* Phones only: the room renders too small to read, so the current wall's words sit here at full size. */}
+      <div className={styles.caps} aria-hidden="true">
+        <div ref={capRefs[0]} className={styles.cap}>
+          <h2>
+            About <span className={styles.ser}>us</span>
+          </h2>
+          <p>
+            AVANTRA 2026 is a two-day festival where school students bring their own science and technology projects,
+            show what they have built, and take on hands-on challenges with students from other schools.
+          </p>
+          <p className={styles.facts}>December 2026 · SSRVM IEMS Sec-20 · 2 days</p>
+        </div>
+        <div ref={capRefs[1]} className={styles.cap}>
+          <h2>
+            Step <span className={styles.ser}>through</span>
+          </h2>
+          <p><b>The Showcase</b> Bring your own project and show what you built.</p>
+          <p><b>The Challenge Floor</b> Hands-on challenges with students from other schools.</p>
+          <p><b>The Exchange</b> Trade questions and ideas with new people.</p>
+        </div>
+        <div ref={capRefs[2]} className={styles.cap}>
+          <h2>
+            Questions? <span className={styles.ser}>Step in.</span>
+          </h2>
+          <p>Keep scrolling to write to the team.</p>
+        </div>
       </div>
 
       <div id="view" ref={viewRef} className={styles.view}>
