@@ -65,10 +65,11 @@
 
 .nav {
   display: flex;
+  align-items: center;
   gap: 22px;
 }
 
-.nav a,
+.nav a:not(:global(.pill)),
 .nav button {
   background: none;
   border: 0;
@@ -82,7 +83,7 @@
 }
 
 .nav .on,
-.nav a:hover,
+.nav a:not(:global(.pill)):hover,
 .nav button:hover {
   border-color: var(--hot);
 }
@@ -639,4 +640,12 @@
     color: #9fd3ff;
     font-size: 15px;
   }
+}
+
+/* 44px tap targets for the contact links */
+.cw p a,
+.bk {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }

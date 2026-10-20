@@ -557,3 +557,25 @@ button.link:disabled {
     font-size: 2.1rem;
   }
 }
+
+/* "Opening soon" card: a way forward instead of a dead end. */
+.soonActions {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  margin-top: 24px;
+}
+
+.soonActions .submitBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  text-decoration: none;
+}
+
+.soonActions .link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}

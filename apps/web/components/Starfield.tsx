@@ -20,15 +20,15 @@ interface Particle {
 
 const SECTION_PROFILES = [
   // 0: Hero
-  { speed: 1.0, colors: ["#ff2fb5", "#8a4bff", "#ffffff"] },
+  { speed: 1.0, colors: ["#9fd4ff", "#f4ead9", "#ffffff"] },
   // 1: About
-  { speed: 1.3, colors: ["#ffb02f", "#ff2fb5", "#ffffff"] },
+  { speed: 1.3, colors: ["#ffffff", "#9fd4ff", "#f4ead9"] },
   // 2: Dimensions (Warp)
-  { speed: 3.2, colors: ["#22e6ff", "#ff2fb5", "#ffffff"] },
+  { speed: 3.2, colors: ["#9fd4ff", "#ffffff", "#f4ead9"] },
   // 3: Timeline (Calm)
-  { speed: 0.6, colors: ["#ffb02f", "#ffffff", "#8a4bff"] },
+  { speed: 0.6, colors: ["#f4ead9", "#ffffff", "#9fd4ff"] },
   // 4: Location
-  { speed: 1.8, colors: ["#ff2fb5", "#9ad2fb", "#ffffff"] },
+  { speed: 1.8, colors: ["#ff5560", "#9fd4ff", "#ffffff"] },
 ];
 
 export default function Starfield({ activeDimension = 0 }: StarFieldProps) {

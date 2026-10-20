@@ -1,64 +1,46 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+const LINKS = [
+  { href: "/about", label: "About" },
+  { href: "/venue", label: "Venue" },
+  { href: "/contact", label: "Contact" },
+  { href: "/registration", label: "Registration" },
+];
 
 export default function Footer() {
   const pathname = usePathname();
   if (pathname === "/" || pathname === "/about" || pathname === "/contact") return null; // these pages have their own footer
   return (
-    <footer className="relative z-30 border-t border-[#9ad2fb]/20 bg-[#07070e] py-16 px-6">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-between gap-8 text-center md:text-left">
-        {/* Logo & Tagline */}
-        <div className="flex flex-col items-center md:items-start gap-4">
-          <Link href="/" className="inline-block focus-visible:outline-none">
-            <img
-              src="/brand/avantra-logo-500w.png"
-              alt="AVANTRA 2026 Logo"
-              className="h-[42px] w-auto object-contain"
-            />
+    <footer className="relative z-30 border-t border-starlight/15 bg-void px-6 pt-14 pb-10">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 text-center md:flex-row md:items-start md:text-left">
+        <div className="flex flex-col items-center gap-3 md:items-start">
+          <Link href="/" aria-label="AVANTRA home" className="inline-flex min-h-11 items-center">
+            <img src="/brand/avantra-logo-500w.png" alt="AVANTRA" className="h-[42px] w-auto object-contain" />
           </Link>
-          <p className="text-sm font-medium text-[#a9a7ba] max-w-sm">
-            A Multiverse-themed inter-school science & innovation festival
-          </p>
-          <p className="text-xs font-bold tracking-widest text-[#9ad2fb]">
-            DECEMBER 2026
-          </p>
+          <p className="max-w-sm text-secondary">A Multiverse-themed inter-school science &amp; innovation festival</p>
+          <p className="font-[family-name:var(--font-display)] text-sky">December 2026</p>
         </div>
 
-        {/* Links Navigation */}
-        <nav className="flex flex-wrap justify-center gap-8 text-sm font-bold tracking-wider text-[#a9a7ba]">
-          <Link
-            href="/about"
-            className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
-          >
-            ABOUT
-          </Link>
-          <Link
-            href="/venue"
-            className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
-          >
-            VENUE
-          </Link>
-          <Link
-            href="/contact"
-            className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
-          >
-            CONTACT
-          </Link>
-          <Link
-            href="/registration"
-            className="hover:text-[#ff2fb5] hover:drop-shadow-[0_0_8px_rgba(255,47,181,0.6)] transition-all duration-200"
-          >
-            REGISTRATION
-          </Link>
+        <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-6 font-semibold text-secondary">
+          {LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              aria-current={pathname === l.href ? "page" : undefined}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center underline-offset-4 transition-colors hover:text-sky hover:underline aria-[current=page]:text-starlight"
+            >
+              {l.label}
+            </Link>
+          ))}
         </nav>
       </div>
 
-      <div className="max-w-6xl mx-auto mt-12 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-[#85839a] gap-4">
-        <p>© 2026 AVANTRA Festival. All rights reserved.</p>
-        <p>Arithi Innovation & Technologies</p>
+      <div className="mx-auto mt-10 flex max-w-6xl flex-col items-center justify-between gap-2 border-t border-starlight/10 pt-6 text-sm text-muted sm:flex-row">
+        <p>AVANTRA 2026, hosted by SSRVM IEMS Sec-20</p>
+        <p>Run by Arithi Innovation &amp; Technologies</p>
       </div>
     </footer>
   );

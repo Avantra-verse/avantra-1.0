@@ -5,14 +5,20 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { apiReady } from "@/lib/api";
 
+// Log in only appears once accounts are live; until then it is one more "Opening soon".
 const LINKS = [
   { href: "/about", label: "About" },
   { href: "/venue", label: "Venue" },
   { href: "/contact", label: "Contact" },
   { href: "/login", label: "Log in" },
   { href: "/registration", label: "Registration" },
-];
+].filter((l) => apiReady || l.href !== "/login");
+
+// Registration is the one call to action in every header.
+export const REGISTER_PILL =
+  "pill inline-flex min-h-11 items-center rounded-full border-2 border-sky bg-ember px-5 font-[family-name:var(--font-display)] text-white transition-[background-color,box-shadow] duration-200 hover:bg-ember-hot hover:shadow-[0_4px_18px_rgb(159_212_255/0.35)]";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -22,20 +28,22 @@ export default function Nav() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/8 bg-void/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        <Link href="/" aria-label="AVANTRA home">
+        <Link href="/" aria-label="AVANTRA home" className="inline-flex min-h-11 items-center">
           <img src="/brand/avantra-logo-500w.png" alt="AVANTRA" className="h-9 w-auto" />
         </Link>
 
-        <nav className="hidden gap-8 md:flex">
+        <nav className="hidden items-center gap-8 md:flex">
           {LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               aria-current={pathname === link.href ? "page" : undefined}
               className={
-                pathname === link.href
-                  ? "text-starlight"
-                  : "text-muted transition-colors hover:text-starlight"
+                link.href === "/registration"
+                  ? REGISTER_PILL
+                  : pathname === link.href
+                    ? "text-starlight"
+                    : "text-secondary transition-colors hover:text-starlight"
               }
             >
               {link.label}

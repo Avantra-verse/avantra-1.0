@@ -40,7 +40,7 @@ export const siteConfig: SiteConfig = {
   venue: {
     name: "SSRVM IEMS",
     address: "Ispat English Medium School, Sector 20, Rourkela, Odisha",
-    directions: "Tap below for directions on Google Maps.",
+    directions: "Directions are on Google Maps.",
     mapUrl: "https://maps.app.goo.gl/5UULyULJRH4CXrgS6",
   },
   prizes: [

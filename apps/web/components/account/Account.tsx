@@ -131,6 +131,14 @@ export function OpensSoon({ what }: { what: string }) {
     <div className={styles.successBox} role="status">
       <h1 className={styles.successHeading}>Opening soon</h1>
       <p className={styles.successText}>{what} opens soon. Check back closer to AVANTRA 2026.</p>
+      <div className={styles.soonActions}>
+        <Link href="/contact" className={styles.submitBtn}>
+          Ask the team
+        </Link>
+        <Link href="/" className={styles.link}>
+          Back to AVANTRA
+        </Link>
+      </div>
     </div>
   );
 }

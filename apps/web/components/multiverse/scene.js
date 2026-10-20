@@ -209,6 +209,7 @@ function frame(now){
   var fo=easeO(clamp((hp-.88)/.09));
   setO(finalEl,fo);finalEl.style.transform='translate3d(0,'+((1-fo)*26)+'px,0)';
   finalEl.style.pointerEvents=fo>.6?'auto':'none';
+  var finHid=fo<.05;if(finalEl.inert!==finHid)finalEl.inert=finHid; // no keyboard focus on invisible buttons
   flogo.style.clipPath='inset(0 '+((1-fo)*100)+'% 0 0)';
   scrimL.style.opacity=fo;
 
@@ -250,6 +251,7 @@ function frame(now){
   var f3=easeO(clamp((yp-.2)/.14)),f4=easeO(clamp((yp-.28)/.14)),e3=$('c3'),e4=$('c4');
   setO(e3,f3);e3.style.transform='translate3d(0,'+((1-f3)*24)+'px,0)';
   setO(e4,f4);e4.style.transform='translate3d(0,'+((1-f4)*24)+'px,0)';
+  var e4Hid=f4<.05;if(e4.inert!==e4Hid)e4.inert=e4Hid;
 
   /* ----- FOOTER logo ----- */
   var ft=easeO(clamp((sy+vh-finTop)/(vh*1.2)));

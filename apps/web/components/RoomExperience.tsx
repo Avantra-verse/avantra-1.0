@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ContactRequest } from "@avantra/shared";
 import { api, ApiError, apiReady } from "@/lib/api";
 import styles from "./RoomExperience.module.css";
-import { MobileMenu } from "@/components/Nav";
+import { MobileMenu, REGISTER_PILL } from "@/components/Nav";
 
 interface RoomExperienceProps {
   initialScrolledToEnd?: boolean;
@@ -130,6 +130,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
         ctRef.current.style.opacity = `${f}`;
         ctRef.current.style.transform = `scale(${0.9 + 0.1 * f})`;
         ctRef.current.classList.toggle(styles.live, f > 0.4);
+        ctRef.current.inert = f < 0.05; // keep keyboard focus out of the form while it is invisible
       }
 
       const face = cur < 0.22 ? 0 : cur < 0.58 ? 1 : 2;
@@ -176,8 +177,10 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
           <button ref={nCRef} id="nC" onClick={() => go(getMax())}>
             Contact
           </button>
-          <Link href="/login">Log in</Link>
-          <Link href="/registration">Registration</Link>
+          {apiReady && <Link href="/login">Log in</Link>}
+          <Link href="/registration" className={REGISTER_PILL}>
+            Registration
+          </Link>
         </nav>
         <MobileMenu className="min-[801px]:hidden" />
       </header>
