@@ -161,7 +161,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
     <div ref={containerRef}>
       <header className={styles.header}>
         <Link href="/" aria-label="AVANTRA home">
-          <img src="/images/avantra-logo.png" alt="Avantra" />
+          <img src="/brand/avantra-logo.png" alt="Avantra" />
         </Link>
         <em>December 2026, dates soon</em>
         <nav className={styles.nav}>

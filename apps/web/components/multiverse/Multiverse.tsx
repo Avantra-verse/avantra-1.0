@@ -6,7 +6,7 @@ import Link from "next/link";
 import { startScene } from "./scene";
 import "./multiverse.css";
 
-const LOGO = "/multiverse/avantra-logo-transparent.png";
+const LOGO = "/brand/avantra-logo.png";
 
 export default function Multiverse() {
   // Layout effect: its cleanup runs before React removes the DOM, so no frame ever draws into a removed page.

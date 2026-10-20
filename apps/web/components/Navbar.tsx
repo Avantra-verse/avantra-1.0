@@ -33,7 +33,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group focus-visible:outline-none">
           <img
-            src="/video/avantra-logo.png"
+            src="/brand/avantra-logo-500w.png"
             alt="AVANTRA Logo"
             className="h-[38px] w-auto object-contain transition-transform group-hover:scale-105"
           />

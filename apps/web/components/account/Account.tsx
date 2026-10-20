@@ -24,7 +24,7 @@ export function AccountShell({ tagline, children }: { tagline: string; children:
                 <div className={styles.orb} />
               </div>
               <div className={`${styles.ring} ${styles.ring3}`} />
-              <img src="/assets/avantra-logo.png" alt="Avantra Logo" className={styles.portalLogo} />
+              <img src="/brand/avantra-logo.png" alt="Avantra Logo" className={styles.portalLogo} />
             </div>
             <p className={styles.heroSubtext}>{tagline}</p>
           </div>

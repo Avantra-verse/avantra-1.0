@@ -46,7 +46,7 @@ export async function drawScoreCard(name: string, s: Omit<WallMe, "open">) {
 
   const joinUrl = `${window.location.origin}/wall`;
   const [avantra, arithi, qr] = await Promise.all([
-    img("/multiverse/avantra-logo-transparent.png"),
+    img("/brand/avantra-logo.png"),
     img("/brand/arithi-logo.png"),
     QRCode.toDataURL(joinUrl, { width: 260, margin: 1, color: { dark: NAVY, light: WHITE } }).then(img),
   ]);
