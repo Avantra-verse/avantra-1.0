@@ -5,14 +5,14 @@ export function startScene(){
 "use strict";
 var alive=true,ac=new AbortController(),sig={signal:ac.signal},timers=[];
 
-var FA=Array.from({length:185},function(_,i){return "/multiverse/frames/planets-gold-dust-timeline/"+String(i+1).padStart(3,"0")+".webp";});
+var FA=Array.from({length:300},function(_,i){return "/multiverse/frames/planets-gold-dust-timeline/"+String(i+1).padStart(3,"0")+".webp";});
 var FB=Array.from({length:89},function(_,i){return "/multiverse/frames/asteroid-nebula-hero/"+String(i+1).padStart(3,"0")+".webp";});
 var CUBE="/multiverse/nebula-cube.jpg";
-var LOGO="/multiverse/avantra-logo-transparent.png";
+var LOGO="/brand/avantra-logo.png";
 
 var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 var fine=matchMedia('(hover:hover) and (pointer:fine)').matches;
-var dpr=Math.min(1.25,window.devicePixelRatio||1);
+var dpr=Math.min(fine?2:1.25,window.devicePixelRatio||1);
 var vw=innerWidth,vh=innerHeight;
 function clamp(v,a,b){a=a===undefined?0:a;b=b===undefined?1:b;return Math.min(b,Math.max(a,v));}
 function lerp(a,b,t){return a+(b-a)*t;}
@@ -105,6 +105,7 @@ var shards=[];
   var C=9,R=4,seed=7;
   function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646;}
   cubewrap.style.setProperty('--img','url("'+CUBE+'")');
+  cubewrap.textContent=''; // a re-run (dev StrictMode, remount) would otherwise leave stale, fully assembled shards behind
   for(var r=0;r<R;r++)for(var c=0;c<C;c++){
     var d=document.createElement('div');d.className='shard';
     d.style.left=(c/C*100)+'%';d.style.top=(r/R*100)+'%';
