@@ -13,8 +13,9 @@ var LOGO="/brand/avantra-logo.png";
 var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 var fine=matchMedia('(hover:hover) and (pointer:fine)').matches;
 var dpr=Math.min(fine?2:1.25,window.devicePixelRatio||1);
-// Phones get a lighter hero set (150 frames, 1280px): the full 1920px set halves their scroll fps.
+// Phones get lighter sets (1280px; the hero also halves to 150 frames): the full 1920px sets halve their scroll fps.
 if(!fine)FA=Array.from({length:150},function(_,i){return "/multiverse/frames/stardust-child-hero-m/"+String(i+1).padStart(3,"0")+".webp";});
+if(!fine)FB=FB.map(function(u){return u.replace("/asteroid-nebula-hero/","/asteroid-nebula-hero-m/");});
 var vw=innerWidth,vh=innerHeight;
 function clamp(v,a,b){a=a===undefined?0:a;b=b===undefined?1:b;return Math.min(b,Math.max(a,v));}
 function lerp(a,b,t){return a+(b-a)*t;}
