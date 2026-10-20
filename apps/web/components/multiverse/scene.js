@@ -5,7 +5,7 @@ export function startScene(){
 "use strict";
 var alive=true,ac=new AbortController(),sig={signal:ac.signal},timers=[];
 
-var FA=Array.from({length:300},function(_,i){return "/multiverse/frames/planets-gold-dust-timeline/"+String(i+1).padStart(3,"0")+".webp";});
+var FA=Array.from({length:300},function(_,i){return "/multiverse/frames/stardust-child-hero/"+String(i+1).padStart(3,"0")+".webp";});
 var FB=Array.from({length:89},function(_,i){return "/multiverse/frames/asteroid-nebula-hero/"+String(i+1).padStart(3,"0")+".webp";});
 var CUBE="/multiverse/nebula-cube.jpg";
 var LOGO="/brand/avantra-logo.png";
@@ -13,6 +13,8 @@ var LOGO="/brand/avantra-logo.png";
 var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 var fine=matchMedia('(hover:hover) and (pointer:fine)').matches;
 var dpr=Math.min(fine?2:1.25,window.devicePixelRatio||1);
+// Phones get a lighter hero set (150 frames, 1280px): the full 1920px set halves their scroll fps.
+if(!fine)FA=Array.from({length:150},function(_,i){return "/multiverse/frames/stardust-child-hero-m/"+String(i+1).padStart(3,"0")+".webp";});
 var vw=innerWidth,vh=innerHeight;
 function clamp(v,a,b){a=a===undefined?0:a;b=b===undefined?1:b;return Math.min(b,Math.max(a,v));}
 function lerp(a,b,t){return a+(b-a)*t;}
