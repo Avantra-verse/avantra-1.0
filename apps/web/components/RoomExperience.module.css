@@ -570,9 +570,7 @@
 
 @media (max-width: 800px) {
   .nav {
-    gap: 4px 12px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    display: none;
   }
   .header em {
     display: none;

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ContactRequest } from "@avantra/shared";
 import { api, ApiError, apiReady } from "@/lib/api";
 import styles from "./RoomExperience.module.css";
+import { MobileMenu } from "@/components/Nav";
 
 interface RoomExperienceProps {
   initialScrolledToEnd?: boolean;
@@ -175,6 +176,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
           <Link href="/login">Log in</Link>
           <Link href="/registration">Registration</Link>
         </nav>
+        <MobileMenu className="min-[801px]:hidden" />
       </header>
 
       <div id="bar" className={styles.bar} aria-label="Room faces">

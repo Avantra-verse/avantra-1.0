@@ -5,6 +5,7 @@ import { useLayoutEffect } from "react";
 import Link from "next/link";
 import { startScene } from "./scene";
 import "./multiverse.css";
+import { MobileMenu } from "@/components/Nav";
 
 const LOGO = "/brand/avantra-logo.png";
 
@@ -50,6 +51,7 @@ export default function Multiverse() {
           <Link className="keep" href="/login" data-hover>Log in</Link>
           <Link className="keep" href="/registration" data-hover>Registration</Link>
         </nav>
+        <MobileMenu className="min-[821px]:hidden" />
       </header>
 
       <div>
