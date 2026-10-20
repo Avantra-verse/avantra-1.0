@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo, Gaegu, Instrument_Serif, Instrument_Sans } from "next/font/google";
+import { Gaegu, Instrument_Serif, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
@@ -7,13 +7,6 @@ import PageTransition from "@/components/PageTransition";
 import Starfield from "@/components/Starfield";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-
-const archivo = Archivo({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-archivo",
-  display: "swap",
-});
 
 const gaegu = Gaegu({
   weight: ["400", "700"],
@@ -64,12 +57,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${archivo.variable} ${gaegu.variable} ${instrumentSerif.variable} ${instrumentSans.variable}`}
+      className={`${gaegu.variable} ${instrumentSerif.variable} ${instrumentSans.variable}`}
       suppressHydrationWarning
     >
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=Gaegu:wght@400;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500&family=Mukta:wght@400;500;600&family=Yatra+One&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=Mukta:wght@400;500;600;700;800&family=Yatra+One&display=swap"
           rel="stylesheet"
         />
       </head>
