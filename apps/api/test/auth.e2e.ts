@@ -30,7 +30,7 @@ test('sign-up, login, wrong tab, logout, password reset, CSRF', async () => {
   assert.equal((await call('/auth/me')).status, 401, 'no cookie, no access');
 
   // Wrong tab and wrong password give the same message.
-  const wrongTab = await call('/auth/login', { role: 'SCHOOL_COORDINATOR', email, password: 'first-password-1' });
+  const wrongTab = await call('/auth/login', { role: 'AMBASSADOR', email, password: 'first-password-1' });
   const wrongPw = await call('/auth/login', { role: 'STUDENT', email, password: 'nope-nope-nope' });
   const noUser = await call('/auth/login', { role: 'STUDENT', email: `x${email}`, password: 'nope-nope-nope' });
   assert.deepEqual([wrongTab.status, wrongPw.status, noUser.status], [401, 401, 401]);
@@ -57,7 +57,7 @@ test('sign-up, login, wrong tab, logout, password reset, CSRF', async () => {
   assert.equal((await call('/auth/register', { ...signup, email: 'not-an-email' })).status, 400);
 });
 
-test('profiles, school approval, coordinator scoping, admin login, staff', async () => {
+test('profiles, ambassadors and referrals, admin login, staff', async () => {
   // Admin via the one-off script, then password + emailed code.
   const adminEmail = `e2e-admin-${Date.now()}@example.com`;
   const out = spawnSync(process.execPath, ['--no-warnings', 'scripts/create-admin.ts', adminEmail, 'Test Admin'], { encoding: 'utf8' });
@@ -69,41 +69,37 @@ test('profiles, school approval, coordinator scoping, admin login, staff', async
   const admin = adminRes.cookie;
   assert.equal((await call('/auth/login', { role: 'STUDENT', email: adminEmail, password: adminPw })).status, 401, 'admin cannot use public login');
 
-  // Coordinator registers a school: pending, not in the dropdown, no students visible yet.
-  const coord = await signUp('SCHOOL_COORDINATOR', 'coord');
-  const schoolName = `E2E School ${Date.now()}`;
-  const school = await call('/profile/school', { schoolName, city: 'Rourkela', address: 'Sector 20, Rourkela', phone: '9876543210' }, coord.cookie);
-  assert.equal(school.status, 201);
-  assert.equal(school.json.status, 'PENDING');
-  assert.equal((await call('/profile/school', { schoolName: `${schoolName} 2`, city: 'Rourkela', address: 'Sector 20, Rourkela', phone: '9876543210' }, coord.cookie)).status, 409, 'one school per coordinator');
-  assert.ok(!(await call('/schools')).json.some((s: { id: string }) => s.id === school.json.id), 'pending school hidden');
-  assert.equal((await call('/auth/me', undefined, coord.cookie)).json.profileComplete, true);
+  // Ambassador: profile gives a 6-character code to share.
+  const amb = await signUp('AMBASSADOR', 'amb');
+  assert.equal((await call('/auth/me', undefined, amb.cookie)).json.profileComplete, false);
+  const ambProfile = { phone: '9876543210', schoolName: 'E2E Ambassador School' };
+  const ambassador = await call('/profile/ambassador', ambProfile, amb.cookie);
+  assert.equal(ambassador.status, 201);
+  assert.match(ambassador.json.code, /^[2-9A-HJ-NP-Z]{6}$/);
+  assert.equal((await call('/profile/ambassador', ambProfile, amb.cookie)).status, 409, 'one profile');
+  assert.equal((await call('/auth/me', undefined, amb.cookie)).json.profileComplete, true);
 
-  // Student: can't pick a pending school; "Others" works; profile only once.
+  // Student: typed school, optional ambassador code (any case), profile only once.
   const student = await signUp('STUDENT', 'student');
-  const profile = { phone: '9876500000', grade: 9, guardianPhone: '9876511111', guardianConsent: true };
-  assert.equal((await call('/profile/student', { ...profile, schoolId: school.json.id }, student.cookie)).status, 403);
-  assert.equal((await call('/profile/student', { ...profile, guardianConsent: false, otherSchoolName: schoolName }, student.cookie)).status, 400, 'consent required');
-  const created = await call('/profile/student', { ...profile, otherSchoolName: schoolName }, student.cookie);
+  const profile = { phone: '9876500000', grade: 9, guardianPhone: '9876511111', guardianConsent: true, schoolName: 'E2E School' };
+  assert.equal((await call('/profile/student', { ...profile, guardianConsent: false }, student.cookie)).status, 400, 'consent required');
+  assert.equal((await call('/profile/student', { ...profile, referralCode: 'ZZZZZZ' }, student.cookie)).status, 400, 'unknown code');
+  const created = await call('/profile/student', { ...profile, referralCode: ` ${ambassador.json.code.toLowerCase()} ` }, student.cookie);
   assert.equal(created.status, 201);
   assert.match(created.json.avantraId, /^AV26-[2-9A-HJ-NP-Z]{5}$/);
-  assert.equal((await call('/profile/student', { ...profile, otherSchoolName: schoolName }, student.cookie)).status, 409);
+  assert.equal((await call('/profile/student', profile, student.cookie)).status, 409);
 
-  // Role checks: nobody but admin reaches /admin, only coordinators see coordinator data.
-  assert.equal((await call('/admin/schools', undefined, coord.cookie)).status, 403);
-  assert.equal((await call('/coordinator/students', undefined, student.cookie)).status, 403);
-  assert.deepEqual((await call('/coordinator/students', undefined, coord.cookie)).json, []);
+  // Role checks: nobody but admin reaches /admin, only ambassadors see their referrals.
+  assert.equal((await call('/admin/ambassadors', undefined, amb.cookie)).status, 403);
+  assert.equal((await call('/ambassador/referrals', undefined, student.cookie)).status, 403);
+  const referrals = (await call('/ambassador/referrals', undefined, amb.cookie)).json;
+  assert.deepEqual(referrals.map((r: { user: { name: string }; feePaidAt: null }) => [r.user.name, r.feePaidAt]), [['Test student', null]]);
 
-  // Admin approves the school and links the "Others" student to it.
-  assert.equal((await call(`/admin/schools/${school.json.id}/approve`, {}, admin)).json.status, 'APPROVED');
-  assert.ok((await call('/schools')).json.some((s: { id: string }) => s.id === school.json.id), 'approved school listed');
-  const unlinked = (await call('/admin/students/unlinked', undefined, admin)).json;
-  const row = unlinked.find((s: { avantraId: string }) => s.avantraId === created.json.avantraId);
-  assert.ok(row);
-  assert.equal((await call(`/admin/students/${row.userId}/link`, { schoolId: school.json.id }, admin)).status, 200);
-  const mine = (await call('/coordinator/students', undefined, coord.cookie)).json;
-  assert.deepEqual(mine.map((s: { avantraId: string }) => s.avantraId), [created.json.avantraId]);
-  assert.equal(mine[0]._count.checkIns, 0); // gate check-ins, shown on the coordinator dashboard
+  // Admin sees the count: 1 sign-up, 0 paid. Paying moves it to 1 paid.
+  const count = async () => (await call('/admin/ambassadors', undefined, admin)).json.find((a: { code: string }) => a.code === ambassador.json.code);
+  assert.deepEqual([(await count()).signups, (await count()).paid], [1, 0]);
+  assert.equal((await call(`/admin/students/${created.json.avantraId}/mark-paid`, { note: 'RCPT-AMB' }, admin)).status, 200);
+  assert.equal((await count()).paid, 1);
 
   // Staff: admin creates a volunteer; it logs in on /staff only and can't reach admin.
   const volEmail = `e2e-vol-${Date.now()}@example.com`;
@@ -112,7 +108,7 @@ test('profiles, school approval, coordinator scoping, admin login, staff', async
   assert.equal((await call('/auth/login', { role: 'STUDENT', email: volEmail, password: 'volunteer-pass' })).status, 401);
   const volLogin = await call('/auth/staff/login', { email: volEmail, password: 'volunteer-pass' });
   assert.equal(volLogin.status, 200);
-  assert.equal((await call('/admin/schools', undefined, volLogin.cookie)).status, 403);
+  assert.equal((await call('/admin/ambassadors', undefined, volLogin.cookie)).status, 403);
   assert.equal((await call('/auth/staff/login', { email: student.email, password: 'a-good-password' })).status, 401, 'students cannot use /staff');
 
   // Disable = logged out everywhere and can't log back in.

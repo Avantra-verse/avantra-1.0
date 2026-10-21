@@ -14,9 +14,8 @@ const studentCard = {
   avantraId: true,
   grade: true,
   feePaidAt: true,
-  otherSchoolName: true,
+  schoolName: true,
   user: { select: { name: true } },
-  school: { select: { name: true } },
 } as const;
 
 @Controller()
@@ -168,8 +167,8 @@ export class StaffController {
     return student;
   }
 
-  private card(s: { avantraId: string; grade: number; feePaidAt: Date | null; otherSchoolName: string | null; user: { name: string }; school: { name: string } | null }) {
-    return { name: s.user.name, avantraId: s.avantraId, grade: s.grade, school: s.school?.name ?? s.otherSchoolName, feePaid: !!s.feePaidAt };
+  private card(s: { avantraId: string; grade: number; feePaidAt: Date | null; schoolName: string; user: { name: string } }) {
+    return { name: s.user.name, avantraId: s.avantraId, grade: s.grade, school: s.schoolName, feePaid: !!s.feePaidAt };
   }
 
   private async judgeEvent(judge: User) {

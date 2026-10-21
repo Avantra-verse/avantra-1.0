@@ -122,7 +122,7 @@ export function Chips<T extends string>({ name, legend, value, onChange, options
 
 export const ROLE_OPTIONS = [
   { value: "STUDENT" as const, title: "Student", sub: "Classes 6–12" },
-  { value: "SCHOOL_COORDINATOR" as const, title: "School", sub: "Teacher coordinator" },
+  { value: "AMBASSADOR" as const, title: "Ambassador", sub: "Bring your friends" },
 ];
 
 // Shown on account pages while the site isn't connected to the API (NEXT_PUBLIC_API_URL unset).

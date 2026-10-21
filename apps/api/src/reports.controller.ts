@@ -12,11 +12,10 @@ export class ReportsController {
   @Get('stats')
   async stats() {
     const p = this.prisma;
-    const [students, paid, unlinked, schools, revenue, events, regs, teams, checkIns, gateToday] = await Promise.all([
+    const [students, paid, ambassadors, revenue, events, regs, teams, checkIns, gateToday] = await Promise.all([
       p.student.count(),
       p.student.count({ where: { feePaidAt: { not: null } } }),
-      p.student.count({ where: { schoolId: null } }),
-      p.school.groupBy({ by: ['status'], _count: true }),
+      p.ambassador.count(),
       p.payment.groupBy({ by: ['method'], where: { status: 'PAID' }, _sum: { amountPaise: true }, _count: true }),
       p.event.findMany({ select: { id: true, name: true, capacity: true }, orderBy: { name: 'asc' } }),
       p.registration.groupBy({ by: ['eventId'], _count: true }),
@@ -30,8 +29,8 @@ export class ReportsController {
     const scanCount = byEvent(checkIns, (r) => r._count.studentId);
     const money = (m: 'ONLINE' | 'OFFLINE') => revenue.find((r) => r.method === m);
     return {
-      students: { total: students, paid, unpaid: students - paid, unlinkedSchool: unlinked },
-      schools: Object.fromEntries(schools.map((s) => [s.status, s._count])),
+      students: { total: students, paid, unpaid: students - paid },
+      ambassadors,
       fees: {
         onlinePaise: money('ONLINE')?._sum.amountPaise ?? 0,
         onlineCount: money('ONLINE')?._count ?? 0,
@@ -53,18 +52,19 @@ export class ReportsController {
   @Get('export/students.csv') @CsvFile('students')
   async studentsCsv() {
     const rows = await this.prisma.student.findMany({
-      include: { user: true, school: true, payments: { where: { status: 'PAID' }, take: 1 }, _count: { select: { checkIns: true } } },
+      include: { user: true, referredBy: { select: { code: true } }, payments: { where: { status: 'PAID' }, take: 1 }, _count: { select: { checkIns: true } } },
       orderBy: { avantraId: 'asc' },
     });
     return toCsv(
-      ['avantraId', 'name', 'email', 'phone', 'grade', 'school', 'guardianPhone', 'guardianEmail', 'feePaidAt', 'paidBy', 'paymentRef', 'checkIns', 'signedUpAt'],
+      ['avantraId', 'name', 'email', 'phone', 'grade', 'school', 'ambassadorCode', 'guardianPhone', 'guardianEmail', 'feePaidAt', 'paidBy', 'paymentRef', 'checkIns', 'signedUpAt'],
       rows.map((s) => ({
         avantraId: s.avantraId,
         name: s.user.name,
         email: s.user.email,
         phone: s.user.phone,
         grade: s.grade,
-        school: s.school?.name ?? `${s.otherSchoolName} (unlinked)`,
+        school: s.schoolName,
+        ambassadorCode: s.referredBy?.code,
         guardianPhone: s.guardianPhone,
         guardianEmail: s.guardianEmail,
         feePaidAt: s.feePaidAt,
@@ -82,7 +82,7 @@ export class ReportsController {
       where: { eventId },
       include: {
         event: true,
-        student: { include: { user: true, school: true } },
+        student: { include: { user: true } },
         teamMember: { include: { team: true } },
       },
       orderBy: [{ event: { name: 'asc' } }, { createdAt: 'asc' }],
@@ -94,7 +94,7 @@ export class ReportsController {
         avantraId: r.student.avantraId,
         name: r.student.user.name,
         grade: r.student.grade,
-        school: r.student.school?.name ?? r.student.otherSchoolName,
+        school: r.student.schoolName,
         team: r.teamMember?.team.name,
         teamLeader: r.teamMember?.isLeader,
         projectTitle: r.teamMember?.team.projectTitle,

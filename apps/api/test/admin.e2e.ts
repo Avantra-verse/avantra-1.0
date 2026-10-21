@@ -20,7 +20,7 @@ test('cash fee, walk-in, stats, CSV exports', async () => {
 
   // Walk-in: account + profile + cash in one step, then they set a password via "Forgot password".
   const walkEmail = `e2e-walkin-${Date.now()}@example.com`;
-  const walkIn = { name: '=SUM(1+1)', email: walkEmail, phone: '9876522222', grade: 8, otherSchoolName: 'Walk-in School', guardianPhone: '9876533333', guardianConsent: true, note: 'RCPT-002' };
+  const walkIn = { name: '=SUM(1+1)', email: walkEmail, phone: '9876522222', grade: 8, schoolName: 'Walk-in School', guardianPhone: '9876533333', guardianConsent: true, note: 'RCPT-002' };
   const w = await call('/admin/walk-in', walkIn, adminCookie);
   assert.equal(w.status, 201, JSON.stringify(w.json));
   assert.match(w.json.avantraId, /^AV26-/);

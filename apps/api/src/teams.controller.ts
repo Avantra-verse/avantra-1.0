@@ -117,7 +117,7 @@ export class TeamsController {
         members: {
           select: {
             isLeader: true,
-            registration: { select: { student: { select: { otherSchoolName: true, school: { select: { name: true } }, user: { select: { name: true } } } } } },
+            registration: { select: { student: { select: { schoolName: true, user: { select: { name: true } } } } } },
           },
         },
         joinRequests: { where: { registrationId: reg.id }, select: { teamId: true } },
@@ -133,7 +133,7 @@ export class TeamsController {
           projectTitle: t.projectTitle,
           members: t.members.length,
           leaderName: leader?.user.name ?? null,
-          school: leader?.school?.name ?? leader?.otherSchoolName ?? null,
+          school: leader?.schoolName ?? null,
           requested: t.joinRequests.length > 0,
         };
       });

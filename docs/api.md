@@ -33,7 +33,7 @@ fetch(`${API}/auth/login`, {
 | `POST /auth/logout` | none | 204 | |
 | `GET /auth/me` | none | 200 `Me` | 401 if not logged in. |
 
-`role` is the login tab: `STUDENT` or `SCHOOL_COORDINATOR`.
+`role` is the login tab: `STUDENT` or `AMBASSADOR`.
 
 `Me` = `{ id, email, name, role, profileComplete }`. If `profileComplete` is false, send the user to the profile step before the dashboard (see Profiles below).
 
@@ -47,7 +47,7 @@ fetch(`${API}/auth/login`, {
    Without that variable the account pages show "opens soon", which is what the live site shows until the API is deployed.
 
 Account pages in `apps/web`: `/registration` (sign-up + email code), `/login`, `/forgot-password`, `/profile` (first-time
-details), `/dashboard` (AVANTRA ID + QR, or the coordinator's school and students). API calls go through `apps/web/lib/api.ts`;
+details), `/dashboard` (AVANTRA ID + QR, or the ambassador's code and referrals). API calls go through `apps/web/lib/api.ts`;
 shared building blocks (Meena's registration styles) are in `apps/web/components/account/Account.tsx`.
 
 Other pages: `/events` (register, fee, teams), `/wall`, `/wall/leaderboard`, `/verify/[code]` (public certificate check),
@@ -59,11 +59,10 @@ downloads, schools, desk, staff, results and certificates, Wall). Badge scanning
 
 | Method + path | Who | Body | Success | Notes |
 |---|---|---|---|---|
-| `GET /schools` | anyone | none | 200 `[{ id, name, city }]` | Approved schools only, for the dropdown. Add an "Others" option yourself. |
-| `POST /profile/student` | STUDENT | `StudentProfile` | 201 student | Send `schoolId` **or** `otherSchoolName`, not both. `guardianConsent` must be `true`. Optional `section` and `guardianPhone` (e.g. `"B"`). Returns `avantraId` (e.g. `AV26-7K3QX`) and `qrToken`. 403 = school not approved. 409 = already done. |
-| `POST /profile/school` | SCHOOL_COORDINATOR | `SchoolProfile` | 201 school | Starts `PENDING` until an admin approves. 409 = school name+city taken, or coordinator already has one. |
-| `GET /profile` | any logged-in | none | 200 `{ student, school }` | Student: avantraId, qrToken (for the QR badge), school, `_count.checkIns` (days through the gate). Coordinator: school with `status`. |
-| `GET /coordinator/students` | SCHOOL_COORDINATOR | none | 200 `[{ avantraId, grade, section, feePaidAt, user: { name, createdAt }, _count: { checkIns } }]` | Only their own school. Empty until the school is approved. `_count.checkIns` = gate check-ins (at most one a day). |
+| `POST /profile/student` | STUDENT | `StudentProfile` | 201 student | Typed `schoolName`. Optional `referralCode` (an ambassador's 6-character code; 400 if unknown). `guardianConsent` must be `true`. Optional `section` and `guardianPhone`. |
+| `POST /profile/ambassador` | AMBASSADOR | `AmbassadorProfile` `{ phone, schoolName }` | 201 `{ code, schoolName }` | Generates the 6-character code to share. 409 if the profile exists. |
+| `GET /profile` | any logged-in | none | 200 `{ student, ambassador }` | Student: avantraId, qrToken (for the QR badge), schoolName, `_count.checkIns` (days through the gate). Ambassador: `code`, `schoolName`. |
+| `GET /ambassador/referrals` | AMBASSADOR | none | 200 `[{ grade, schoolName, feePaidAt, user: { name, createdAt } }]` | Only students who entered their code. |
 
 ## Staff and admin login
 
@@ -80,10 +79,7 @@ Admin accounts are created only with `pnpm --filter @avantra/api create-admin <e
 
 | Method + path | Body | Notes |
 |---|---|---|
-| `GET /admin/schools?status=PENDING` | none | `status` optional. Includes coordinator contact and student count. |
-| `POST /admin/schools/:id/approve` / `reject` | none | Emails the coordinator. |
-| `GET /admin/students/unlinked` | none | Students who picked "Others". |
-| `POST /admin/students/:userId/link` | `LinkStudentRequest` `{ schoolId }` | School must be approved. |
+| `GET /admin/ambassadors` | none | Each ambassador with contact, `code`, `signups` and `paid` (referred students who paid the fee), most sign-ups first. |
 | `GET /admin/staff` | none | Volunteers and judges. |
 | `POST /admin/staff` | `CreateStaffRequest` `{ role, name, email, password, expiresAt?, eventId? }` | Judges need `eventId` (the event they score). `expiresAt` defaults to 21 Dec 2026. 409 = email taken. |
 | `POST /admin/staff/:id/assign` | `AssignJudgeRequest` `{ eventId }` | Move a judge to another event. |
@@ -178,7 +174,7 @@ Team (judge view): `{ id, name, projectTitle, topic, members: [{ name, avantraId
 
 | Method + path | Body | Notes |
 |---|---|---|
-| `GET /admin/stats` | none | Dashboard numbers: `students { total, paid, unpaid, unlinkedSchool }`, `schools { PENDING, APPROVED, REJECTED }`, `fees { onlinePaise, onlineCount, cashPaise, cashCount }`, `gate.checkedInToday`, `events[]` with `registrations`, `teams`, `deskScans`. |
+| `GET /admin/stats` | none | Dashboard numbers: `students { total, paid, unpaid }`, `ambassadors`, `fees { onlinePaise, onlineCount, cashPaise, cashCount }`, `gate.checkedInToday`, `events[]` with `registrations`, `teams`, `deskScans`. |
 | `POST /admin/students/:avantraId/mark-paid` | `MarkPaidRequest` `{ note? }` | Cash fee for an online sign-up. Records which admin took it. 409 = already paid. |
 | `POST /admin/walk-in` | `WalkInRequest` = student profile + `{ name, email, note? }` | Walk-in: account + profile + cash fee in one step. Returns `{ avantraId, qrToken, name }` (print the badge). Email can be the parent's; they set a password via "Forgot password". 409 = email exists (use mark-paid). |
 | `POST /admin/teams/:id/rank` | `SetRankRequest` `{ rank: 1 \| 2 \| 3 \| null }` | Winners, after judging. Shows on certificates. |

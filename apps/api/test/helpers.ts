@@ -58,7 +58,7 @@ export async function codeFor(email: string): Promise<string> {
 
 const unique = (tag: string) => `e2e-${tag}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`;
 
-export async function signUp(role: 'STUDENT' | 'SCHOOL_COORDINATOR', tag: string) {
+export async function signUp(role: 'STUDENT' | 'AMBASSADOR', tag: string) {
   const email = unique(tag);
   const body = { role, name: `Test ${tag}`, email, password: 'a-good-password' };
   assert.equal((await call('/auth/register', body)).status, 202);
@@ -67,10 +67,10 @@ export async function signUp(role: 'STUDENT' | 'SCHOOL_COORDINATOR', tag: string
   return { email, cookie: res.cookie };
 }
 
-// Signed-up student with a profile ("Others" school). Returns their AVANTRA ID too.
+// Signed-up student with a profile. Returns their AVANTRA ID too.
 export async function student(tag: string) {
   const s = await signUp('STUDENT', tag);
-  const profile = { phone: '9876500000', grade: 9, guardianPhone: '9876511111', guardianConsent: true, otherSchoolName: 'E2E Test School' };
+  const profile = { phone: '9876500000', grade: 9, guardianPhone: '9876511111', guardianConsent: true, schoolName: 'E2E Test School' };
   const res = await call('/profile/student', profile, s.cookie);
   assert.equal(res.status, 201);
   return { ...s, avantraId: res.json.avantraId as string };

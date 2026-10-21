@@ -8,7 +8,7 @@ ARITHI owns: website, registration, participant DB, QR check-in, scoring, digita
 ```
 avantra-1.0/
 ├─ apps/
-│  ├─ web/      Next.js — public site, sign-up/login, student + coordinator + judge + admin
+│  ├─ web/      Next.js — public site, sign-up/login, student + ambassador + judge + admin
 │  │            dashboards, /staff scanner (volunteers + judges), /admin
 │  └─ api/      NestJS + Prisma — the only thing that touches the database
 │     └─ prisma/schema.prisma   data model (source of truth)
@@ -42,22 +42,22 @@ Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Au
 | Role | Created by | Logs in at | Can do |
 |---|---|---|---|
 | STUDENT | self (Google or email+password) | `/login` → Student tab | registers for events, pays, gets QR badge |
-| SCHOOL_COORDINATOR | self, then admin approval | `/login` → Coordinator tab | sees **only students of their school** |
+| AMBASSADOR | self | `/login` → Ambassador tab | gets a code to share; sees **only students who signed up with it** |
 | VOLUNTEER | admin | `/staff` (mobile) | scans QR for attendance — nothing else |
 | JUDGE | admin, assigned to one event | `/staff` (mobile) | scans QR → scores that student's entry in their event |
-| ADMIN (ARITHI) | seed script only | `/admin` (unlinked) | approves schools, manages all data, offline registration |
+| ADMIN (ARITHI) | seed script only | `/admin` (unlinked) | sees ambassador counts, manages all data, offline registration |
 
 ## Auth decisions
 
-- Public login/register: two tabs (Student / School Coordinator). Tab sets role at sign-up. Google sign-in or email+password on both.
+- Public login/register: two tabs (Student / Ambassador). Tab sets role at sign-up. Google sign-in or email+password on both.
 - Google sign-in gives name + email only → "complete profile" step for the rest; dashboard locked until done.
 - Email+password sign-up verified with 6-digit email code.
 - **No account enumeration:** every failure says "Invalid email or password". Forgot-password always says "If that email is registered, we sent a code". Wrong-tab login gets the same generic error.
 - Student gives own email/phone + parent email/phone ("same as mine" tick copies them).
-- School dropdown shows APPROVED schools + "Others" (typed name, `schoolId` null). Admin links them later.
+- Students type their school name. The Wall's school board groups names ignoring case and spacing.
 - `/staff` and `/admin` share auth code but are separate pages. Admin requires a second step (emailed code).
 - Staff (volunteer/judge) accounts expire 21 Dec 2026; admin can disable any account.
-- **Every API route checks role server-side.** Hidden buttons are not security. Coordinator scoping is in the query (`where: { schoolId: me.school.id }`).
+- **Every API route checks role server-side.** Hidden buttons are not security. Ambassador scoping is in the query (`where: { referredById: me.id }`).
 - Offline registration by admin; payment marked `OFFLINE` so school money reconciles.
 
 ## Core flows

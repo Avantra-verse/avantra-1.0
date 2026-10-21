@@ -37,8 +37,11 @@ export async function api<T = unknown>(path: string, body?: unknown, method = bo
   throw new ApiError(res.status, message, fields, data);
 }
 
-export type Role = "STUDENT" | "SCHOOL_COORDINATOR" | "JUDGE" | "VOLUNTEER" | "ADMIN";
+export type Role = "STUDENT" | "AMBASSADOR" | "JUDGE" | "VOLUNTEER" | "ADMIN";
 export type Me = { id: string; email: string; name: string; role: Role; profileComplete: boolean };
+
+// localStorage key: ambassador code from a share link (/registration?ref=CODE), filled in on the profile step.
+export const REF_KEY = "avantra.ref";
 
 // null = not logged in
 export const getMe = () => api<Me>("/auth/me").catch((e) => (e instanceof ApiError && e.status === 401 ? null : Promise.reject(e)));

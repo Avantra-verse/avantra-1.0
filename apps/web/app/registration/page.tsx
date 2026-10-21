@@ -1,18 +1,18 @@
 "use client";
 
-// Sign-up: pick Student or School (?as=…, so Back works) -> details -> 6-digit code emailed -> account created and logged in -> profile step.
+// Sign-up: pick Student or Ambassador (?as=…, so Back works; ?ref=CODE from an ambassador's link is kept for the profile step) -> details -> 6-digit code emailed -> account created and logged in -> profile step.
 // The account only exists once the code is verified (POST /auth/register, then /auth/register/verify).
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterRequest } from "@avantra/shared";
-import { api, ApiError, apiReady } from "@/lib/api";
+import { api, ApiError, apiReady, REF_KEY } from "@/lib/api";
 import { AccountShell, Field, FooterLink, FormError, OpensSoon, ROLE_OPTIONS, styles } from "@/components/account/Account";
 
 type Role = (typeof ROLE_OPTIONS)[number]["value"];
-const AS: Record<string, Role> = { student: "STUDENT", coordinator: "SCHOOL_COORDINATOR" };
+const AS: Record<string, Role> = { student: "STUDENT", ambassador: "AMBASSADOR" };
 const BLURB: Record<Role, string> = {
   STUDENT: "Get your entry badge and pay the exhibition fee.",
-  SCHOOL_COORDINATOR: "Register your school and follow your students.",
+  AMBASSADOR: "Get a code for your friends and see who joined with it.",
 };
 
 export default function RegistrationPage() {
@@ -28,6 +28,10 @@ export default function RegistrationPage() {
   useEffect(() => {
     const read = () => setRole(AS[new URLSearchParams(window.location.search).get("as") ?? ""] ?? null);
     read();
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    try {
+      if (ref) localStorage.setItem(REF_KEY, ref);
+    } catch {}
     window.addEventListener("popstate", read);
     return () => window.removeEventListener("popstate", read);
   }, []);
@@ -145,9 +149,9 @@ export default function RegistrationPage() {
         </>
       ) : (
         <>
-          <h1 className={styles.heading}>{role === "STUDENT" ? "Join as a student" : "Register your school"}</h1>
+          <h1 className={styles.heading}>{role === "STUDENT" ? "Join as a student" : "Become an ambassador"}</h1>
           <p className={styles.subtext}>
-            {role === "STUDENT" ? "Create your account for AVANTRA 2026." : "Create your coordinator account first. You add the school details next."}{" "}
+            {role === "STUDENT" ? "Create your account for AVANTRA 2026." : "Create your account first. You get your code to share next."}{" "}
             <button type="button" className={styles.link} onClick={() => pick(null)}>
               Not you? Go back
             </button>

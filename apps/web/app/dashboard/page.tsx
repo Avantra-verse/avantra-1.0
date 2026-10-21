@@ -4,24 +4,21 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { api, ApiError, apiReady, getMe, payExhibitionFee, type Me } from "@/lib/api";
-import { AccountShell, Field, FormError, OpensSoon, styles } from "@/components/account/Account";
+import { AccountShell, FormError, OpensSoon, styles } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
 import { Tile, useLoad, useTabs } from "../admin/ui";
 
-type School = { id: string; name: string; city: string; address?: string; status?: "PENDING" | "APPROVED" | "REJECTED" };
 type Student = {
   avantraId: string;
   qrToken: string;
   grade: number;
   section: string | null;
-  otherSchoolName: string | null;
+  schoolName: string;
   feePaidAt: string | null;
-  school: School | null;
   _count: { checkIns: number };
 };
 type WallMe = { open: boolean; points: number; solved: number; rank: number | null; players: number };
-type Profile = { student: Student | null; school: School | null };
-type MyStudent = { avantraId: string; grade: number; section: string | null; feePaidAt: string | null; user: { name: string }; _count: { checkIns: number } };
+type Profile = { student: Student | null; ambassador: Ambassador | null };
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -45,9 +42,8 @@ export default function DashboardPage() {
     router.push("/login");
   }
 
-  // An approved school gets a full-width dashboard; everything else fits the small account card.
   if (me && profile?.student) return <StudentDashboard me={me} s={profile.student} logout={logout} onPaid={async () => setProfile(await api<Profile>("/profile"))} />;
-  if (me && profile?.school?.status === "APPROVED") return <SchoolDashboard email={me.email} school={profile.school} logout={logout} />;
+  if (me && profile?.ambassador) return <AmbassadorDashboard me={me} a={profile.ambassador} logout={logout} />;
 
   return (
     <AccountShell tagline={me ? `Welcome, ${me.name.split(" ")[0]}.` : "Your universe, at a glance."}>
@@ -59,7 +55,6 @@ export default function DashboardPage() {
         <p className={styles.subtext} role="status">Loading…</p>
       ) : (
         <>
-          {profile.school && <SchoolCard school={profile.school} />}
           <div className={styles.footerLine}>
             Signed in as {me.email} ·{" "}
             <button type="button" className={styles.link} onClick={logout}>
@@ -109,7 +104,7 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
             <h1 className={styles.heading} style={{ fontSize: "2rem", margin: 0 }}>{me.name}</h1>
             <span className={t.mute}>
               Class {s.grade}
-              {s.section ? `-${s.section}` : ""} · {s.school?.name ?? s.otherSchoolName}
+              {s.section ? `-${s.section}` : ""} · {s.schoolName}
             </span>
           </div>
           <span className={t.mute}>
@@ -181,36 +176,20 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
   );
 }
 
-const STATUS = {
-  PENDING: "Waiting for approval by the AVANTRA team. We'll email you when it's approved, so you can close this page.",
-  REJECTED: "Not approved. Contact the AVANTRA team.",
-};
+type Ambassador = { code: string; schoolName: string };
+type Referral = { grade: number; schoolName: string; feePaidAt: string | null; user: { name: string; createdAt: string } };
 
-function SchoolCard({ school }: { school: School }) {
-  return (
-    <>
-      <h1 className={styles.heading}>{school.name}</h1>
-      <p className={styles.subtext}>
-        {school.city} · {STATUS[school.status === "REJECTED" ? "REJECTED" : "PENDING"]}
-      </p>
-    </>
-  );
-}
+function AmbassadorDashboard({ me, a, logout }: { me: Me; a: Ambassador; logout: () => void }) {
+  const { data: friends, error, reload } = useLoad<Referral[]>("/ambassador/referrals");
+  const [copied, setCopied] = useState(false);
+  const link = `${window.location.origin}/registration?as=student&ref=${a.code}`;
+  const all = friends ?? [];
+  const paid = all.filter((f) => f.feePaidAt).length;
 
-const SCHOOL_TABS = { overview: "Overview", students: "Students" } as const;
-
-function SchoolDashboard({ email, school, logout }: { email: string; school: School; logout: () => void }) {
-  const { data: students, error, reload } = useLoad<MyStudent[]>("/coordinator/students");
-  const { tab, bar } = useTabs(SCHOOL_TABS, "overview");
-  const [query, setQuery] = useState("");
-  const [unpaidOnly, setUnpaidOnly] = useState(false);
-
-  const all = students ?? [];
-  const paid = all.filter((st) => st.feePaidAt).length;
-  const needle = query.trim().toLowerCase();
-  const shown = all.filter(
-    (st) => (!unpaidOnly || !st.feePaidAt) && (!needle || st.user.name.toLowerCase().includes(needle) || st.avantraId.toLowerCase().includes(needle)),
-  );
+  async function copy() {
+    await navigator.clipboard.writeText(link).catch(() => {});
+    setCopied(true);
+  }
 
   return (
     <div className={styles.registrationPage}>
@@ -218,82 +197,65 @@ function SchoolDashboard({ email, school, logout }: { email: string; school: Sch
       <div className={t.page}>
         <div className={t.head}>
           <div>
-            <h1 className={styles.heading} style={{ fontSize: "2rem", margin: 0 }}>{school.name}</h1>
-            <span className={t.mute}>{school.city} · School coordinator</span>
+            <h1 className={styles.heading} style={{ fontSize: "2rem", margin: 0 }}>{me.name}</h1>
+            <span className={t.mute}>{a.schoolName} · AVANTRA ambassador</span>
           </div>
           <span className={t.mute}>
-            {email} · <button type="button" className={styles.link} onClick={logout}>Log out</button>
+            {me.email} · <button type="button" className={styles.link} onClick={logout}>Log out</button>
           </span>
         </div>
 
-        {bar}
-        {tab === "overview" && (
-          <section className={t.panel} aria-labelledby="numbers">
-            <div className={t.head}>
-              <h2 id="numbers">Your school at AVANTRA</h2>
-              <button type="button" className={t.ghost} onClick={reload}>Refresh</button>
-            </div>
-            {error && <FormError message={error} />}
-            <div className={t.tiles}>
-              <Tile value={students ? all.length : "…"} label="students signed up" />
-              <Tile value={students ? paid : "…"} label="exhibition fee paid" />
-              <Tile value={students ? all.length - paid : "…"} label="fee not paid yet" />
-              <Tile value={students ? all.filter((st) => st._count.checkIns > 0).length : "…"} label="checked in at the fest" />
-            </div>
-            <p className={t.mute} style={{ marginBottom: 0 }}>
-              Ask your students to sign up on the AVANTRA website and pick <strong>{school.name}</strong> as their school. They show up here as soon as they finish.
-            </p>
-          </section>
-        )}
-        {tab === "students" && (
-          <section className={t.panel} aria-labelledby="students">
-            <h2 id="students">Students</h2>
-            <div className={t.inline}>
-              <Field name="find" label="Find by name or AVANTRA ID" type="search" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} />
-              <label style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14 }}>
-                <input type="checkbox" checked={unpaidOnly} onChange={(e) => setUnpaidOnly(e.target.checked)} />
-                <span>Fee not paid only</span>
-              </label>
-            </div>
-            {!students ? (
-              !error && <p className={t.mute} role="status">Loading…</p>
-            ) : all.length === 0 ? (
-              <p className={t.mute}>No students yet.</p>
-            ) : shown.length === 0 ? (
-              <p className={t.mute}>No students match.</p>
-            ) : (
+        <section className={t.panel} aria-labelledby="code">
+          <h2 id="code">Your code</h2>
+          <p className={t.mono} style={{ fontSize: "2.5rem", letterSpacing: "0.15em", margin: "0 0 8px" }}>{a.code}</p>
+          <p className={t.mute}>Friends type this code when they fill in their details, or sign up from your link:</p>
+          <div className={t.inline}>
+            <span className={t.mono} style={{ wordBreak: "break-all" }}>{link}</span>
+            <button type="button" className={t.ghost} onClick={copy}>{copied ? "Copied" : "Copy link"}</button>
+          </div>
+        </section>
+
+        <section className={t.panel} aria-labelledby="friends">
+          <div className={t.head}>
+            <h2 id="friends">Friends who joined</h2>
+            <button type="button" className={t.ghost} onClick={reload}>Refresh</button>
+          </div>
+          {error && <FormError message={error} />}
+          <div className={t.tiles}>
+            <Tile value={friends ? all.length : "…"} label="signed up with your code" />
+            <Tile value={friends ? paid : "…"} label="paid the exhibition fee" />
+          </div>
+          {friends && all.length === 0 ? (
+            <p className={t.mute}>No one yet. Share your link to get started.</p>
+          ) : (
+            friends && (
               <div className={t.scroll}>
                 <table className={`${t.table} ${t.stack}`}>
                   <thead>
                     <tr>
                       <th>Name</th>
                       <th>Class</th>
-                      <th>AVANTRA ID</th>
+                      <th>School</th>
                       <th>Exhibition fee</th>
-                      <th>At the fest</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {shown.map((st) => (
-                      <tr key={st.avantraId}>
-                        <td>{st.user.name}</td>
-                        <td data-label="Class">
-                          {st.grade}
-                          {st.section ? `-${st.section}` : ""}
-                        </td>
-                        <td className={t.mono}>{st.avantraId}</td>
+                    {all.map((f) => (
+                      <tr key={f.user.createdAt + f.user.name}>
+                        <td>{f.user.name}</td>
+                        <td data-label="Class">{f.grade}</td>
+                        <td data-label="School">{f.schoolName}</td>
                         <td>
-                          <span className={`${t.pill} ${st.feePaidAt ? t.on : t.off}`}>{st.feePaidAt ? "paid" : "not paid"}</span>
+                          <span className={`${t.pill} ${f.feePaidAt ? t.on : t.off}`}>{f.feePaidAt ? "paid" : "not paid"}</span>
                         </td>
-                        <td data-label="At the fest">{st._count.checkIns === 0 ? <span className={t.mute}>not yet</span> : st._count.checkIns === 1 ? "1 day" : `${st._count.checkIns} days`}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            )}
-          </section>
-        )}
+            )
+          )}
+        </section>
       </div>
     </div>
   );

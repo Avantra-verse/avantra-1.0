@@ -13,7 +13,7 @@ import { fileUrl, rupees, Tile, useAction, useLoad } from "./ui";
 import { Events } from "./events";
 import { Wall } from "./wall";
 
-const TABS = { overview: "Overview", schools: "Schools", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall" } as const;
+const TABS = { overview: "Overview", ambassadors: "Ambassadors", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall" } as const;
 type Tab = keyof typeof TABS;
 
 export default function AdminPage() {
@@ -67,7 +67,7 @@ export default function AdminPage() {
               ))}
             </div>
             {tab === "overview" && <Overview />}
-            {tab === "schools" && <Schools />}
+            {tab === "ambassadors" && <Ambassadors />}
             {tab === "desk" && <Desk />}
             {tab === "staff" && <Staff />}
             {tab === "events" && <Events />}
@@ -82,8 +82,8 @@ export default function AdminPage() {
 // ---- overview ----
 
 type Stats = {
-  students: { total: number; paid: number; unpaid: number; unlinkedSchool: number };
-  schools: Partial<Record<"PENDING" | "APPROVED" | "REJECTED", number>>;
+  students: { total: number; paid: number; unpaid: number };
+  ambassadors: number;
   fees: { onlinePaise: number; onlineCount: number; cashPaise: number; cashCount: number };
   gate: { checkedInToday: number };
   events: { id: string; name: string; capacity: number | null; registrations: number; teams: number; deskScans: number }[];
@@ -103,8 +103,7 @@ function Overview() {
           <Tile value={s.students.total} label="students" />
           <Tile value={s.students.paid} label="fee paid" />
           <Tile value={s.gate.checkedInToday} label="through the gate today" />
-          <Tile value={s.schools.PENDING ?? 0} label="schools waiting for approval" />
-          <Tile value={s.students.unlinkedSchool} label="students with an unlisted school" />
+          <Tile value={s.ambassadors} label="ambassadors" />
           <Tile value={rupees(s.fees.onlinePaise)} label={`online (${s.fees.onlineCount})`} />
           <Tile value={rupees(s.fees.cashPaise)} label={`cash at desk (${s.fees.cashCount})`} />
         </div>
@@ -151,142 +150,57 @@ function Overview() {
   );
 }
 
-// ---- schools ----
+// ---- ambassadors ----
 
-type School = {
-  id: string;
-  name: string;
-  city: string;
-  address: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  coordinator: { name: string; email: string; phone: string | null };
-  _count: { students: number };
+type AmbassadorRow = {
+  userId: string;
+  code: string;
+  schoolName: string;
+  signups: number;
+  paid: number;
+  user: { name: string; email: string; phone: string | null; disabledAt: string | null };
 };
-type Unlinked = { userId: string; avantraId: string; otherSchoolName: string | null; grade: number; feePaidAt: string | null; user: { name: string; email: string } };
 
-function Schools() {
-  const [status, setStatus] = useState("PENDING");
-  const schools = useLoad<School[]>(`/admin/schools${status ? `?status=${status}` : ""}`);
-  const approved = useLoad<School[]>("/admin/schools?status=APPROVED");
-  const unlinked = useLoad<Unlinked[]>("/admin/students/unlinked");
-  const act = useAction();
-  const [pick, setPick] = useState<Record<string, string>>({});
-
-  const decide = (s: School, d: "approve" | "reject") =>
-    act.run(
-      () => api(`/admin/schools/${s.id}/${d}`, {}),
-      () => `${s.name} ${d === "approve" ? "approved" : "rejected"}. The coordinator has been emailed.`,
-    ).then(() => {
-      schools.reload();
-      approved.reload();
-    });
-
-  const link = (u: Unlinked) =>
-    act.run(
-      () => api(`/admin/students/${u.userId}/link`, { schoolId: pick[u.userId] }),
-      () => `${u.user.name} linked.`,
-    ).then(() => unlinked.reload());
-
+function Ambassadors() {
+  const { data, error, reload } = useLoad<AmbassadorRow[]>("/admin/ambassadors");
   return (
-    <>
-      <section className={t.panel} aria-labelledby="schools">
-        <div className={t.head}>
-          <h2 id="schools">Schools</h2>
-          <select className={t.select} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Show">
-            <option value="PENDING">Waiting for approval</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="">All</option>
-          </select>
+    <section className={t.panel} aria-labelledby="ambassadors">
+      <div className={t.head}>
+        <h2 id="ambassadors">Ambassadors</h2>
+        <button type="button" className={t.ghost} onClick={reload}>Refresh</button>
+      </div>
+      <p className={t.mute}>Most sign-ups first. Students enter an ambassador&apos;s code on their profile step.</p>
+      <FormError message={error} />
+      {!data ? null : data.length === 0 ? (
+        <p className={t.mute}>No ambassadors yet.</p>
+      ) : (
+        <div className={t.scroll}>
+          <table className={`${t.table} ${t.stack}`}>
+            <thead>
+              <tr>
+                <th>Ambassador</th>
+                <th>Code</th>
+                <th className={t.num}>Sign-ups</th>
+                <th className={t.num}>Paid</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((a) => (
+                <tr key={a.userId}>
+                  <td>
+                    {a.user.name} {a.user.disabledAt && <span className={`${t.pill} ${t.off}`}>disabled</span>}
+                    <div className={t.mute}>{a.schoolName} · {a.user.email}{a.user.phone && ` · ${a.user.phone}`}</div>
+                  </td>
+                  <td className={t.mono} data-label="Code">{a.code}</td>
+                  <td className={t.num} data-label="Sign-ups">{a.signups}</td>
+                  <td className={t.num} data-label="Paid">{a.paid}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <FormError message={act.error || schools.error} />
-        {act.note && <p className={t.mute} role="status">{act.note}</p>}
-        {!schools.data ? null : schools.data.length === 0 ? (
-          <p className={t.mute}>Nothing here.</p>
-        ) : (
-          <div className={t.scroll}>
-            <table className={`${t.table} ${t.stack}`}>
-              <thead>
-                <tr>
-                  <th>School</th>
-                  <th>Coordinator</th>
-                  <th className={t.num}>Students</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {schools.data.map((s) => (
-                  <tr key={s.id}>
-                    <td>
-                      {s.name}
-                      <div className={t.mute}>{s.city} · {s.address}</div>
-                    </td>
-                    <td>
-                      {s.coordinator.name}
-                      <div className={t.mute}>{s.coordinator.email}{s.coordinator.phone && ` · ${s.coordinator.phone}`}</div>
-                    </td>
-                    <td className={t.num} data-label="Students">{s._count.students}</td>
-                    <td className={t.num}>
-                      {s.status === "PENDING" ? (
-                        <div className={t.inline} style={{ justifyContent: "flex-end" }}>
-                          <button type="button" className={t.btn} disabled={act.busy} onClick={() => decide(s, "approve")}>Approve</button>
-                          <button type="button" className={t.ghost} disabled={act.busy} onClick={() => confirm(`Reject ${s.name}?`) && decide(s, "reject")}>Reject</button>
-                        </div>
-                      ) : (
-                        <span className={`${t.pill} ${s.status === "APPROVED" ? t.on : t.off}`}>{s.status.toLowerCase()}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className={t.panel} aria-labelledby="unlinked">
-        <h2 id="unlinked">Students who typed their school</h2>
-        <p className={t.mute}>Link them to an approved school so they count for it on the Wall and appear on the coordinator&apos;s list.</p>
-        <FormError message={unlinked.error} />
-        {!unlinked.data ? null : unlinked.data.length === 0 ? (
-          <p className={t.mute}>None.</p>
-        ) : (
-          <div className={t.scroll}>
-            <table className={`${t.table} ${t.stack}`}>
-              <thead>
-                <tr>
-                  <th>Student</th>
-                  <th>Typed school</th>
-                  <th>Link to</th>
-                </tr>
-              </thead>
-              <tbody>
-                {unlinked.data.map((u) => (
-                  <tr key={u.userId}>
-                    <td>
-                      {u.user.name} <span className={t.mute}>· Class {u.grade}</span>
-                      <div className={`${t.mute} ${t.mono}`}>{u.avantraId}</div>
-                    </td>
-                    <td data-label="Typed school">{u.otherSchoolName}</td>
-                    <td>
-                      <div className={t.inline}>
-                        <select className={t.select} value={pick[u.userId] ?? ""} onChange={(e) => setPick((p) => ({ ...p, [u.userId]: e.target.value }))} aria-label={`School for ${u.user.name}`}>
-                          <option value="">Pick a school…</option>
-                          {approved.data?.map((s) => (
-                            <option key={s.id} value={s.id}>{s.name}, {s.city}</option>
-                          ))}
-                        </select>
-                        <button type="button" className={t.btn} disabled={act.busy || !pick[u.userId]} onClick={() => link(u)}>Link</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </>
+      )}
+    </section>
   );
 }
 
@@ -333,10 +247,9 @@ function MarkPaid() {
   );
 }
 
-const emptyWalkIn = { name: "", email: "", phone: "", grade: "", section: "", schoolId: "", otherSchoolName: "", guardianEmail: "", guardianPhone: "", note: "" };
+const emptyWalkIn = { name: "", email: "", phone: "", grade: "", section: "", schoolName: "", guardianEmail: "", guardianPhone: "", note: "" };
 
 function WalkIn() {
-  const schools = useLoad<{ id: string; name: string; city: string }[]>("/schools");
   const [form, setForm] = useState(emptyWalkIn);
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -350,7 +263,6 @@ function WalkIn() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const other = form.schoolId === "__others";
     const blank = (v: string) => v.trim() || undefined;
     const parsed = WalkInRequest.safeParse({
       name: form.name,
@@ -358,8 +270,7 @@ function WalkIn() {
       phone: form.phone,
       grade: form.grade ? Number(form.grade) : undefined,
       section: blank(form.section),
-      schoolId: other ? undefined : blank(form.schoolId),
-      otherSchoolName: other ? blank(form.otherSchoolName) : undefined,
+      schoolName: form.schoolName,
       guardianEmail: blank(form.guardianEmail),
       guardianPhone: blank(form.guardianPhone),
       guardianConsent: consent || undefined,
@@ -406,16 +317,7 @@ function WalkIn() {
             ))}
           </SelectField>
           <Field name="section" label="Section (optional)" value={form.section} onChange={set} error={errors.section} />
-          <SelectField name="schoolId" label="School" value={form.schoolId} onChange={set} error={errors.schoolId}>
-            <option value="">Pick…</option>
-            {schools.data?.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}, {s.city}</option>
-            ))}
-            <option value="__others">Others (type it)</option>
-          </SelectField>
-          {form.schoolId === "__others" && (
-            <Field name="otherSchoolName" label="School name" value={form.otherSchoolName} onChange={set} error={errors.otherSchoolName} />
-          )}
+          <Field name="schoolName" label="School name" value={form.schoolName} onChange={set} error={errors.schoolName} />
           <Field name="guardianEmail" label="Parent's email (optional)" type="email" value={form.guardianEmail} onChange={set} error={errors.guardianEmail} />
           <Field name="guardianPhone" label="Parent's phone (optional)" type="tel" value={form.guardianPhone} onChange={set} error={errors.guardianPhone} />
           <Field name="note" label="Receipt no. (optional)" value={form.note} onChange={set} error={errors.note} />

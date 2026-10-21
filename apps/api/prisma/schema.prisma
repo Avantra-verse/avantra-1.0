@@ -12,7 +12,7 @@ datasource db {
 
 enum Role {
   STUDENT
-  SCHOOL_COORDINATOR
+  AMBASSADOR
   JUDGE
   VOLUNTEER
   ADMIN
@@ -22,12 +22,6 @@ enum CodePurpose {
   VERIFY_EMAIL
   RESET_PASSWORD
   ADMIN_LOGIN // no longer used (admin login is password only); kept to avoid a migration
-}
-
-enum SchoolStatus {
-  PENDING // registered, waiting for ARITHI admin approval
-  APPROVED // shows up in the student school dropdown
-  REJECTED
 }
 
 enum EventCategory {
@@ -64,7 +58,7 @@ model User {
   assignedEvent   Event?    @relation("JudgeEvent", fields: [assignedEventId], references: [id])
   createdAt       DateTime  @default(now())
   student         Student?
-  school          School? // set when role = SCHOOL_COORDINATOR
+  ambassador      Ambassador? // set when role = AMBASSADOR
   sessions        Session[]
   scans           CheckIn[]
   scores          Score[]
@@ -95,27 +89,22 @@ model EmailCode {
   @@unique([email, purpose])
 }
 
-model School {
-  id            String       @id @default(cuid())
-  name          String
-  city          String
-  address       String
-  status        SchoolStatus @default(PENDING)
-  coordinatorId String       @unique
-  coordinator   User         @relation(fields: [coordinatorId], references: [id])
-  students      Student[]
-  createdAt     DateTime     @default(now())
-
-  @@unique([name, city])
-  @@index([status])
+// A student who brings friends: they share `code`, friends enter it on their profile step.
+model Ambassador {
+  userId     String    @id
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code       String    @unique // 6 characters, what friends type
+  schoolName String
+  referrals  Student[]
+  createdAt  DateTime  @default(now())
 }
 
 model Student {
   userId            String         @id
   user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  schoolId          String? // null = picked "Others"; admin links later
-  school            School?        @relation(fields: [schoolId], references: [id])
-  otherSchoolName   String? // typed when "Others" is picked
+  schoolName        String // typed by the student
+  referredById      String? // the ambassador whose code they entered
+  referredBy        Ambassador?    @relation(fields: [referredById], references: [userId], onDelete: SetNull)
   grade             Int
   section           String?
   guardianEmail     String?
@@ -130,7 +119,7 @@ model Student {
   wallAttempts      WallAttempt[]
   wallSolves        WallSolve[]
 
-  @@index([schoolId]) // coordinator view: students of my school
+  @@index([referredById])
 }
 
 model Event {

@@ -32,7 +32,7 @@ import {
   wallAnswersValid,
   WallStateRequest,
 } from '@avantra/shared';
-import type { User, WallChallenge } from '@prisma/client';
+import { Prisma, type User, type WallChallenge } from '@prisma/client';
 import { CurrentUser, Public, Roles } from './auth/session.guard';
 import { renderChits } from './chits';
 import { CsvFile, toCsv } from './csv';
@@ -43,9 +43,10 @@ import { ZodPipe } from './zod.pipe';
 
 const OPEN_KEY = 'wall.open';
 const FROZEN_KEY = 'wall.frozenAt'; // ISO time; absent = live
+const SCHOOL_KEY = Prisma.sql`lower(regexp_replace(trim(s."schoolName"), '[[:space:]]+', ' ', 'g'))`;
 
-type Player = { studentId: string; name: string; grade: number; section: string | null; avantraId: string; schoolId: string | null; school: string | null; points: number; solved: number; lastSolvedAt: Date };
-type SchoolRow = { schoolId: string; school: string; points: number; solved: number; players: number; lastSolvedAt: Date };
+type Player = { studentId: string; name: string; grade: number; section: string | null; avantraId: string; schoolKey: string; school: string; points: number; solved: number; lastSolvedAt: Date };
+type SchoolRow = { schoolKey: string; school: string; points: number; solved: number; players: number; lastSolvedAt: Date };
 type Board = { players: Player[]; schools: SchoolRow[] };
 
 // Ranking: points, then more challenges solved, then whoever got there first.
@@ -315,9 +316,9 @@ export class WallController {
   // A student always sees their own points live. While frozen, ranks (theirs and their school's) are as at the freeze.
   private async standing(studentId: string) {
     const frozenAt = await this.frozenAt();
-    const [me] = await this.prisma.$queryRaw<{ points: number; solved: number; lastSolvedAt: Date | null; schoolId: string | null }[]>`
+    const [me] = await this.prisma.$queryRaw<{ points: number; solved: number; lastSolvedAt: Date | null; schoolKey: string | null }[]>`
       SELECT COALESCE(SUM(c.points), 0)::int AS points, COUNT(w."challengeId")::int AS solved, MAX(w."solvedAt") AS "lastSolvedAt",
-             (SELECT "schoolId" FROM "Student" WHERE "userId" = ${studentId}) AS "schoolId"
+             (SELECT ${SCHOOL_KEY} FROM "Student" s WHERE s."userId" = ${studentId}) AS "schoolKey"
       FROM "WallSolve" w JOIN "WallChallenge" c ON c.id = w."challengeId"
       WHERE w."studentId" = ${studentId}`;
     const { players, schools } = await this.standings(frozenAt);
@@ -333,7 +334,7 @@ export class WallController {
       rank = others.filter((p) => byRank(p, mine) < 0).length + 1;
       total = others.length + 1;
     }
-    const s = me.schoolId ? schools.findIndex((x) => x.schoolId === me.schoolId) : -1;
+    const s = schools.findIndex((x) => x.schoolKey === me.schoolKey);
     return {
       points: me.points,
       solved: me.solved,
@@ -344,7 +345,7 @@ export class WallController {
     };
   }
 
-  // Disabled accounts don't rank. "Others" students rank individually but not for a school until an admin links them.
+  // Disabled accounts don't rank. Students type their school, so a school is everyone whose typed name matches ignoring case and spacing.
   private standings(asOf: Date | null = null, fresh = false): Promise<Board> {
     const key = asOf?.toISOString() ?? 'live';
     const cached = this.boards.get(key);
@@ -358,25 +359,23 @@ export class WallController {
   private async computeBoard(asOf: Date | null): Promise<Board> {
     const upTo = asOf?.toISOString() ?? '9999-12-31T00:00:00Z'; // solvedAt is stored as UTC
     const players = await this.prisma.$queryRaw<Player[]>`
-      SELECT s."userId" AS "studentId", u.name, s.grade, s.section, s."avantraId", s."schoolId", COALESCE(sc.name, s."otherSchoolName") AS school,
+      SELECT s."userId" AS "studentId", u.name, s.grade, s.section, s."avantraId", ${SCHOOL_KEY} AS "schoolKey", s."schoolName" AS school,
              SUM(c.points)::int AS points, COUNT(*)::int AS solved, MAX(w."solvedAt") AS "lastSolvedAt"
       FROM "WallSolve" w
       JOIN "WallChallenge" c ON c.id = w."challengeId"
       JOIN "Student" s ON s."userId" = w."studentId"
       JOIN "User" u ON u.id = s."userId"
-      LEFT JOIN "School" sc ON sc.id = s."schoolId"
       WHERE u."disabledAt" IS NULL AND w."solvedAt" <= (${upTo}::timestamptz AT TIME ZONE 'UTC')
-      GROUP BY s."userId", u.name, sc.name`;
+      GROUP BY s."userId", u.name`;
     players.sort(byRank);
     const bySchool = new Map<string, SchoolRow>();
     for (const p of players) {
-      if (!p.schoolId) continue;
-      const row = bySchool.get(p.schoolId) ?? { schoolId: p.schoolId, school: p.school!, points: 0, solved: 0, players: 0, lastSolvedAt: p.lastSolvedAt };
+      const row = bySchool.get(p.schoolKey) ?? { schoolKey: p.schoolKey, school: p.school, points: 0, solved: 0, players: 0, lastSolvedAt: p.lastSolvedAt };
       row.points += p.points;
       row.solved += p.solved;
       row.players += 1;
       if (p.lastSolvedAt > row.lastSolvedAt) row.lastSolvedAt = p.lastSolvedAt;
-      bySchool.set(p.schoolId, row);
+      bySchool.set(p.schoolKey, row);
     }
     return { players, schools: [...bySchool.values()].sort(byRank) };
   }

@@ -69,17 +69,15 @@ test('wall: play, tries, re-grade, lost chit, ranks, school board, admin control
   await call(`/admin/wall/challenges/${M.id}`, { active: false }, adminCookie, { method: 'PATCH' });
   assert.equal((await call(`/wall/challenges/${M.code}`, undefined, b.cookie)).status, 410);
 
-  // School board: linked students add up; "Others" students rank alone.
-  const coord = await signUp('SCHOOL_COORDINATOR', 'wcoord');
-  const school = await call('/profile/school', { schoolName: `Wall School ${n}`, city: 'Rourkela', address: 'Sector 20 road', phone: '9876544444' }, coord.cookie);
-  await prisma.school.update({ where: { id: school.json.id }, data: { status: 'APPROVED' } });
-  await prisma.student.updateMany({ where: { avantraId: { in: [a.avantraId, c.avantraId] } }, data: { schoolId: school.json.id } });
+  // School board: students who typed the same school (ignoring case and spaces) add up.
+  await prisma.student.update({ where: { avantraId: a.avantraId }, data: { schoolName: `Wall School ${n}` } });
+  await prisma.student.update({ where: { avantraId: c.avantraId }, data: { schoolName: ` wall  SCHOOL ${n} ` } });
   await call(`/admin/wall/challenges/${T.id}`, { points: 31 }, adminCookie, { method: 'PATCH' }); // clears the 5 s cache
   const board = (await call('/wall/leaderboard')).json;
   const row = board.schools.find((s: { name: string }) => s.name === `Wall School ${n}`);
   assert.deepEqual([row.points, row.solved, row.players], [131 + 31, 3, 2]);
   assert.equal((await call('/wall/me', undefined, a.cookie)).json.school.name, `Wall School ${n}`);
-  assert.equal((await call('/wall/me', undefined, d.cookie)).json.school, null);
+  assert.equal((await call('/wall/me', undefined, d.cookie)).json.school.name, 'E2E Test School');
   assert.ok(board.players.every((p: object) => !('avantraId' in p)), 'public board has no IDs');
   assert.ok(board.players.some((p: { name: string }) => p.name === 'Test W.'), 'names shortened');
 
@@ -101,10 +99,7 @@ test('wall freeze: public board and ranks stop, own points stay live, unfreeze r
 
   // A fresh school with one player, so its row is easy to find on the public board.
   const s = await student('wfz');
-  const coord = await signUp('SCHOOL_COORDINATOR', 'wfzcoord');
-  const school = await call('/profile/school', { schoolName: `Freeze School ${n}`, city: 'Rourkela', address: 'Sector 20 road', phone: '9876544444' }, coord.cookie);
-  await prisma.school.update({ where: { id: school.json.id }, data: { status: 'APPROVED' } });
-  await prisma.student.update({ where: { avantraId: s.avantraId }, data: { schoolId: school.json.id } });
+  await prisma.student.update({ where: { avantraId: s.avantraId }, data: { schoolName: `Freeze School ${n}` } });
   const row = async () => (await call('/wall/leaderboard')).json.schools.find((x: { name: string }) => x.name === `Freeze School ${n}`);
 
   await call(`/wall/challenges/${one.code}/answer`, { answer: 'yes' }, s.cookie);

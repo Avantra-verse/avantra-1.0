@@ -21,8 +21,8 @@ const CODE_TTL_MS = 10 * 60_000;
 const CODE_RESEND_MS = 60_000;
 const CODE_MAX_ATTEMPTS = 5;
 const DAY_MS = 24 * 60 * 60_000;
-// Students/coordinators stay logged in for a month; admin and staff sessions last one working day.
-export const sessionTtlMs = (role: Role) => (role === 'STUDENT' || role === 'SCHOOL_COORDINATOR' ? 30 * DAY_MS : DAY_MS / 2);
+// Students/ambassadors stay logged in for a month; admin and staff sessions last one working day.
+export const sessionTtlMs = (role: Role) => (role === 'STUDENT' || role === 'AMBASSADOR' ? 30 * DAY_MS : DAY_MS / 2);
 
 const INVALID_LOGIN = 'Invalid email or password';
 const INVALID_CODE = 'Invalid or expired code';
@@ -139,9 +139,9 @@ export class AuthService {
   async me(userId: string): Promise<Me> {
     const u = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      include: { student: { select: { userId: true } }, school: { select: { id: true } } },
+      include: { student: { select: { userId: true } }, ambassador: { select: { userId: true } } },
     });
-    const profileComplete = u.role === 'STUDENT' ? !!u.student : u.role === 'SCHOOL_COORDINATOR' ? !!u.school : true;
+    const profileComplete = u.role === 'STUDENT' ? !!u.student : u.role === 'AMBASSADOR' ? !!u.ambassador : true;
     return { id: u.id, email: u.email, name: u.name, role: u.role, profileComplete };
   }
 

@@ -1,11 +1,11 @@
 // Contract shared by apps/web and apps/api. Validate with these on both sides.
 import { z } from 'zod';
 
-export const Role = z.enum(['STUDENT', 'SCHOOL_COORDINATOR', 'JUDGE', 'VOLUNTEER', 'ADMIN']);
+export const Role = z.enum(['STUDENT', 'AMBASSADOR', 'JUDGE', 'VOLUNTEER', 'ADMIN']);
 export type Role = z.infer<typeof Role>;
 
 // The two roles that can sign up / log in on the public /login page.
-export const PublicRole = z.enum(['STUDENT', 'SCHOOL_COORDINATOR']);
+export const PublicRole = z.enum(['STUDENT', 'AMBASSADOR']);
 export type PublicRole = z.infer<typeof PublicRole>;
 
 const email = z.string().trim().toLowerCase().pipe(z.email('Enter a valid email'));
@@ -44,28 +44,25 @@ export type Me = {
 };
 
 // Profile steps (after sign-up). Used from build step 2.
-export const SchoolProfile = z.object({
-  schoolName: z.string().trim().min(3).max(200),
-  city: z.string().trim().min(2).max(100),
-  address: z.string().trim().min(5).max(500),
-  phone,
-});
-export type SchoolProfile = z.infer<typeof SchoolProfile>;
+const schoolName = z.string().trim().min(3, 'Type your school name').max(200);
+
+export const AmbassadorProfile = z.object({ phone, schoolName });
+export type AmbassadorProfile = z.infer<typeof AmbassadorProfile>;
+
+// The code an ambassador shares. Codes are 6 characters; case and spaces don't matter.
+export const ReferralCode = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{6}$/, 'Ambassador codes are 6 letters and numbers');
 
 const studentProfileFields = z.object({
   phone,
   grade: z.number().int().min(1).max(12),
   section: z.string().trim().toUpperCase().min(1).max(10).optional(), // e.g. "B"
-  schoolId: z.string().min(1).optional(), // an APPROVED school
-  otherSchoolName: z.string().trim().min(3).max(200).optional(), // "Others"
+  schoolName,
   guardianEmail: email.optional(),
   guardianPhone: phone.optional(),
   guardianConsent: z.literal(true),
 });
-const oneSchool = (v: { schoolId?: string; otherSchoolName?: string }) => !!v.schoolId !== !!v.otherSchoolName;
-const oneSchoolError = { message: 'Pick your school or type its name', path: ['schoolId'] };
 
-export const StudentProfile = studentProfileFields.refine(oneSchool, oneSchoolError);
+export const StudentProfile = studentProfileFields.extend({ referralCode: ReferralCode.optional() });
 export type StudentProfile = z.infer<typeof StudentProfile>;
 
 // ---- staff (/staff) and admin (/admin) ----
@@ -88,12 +85,6 @@ export const CreateStaffRequest = z
   })
   .refine((v) => v.role !== 'JUDGE' || !!v.eventId, { message: 'Judges need an event', path: ['eventId'] });
 export type CreateStaffRequest = z.infer<typeof CreateStaffRequest>;
-
-export const LinkStudentRequest = z.object({ schoolId: z.string().min(1) });
-export type LinkStudentRequest = z.infer<typeof LinkStudentRequest>;
-
-export const SchoolStatus = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
-export type SchoolStatus = z.infer<typeof SchoolStatus>;
 
 // ---- events, registrations, payments ----
 
@@ -217,7 +208,7 @@ export type AssignJudgeRequest = z.infer<typeof AssignJudgeRequest>;
 
 // Walk-in at the registration desk: admin creates the account and takes the fee in cash.
 // Email can be the parent's; the student sets a password later with "Forgot password".
-export const WalkInRequest = studentProfileFields.extend({ name, email, note: z.string().trim().max(200).optional() }).refine(oneSchool, oneSchoolError);
+export const WalkInRequest = studentProfileFields.extend({ name, email, note: z.string().trim().max(200).optional() });
 export type WalkInRequest = z.infer<typeof WalkInRequest>;
 
 // Public "Write to the team" form. `website` is a hidden trap field: people leave it empty, bots fill it in.

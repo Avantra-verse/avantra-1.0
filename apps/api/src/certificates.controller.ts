@@ -48,7 +48,7 @@ export class CertificatesController {
       where: { certificateCode: code.toUpperCase() },
       include: {
         event: { select: { name: true } },
-        student: { include: { user: { select: { name: true } }, school: { select: { name: true } } } },
+        student: { include: { user: { select: { name: true } } } },
         teamMember: { select: { team: { select: { rank: true } } } },
       },
     });
@@ -56,7 +56,7 @@ export class CertificatesController {
     return {
       code: reg.certificateCode,
       name: reg.student.user.name,
-      school: reg.student.school?.name ?? reg.student.otherSchoolName,
+      school: reg.student.schoolName,
       event: reg.event.name,
       rank: reg.teamMember?.team.rank ?? null,
       issuedAt: reg.certificateIssuedAt,

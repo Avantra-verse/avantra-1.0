@@ -1,11 +1,9 @@
-import { Body, ConflictException, Controller, Get, HttpCode, NotFoundException, Param, Post, Query } from '@nestjs/common';
+import { Body, ConflictException, Controller, Get, HttpCode, NotFoundException, Param, Post } from '@nestjs/common';
 import {
   AssignJudgeRequest,
   AVANTRA_FEE_PAISE,
   CreateStaffRequest,
-  LinkStudentRequest,
   MarkPaidRequest,
-  SchoolStatus,
   SetRankRequest,
   WalkInRequest,
 } from '@avantra/shared';
@@ -39,66 +37,19 @@ export class AdminController {
     private readonly mail: MailService,
   ) {}
 
-  // ---- schools ----
+  // ---- ambassadors: who brought how many sign-ups, and how many of those paid ----
 
-  @Get('schools')
-  schools(@Query('status', new ZodPipe(SchoolStatus.optional())) status?: SchoolStatus) {
-    return this.prisma.school.findMany({
-      where: { status },
-      include: {
-        coordinator: { select: { name: true, email: true, phone: true } },
-        _count: { select: { students: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  @Post('schools/:id/approve') @HttpCode(200)
-  approve(@Param('id') id: string) {
-    return this.setSchoolStatus(id, 'APPROVED');
-  }
-
-  @Post('schools/:id/reject') @HttpCode(200)
-  reject(@Param('id') id: string) {
-    return this.setSchoolStatus(id, 'REJECTED');
-  }
-
-  private async setSchoolStatus(id: string, status: 'APPROVED' | 'REJECTED') {
-    const school = await this.prisma.school
-      .update({ where: { id }, data: { status }, include: { coordinator: { select: { email: true } } } })
-      .catch(() => {
-        throw new NotFoundException();
-      });
-    await this.mail.send({
-      to: school.coordinator.email,
-      subject: `AVANTRA: ${school.name} was ${status === 'APPROVED' ? 'approved' : 'not approved'}`,
-      text:
-        status === 'APPROVED'
-          ? `${school.name} is now approved. Your students can pick it when they sign up, and you can see them in your dashboard.`
-          : `${school.name} was not approved. Reply to this email if you think this is a mistake.`,
-    });
-    return school;
-  }
-
-  // ---- students who picked "Others" ----
-
-  @Get('students/unlinked')
-  unlinked() {
-    return this.prisma.student.findMany({
-      where: { schoolId: null },
-      select: { userId: true, avantraId: true, otherSchoolName: true, grade: true, feePaidAt: true, user: { select: { name: true, email: true } } },
-      orderBy: { otherSchoolName: 'asc' },
-    });
-  }
-
-  @Post('students/:userId/link') @HttpCode(200)
-  async link(@Param('userId') userId: string, @Body(new ZodPipe(LinkStudentRequest)) { schoolId }: LinkStudentRequest) {
-    if (!(await this.prisma.school.findFirst({ where: { id: schoolId, status: 'APPROVED' } }))) throw new NotFoundException('School not found or not approved');
-    return this.prisma.student
-      .update({ where: { userId }, data: { schoolId, otherSchoolName: null }, select: { userId: true, avantraId: true, schoolId: true } })
-      .catch(() => {
-        throw new NotFoundException('Student not found');
-      });
+  @Get('ambassadors')
+  async ambassadors() {
+    const [ambassadors, paid] = await Promise.all([
+      this.prisma.ambassador.findMany({
+        include: { user: { select: { name: true, email: true, phone: true, disabledAt: true } }, _count: { select: { referrals: true } } },
+        orderBy: { referrals: { _count: 'desc' } },
+      }),
+      this.prisma.student.groupBy({ by: ['referredById'], where: { referredById: { not: null }, feePaidAt: { not: null } }, _count: true }),
+    ]);
+    const paidBy = new Map(paid.map((p) => [p.referredById, p._count]));
+    return ambassadors.map(({ _count, ...a }) => ({ ...a, signups: _count.referrals, paid: paidBy.get(a.userId) ?? 0 }));
   }
 
   // ---- registration desk: cash fee and walk-ins ----
@@ -123,17 +74,13 @@ export class AdminController {
   // Walk-in: account + profile + cash fee in one step. They set a password later via "Forgot password".
   @Post('walk-in')
   async walkIn(@CurrentUser() admin: User, @Body(new ZodPipe(WalkInRequest)) body: WalkInRequest) {
-    const { name, email, phone, note, guardianConsent: _, schoolId, ...profile } = body;
-    if (schoolId && !(await this.prisma.school.findFirst({ where: { id: schoolId, status: 'APPROVED' } }))) {
-      throw new NotFoundException('School not found or not approved');
-    }
+    const { name, email, phone, note, guardianConsent: _, ...profile } = body;
     try {
       const student = await retryOnIdClash(['avantraId', 'qrToken'], () =>
         this.prisma.student.create({
           data: {
             ...profile,
             ...newStudentIds(),
-            school: schoolId ? { connect: { id: schoolId } } : undefined,
             guardianConsentAt: new Date(),
             feePaidAt: new Date(),
             user: { create: { name, email, phone, role: 'STUDENT' } },
