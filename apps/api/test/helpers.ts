@@ -9,6 +9,7 @@ process.loadEnvFile();
 // and their own Redis db so a running dev API doesn't grab their emails off the queue.
 process.env.DATABASE_URL = process.env.DIRECT_URL = process.env.TEST_DATABASE_URL ?? 'postgresql://avantra:avantra@localhost:5432/avantra_test';
 process.env.REDIS_URL = process.env.TEST_REDIS_URL ?? 'redis://localhost:6379/1';
+process.env.STUDENT_SIGNUP ??= 'open'; // most tests sign students up; signup-closed.e2e.ts covers the closed state
 const migrated = spawnSync('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], { encoding: 'utf8', shell: true });
 assert.equal(migrated.status, 0, `Test database migration failed:\n${migrated.stdout}${migrated.stderr}`);
 const ORIGIN = process.env.WEB_ORIGIN!;

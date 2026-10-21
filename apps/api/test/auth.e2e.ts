@@ -72,7 +72,7 @@ test('profiles, ambassadors and referrals, admin login, staff', async () => {
   // Ambassador: profile gives a 6-character code to share.
   const amb = await signUp('AMBASSADOR', 'amb');
   assert.equal((await call('/auth/me', undefined, amb.cookie)).json.profileComplete, false);
-  const ambProfile = { phone: '9876543210', schoolName: 'E2E Ambassador School' };
+  const ambProfile = { phone: '9876543210', schoolName: 'E2E Ambassador School', schoolCity: 'Rourkela', grade: 10 };
   const ambassador = await call('/profile/ambassador', ambProfile, amb.cookie);
   assert.equal(ambassador.status, 201);
   assert.match(ambassador.json.code, /^[2-9A-HJ-NP-Z]{6}$/);

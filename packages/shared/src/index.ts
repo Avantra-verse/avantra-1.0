@@ -46,7 +46,9 @@ export type Me = {
 // Profile steps (after sign-up). Used from build step 2.
 const schoolName = z.string().trim().min(3, 'Type your school name').max(200);
 
-export const AmbassadorProfile = z.object({ phone, schoolName });
+const grade = z.number().int().min(1).max(12);
+
+export const AmbassadorProfile = z.object({ schoolName, schoolCity: z.string().trim().min(2, 'Type your school\'s city or town').max(100), grade, phone });
 export type AmbassadorProfile = z.infer<typeof AmbassadorProfile>;
 
 // The code an ambassador shares. Codes are 6 characters; case and spaces don't matter.
@@ -54,7 +56,7 @@ export const ReferralCode = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{6}$
 
 const studentProfileFields = z.object({
   phone,
-  grade: z.number().int().min(1).max(12),
+  grade,
   section: z.string().trim().toUpperCase().min(1).max(10).optional(), // e.g. "B"
   schoolName,
   guardianEmail: email.optional(),

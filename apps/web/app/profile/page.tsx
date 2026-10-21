@@ -139,19 +139,23 @@ function StudentForm({ name, onDone }: { name: string; onDone: () => void }) {
 }
 
 function AmbassadorForm({ onDone }: { onDone: () => void }) {
-  const [f, setF] = useState({ schoolName: "", phone: "" });
+  const [f, setF] = useState({ schoolName: "", schoolCity: "", grade: "", phone: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
-  const set = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setF((v) => ({ ...v, [e.target.name]: e.target.value }));
     setErrors((x) => ({ ...x, [e.target.name]: "", form: "" })); // fixing a field clears its message
   };
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const parsed = AmbassadorProfile.safeParse({ ...f, phone: f.phone.replace(/\D/g, "").slice(-10) });
-    if (!parsed.success) return setErrors(issues(parsed.error));
+    const parsed = AmbassadorProfile.safeParse({ ...f, grade: Number(f.grade) || undefined, phone: f.phone.replace(/\D/g, "").slice(-10) });
+    if (!parsed.success) {
+      const found = issues(parsed.error);
+      if (!f.grade) found.grade = "Pick your class.";
+      return setErrors(found);
+    }
     setBusy(true);
     try {
       await api("/profile/ambassador", parsed.data);
@@ -168,7 +172,16 @@ function AmbassadorForm({ onDone }: { onDone: () => void }) {
       <h1 className={styles.heading}>Your details</h1>
       <p className={styles.subtext}>Next you get your ambassador code to share with friends.</p>
       <form className={styles.form} onSubmit={submit} noValidate>
-        <Field name="schoolName" label="School name" placeholder="e.g. SSRVM, Rourkela" value={f.schoolName} onChange={set} error={errors.schoolName} />
+        <Field name="schoolName" label="School name" placeholder="e.g. SSRVM" value={f.schoolName} onChange={set} error={errors.schoolName} />
+        <Field name="schoolCity" label="School location" placeholder="City or town, e.g. Rourkela" autoComplete="address-level2" value={f.schoolCity} onChange={set} error={errors.schoolCity} />
+        <SelectField name="grade" label="Class" value={f.grade} onChange={set} error={errors.grade}>
+          <option value="">Select</option>
+          {GRADES.map((g) => (
+            <option key={g} value={g}>
+              Class {g}
+            </option>
+          ))}
+        </SelectField>
         <Field name="phone" label="Your phone" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile" value={f.phone} onChange={set} error={errors.phone} />
         <FormError message={errors.form} />
         <button type="submit" className={styles.submitBtn} disabled={busy}>

@@ -38,12 +38,12 @@ export class ProfileController {
   }
 
   @Roles('AMBASSADOR') @Post('profile/ambassador')
-  async createAmbassador(@CurrentUser() user: User, @Body(new ZodPipe(AmbassadorProfile)) { phone, schoolName }: AmbassadorProfile) {
+  async createAmbassador(@CurrentUser() user: User, @Body(new ZodPipe(AmbassadorProfile)) { phone, ...profile }: AmbassadorProfile) {
     if (await this.prisma.ambassador.findUnique({ where: { userId: user.id } })) throw new ConflictException('Profile already exists');
     const updated = await retryOnIdClash(['code'], () =>
       this.prisma.user.update({
         where: { id: user.id },
-        data: { phone, ambassador: { create: { schoolName, code: randomCode(6) } } },
+        data: { phone, ambassador: { create: { ...profile, code: randomCode(6) } } },
         select: { ambassador: true },
       }),
     );

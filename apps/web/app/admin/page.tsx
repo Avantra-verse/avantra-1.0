@@ -156,6 +156,8 @@ type AmbassadorRow = {
   userId: string;
   code: string;
   schoolName: string;
+  schoolCity: string;
+  grade: number;
   signups: number;
   paid: number;
   user: { name: string; email: string; phone: string | null; disabledAt: string | null };
@@ -189,7 +191,7 @@ function Ambassadors() {
                 <tr key={a.userId}>
                   <td>
                     {a.user.name} {a.user.disabledAt && <span className={`${t.pill} ${t.off}`}>disabled</span>}
-                    <div className={t.mute}>{a.schoolName} · {a.user.email}{a.user.phone && ` · ${a.user.phone}`}</div>
+                    <div className={t.mute}>Class {a.grade} · {a.schoolName}, {a.schoolCity} · {a.user.email}{a.user.phone && ` · ${a.user.phone}`}</div>
                   </td>
                   <td className={t.mono} data-label="Code">{a.code}</td>
                   <td className={t.num} data-label="Sign-ups">{a.signups}</td>

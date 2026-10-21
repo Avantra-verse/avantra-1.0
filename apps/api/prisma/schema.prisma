@@ -95,6 +95,8 @@ model Ambassador {
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   code       String    @unique // 6 characters, what friends type
   schoolName String
+  schoolCity String
+  grade      Int
   referrals  Student[]
   createdAt  DateTime  @default(now())
 }

@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterRequest } from "@avantra/shared";
-import { api, ApiError, apiReady, REF_KEY } from "@/lib/api";
+import { api, ApiError, apiReady, REF_KEY, studentSignupOpen } from "@/lib/api";
 import { AccountShell, Field, FooterLink, FormError, OpensSoon, ROLE_OPTIONS, styles } from "@/components/account/Account";
 
 type Role = (typeof ROLE_OPTIONS)[number]["value"];
@@ -132,6 +132,8 @@ export default function RegistrationPage() {
             </button>
           </div>
         </>
+      ) : role === "STUDENT" && !studentSignupOpen ? (
+        <OpensSoon what="Student registration" />
       ) : !role ? (
         <>
           <h1 className={styles.heading}>Join Avantra</h1>

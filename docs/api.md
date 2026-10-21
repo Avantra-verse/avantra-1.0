@@ -33,7 +33,7 @@ fetch(`${API}/auth/login`, {
 | `POST /auth/logout` | none | 204 | |
 | `GET /auth/me` | none | 200 `Me` | 401 if not logged in. |
 
-`role` is the login tab: `STUDENT` or `AMBASSADOR`.
+`role` is the login tab: `STUDENT` or `AMBASSADOR`. Student sign-up (register, verify, first Google login) returns 403 "Student registration opens soon" until the API has `STUDENT_SIGNUP=open`; the web hides the form until `NEXT_PUBLIC_STUDENT_SIGNUP=open`.
 
 `Me` = `{ id, email, name, role, profileComplete }`. If `profileComplete` is false, send the user to the profile step before the dashboard (see Profiles below).
 
@@ -60,7 +60,7 @@ downloads, schools, desk, staff, results and certificates, Wall). Badge scanning
 | Method + path | Who | Body | Success | Notes |
 |---|---|---|---|---|
 | `POST /profile/student` | STUDENT | `StudentProfile` | 201 student | Typed `schoolName`. Optional `referralCode` (an ambassador's 6-character code; 400 if unknown). `guardianConsent` must be `true`. Optional `section` and `guardianPhone`. |
-| `POST /profile/ambassador` | AMBASSADOR | `AmbassadorProfile` `{ phone, schoolName }` | 201 `{ code, schoolName }` | Generates the 6-character code to share. 409 if the profile exists. |
+| `POST /profile/ambassador` | AMBASSADOR | `AmbassadorProfile` `{ schoolName, schoolCity, grade, phone }` | 201 `{ code, schoolName }` | Generates the 6-character code to share. 409 if the profile exists. |
 | `GET /profile` | any logged-in | none | 200 `{ student, ambassador }` | Student: avantraId, qrToken (for the QR badge), schoolName, `_count.checkIns` (days through the gate). Ambassador: `code`, `schoolName`. |
 | `GET /ambassador/referrals` | AMBASSADOR | none | 200 `[{ grade, schoolName, feePaidAt, user: { name, createdAt } }]` | Only students who entered their code. |
 

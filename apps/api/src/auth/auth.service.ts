@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import type {
   ForgotPasswordRequest,
   GoogleLoginRequest,
@@ -21,6 +21,11 @@ const CODE_TTL_MS = 10 * 60_000;
 const CODE_RESEND_MS = 60_000;
 const CODE_MAX_ATTEMPTS = 5;
 const DAY_MS = 24 * 60 * 60_000;
+// Ambassadors sign up first; student sign-up opens when STUDENT_SIGNUP=open is set on the API.
+const assertSignupOpen = (role: Role) => {
+  if (role === 'STUDENT' && process.env.STUDENT_SIGNUP !== 'open') throw new ForbiddenException('Student registration opens soon');
+};
+
 // Students/ambassadors stay logged in for a month; admin and staff sessions last one working day.
 export const sessionTtlMs = (role: Role) => (role === 'STUDENT' || role === 'AMBASSADOR' ? 30 * DAY_MS : DAY_MS / 2);
 
@@ -41,13 +46,15 @@ export class AuthService {
 
   // ---- sign-up: code first, account only after the code is verified ----
 
-  async requestSignupCode({ email }: RegisterRequest): Promise<void> {
+  async requestSignupCode({ role, email }: RegisterRequest): Promise<void> {
+    assertSignupOpen(role);
     // Existing email: same response, no email. Never reveals who has an account.
     if (await this.prisma.user.findUnique({ where: { email } })) return;
     await this.sendCode(email, CodePurpose.VERIFY_EMAIL, 'Your AVANTRA sign-up code');
   }
 
   async verifySignup({ role, name, email, password, code }: VerifyEmailRequest): Promise<User> {
+    assertSignupOpen(role);
     const passwordHash = await hashPassword(password);
     if (!(await this.consumeCode(email, CodePurpose.VERIFY_EMAIL, code))) throw new BadRequestException(INVALID_CODE);
     try {
@@ -95,6 +102,7 @@ export class AuthService {
       (await this.prisma.user.findUnique({ where: { googleId: payload.sub } })) ??
       (await this.prisma.user.findUnique({ where: { email } }));
     if (!user) {
+      assertSignupOpen(role);
       return this.prisma.user.create({
         data: { role, email, name: payload.name ?? email, googleId: payload.sub, emailVerifiedAt: new Date() },
       });

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { api, ApiError, apiReady, getMe, payExhibitionFee, type Me } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, payExhibitionFee, studentSignupOpen, type Me } from "@/lib/api";
 import { AccountShell, FormError, OpensSoon, styles } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
 import { Tile, useLoad, useTabs } from "../admin/ui";
@@ -176,7 +176,7 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
   );
 }
 
-type Ambassador = { code: string; schoolName: string };
+type Ambassador = { code: string; schoolName: string; schoolCity: string; grade: number };
 type Referral = { grade: number; schoolName: string; feePaidAt: string | null; user: { name: string; createdAt: string } };
 
 function AmbassadorDashboard({ me, a, logout }: { me: Me; a: Ambassador; logout: () => void }) {
@@ -198,7 +198,7 @@ function AmbassadorDashboard({ me, a, logout }: { me: Me; a: Ambassador; logout:
         <div className={t.head}>
           <div>
             <h1 className={styles.heading} style={{ fontSize: "2rem", margin: 0 }}>{me.name}</h1>
-            <span className={t.mute}>{a.schoolName} · AVANTRA ambassador</span>
+            <span className={t.mute}>Class {a.grade} · {a.schoolName}, {a.schoolCity} · AVANTRA ambassador</span>
           </div>
           <span className={t.mute}>
             {me.email} · <button type="button" className={styles.link} onClick={logout}>Log out</button>
@@ -213,6 +213,7 @@ function AmbassadorDashboard({ me, a, logout }: { me: Me; a: Ambassador; logout:
             <span className={t.mono} style={{ wordBreak: "break-all" }}>{link}</span>
             <button type="button" className={t.ghost} onClick={copy}>{copied ? "Copied" : "Copy link"}</button>
           </div>
+          {!studentSignupOpen && <p className={t.mute} style={{ marginBottom: 0 }}>Student registration opens soon. Your code and link start counting from then.</p>}
         </section>
 
         <section className={t.panel} aria-labelledby="friends">
