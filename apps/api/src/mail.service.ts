@@ -1,4 +1,4 @@
-import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
+import { InjectQueue, OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import type { Job, Queue } from 'bullmq';
 import { createTransport, type Transporter } from 'nodemailer';
@@ -34,5 +34,11 @@ export class MailProcessor extends WorkerHost {
       return;
     }
     await this.smtp.sendMail({ from: process.env.MAIL_FROM, ...data });
+  }
+
+  // Retries are silent otherwise; this is the only trace of a bad SMTP password or a rejected address.
+  @OnWorkerEvent('failed')
+  failed(job: Job<Mail>, err: Error) {
+    this.logger.error(`Email to ${job.data.to} failed (try ${job.attemptsMade}/${job.opts.attempts}): ${err.message}`);
   }
 }
