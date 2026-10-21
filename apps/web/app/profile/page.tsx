@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AmbassadorProfile, StudentProfile } from "@avantra/shared";
-import { api, ApiError, apiReady, getMe, REF_KEY, type Me } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, LOGIN_HREF, REF_KEY, type Me } from "@/lib/api";
 import { AccountShell, Field, FormError, OpensSoon, SelectField, styles } from "@/components/account/Account";
 
 const GRADES = [6, 7, 8, 9, 10, 11, 12];
@@ -19,7 +19,7 @@ export default function ProfilePage() {
     if (!apiReady) return;
     getMe()
       .then((m) => {
-        if (!m) router.replace("/login");
+        if (!m) router.replace(LOGIN_HREF);
         else if (m.profileComplete) router.replace("/dashboard");
         else setMe(m);
       })

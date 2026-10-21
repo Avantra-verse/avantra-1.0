@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { REGISTER_HREF } from "@/lib/api";
 
 const LINKS = [
   { href: "/about", label: "About" },
   { href: "/venue", label: "Venue" },
   { href: "/contact", label: "Contact" },
-  { href: "/registration", label: "Registration" },
+  { href: REGISTER_HREF, label: "Registration" },
 ];
 
 export default function Footer() {

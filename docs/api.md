@@ -46,7 +46,7 @@ fetch(`${API}/auth/login`, {
 5. Web: create `apps/web/.env.local` with `NEXT_PUBLIC_API_URL=http://localhost:4000`, then `pnpm dev:web` (http://localhost:3000).
    Without that variable the account pages show "opens soon", which is what the live site shows until the API is deployed.
 
-Account pages in `apps/web`: `/registration` (sign-up + email code), `/login`, `/forgot-password`, `/profile` (first-time
+Account pages in `apps/web`: `/registration` and `/login` (students; hidden until `NEXT_PUBLIC_STUDENT_SIGNUP=open`), `/ambassador/registration` and `/ambassador/login`, `/forgot-password`, `/profile` (first-time
 details), `/dashboard` (AVANTRA ID + QR, or the ambassador's code and referrals). API calls go through `apps/web/lib/api.ts`;
 shared building blocks (Meena's registration styles) are in `apps/web/components/account/Account.tsx`.
 

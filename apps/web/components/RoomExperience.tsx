@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ContactRequest } from "@avantra/shared";
-import { api, ApiError, apiReady } from "@/lib/api";
+import { api, ApiError, apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
 import styles from "./RoomExperience.module.css";
 import { MobileMenu, REGISTER_PILL } from "@/components/Nav";
 
@@ -177,8 +177,8 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
           <button ref={nCRef} id="nC" onClick={() => go(getMax())}>
             Contact
           </button>
-          {apiReady && <Link href="/login">Log in</Link>}
-          <Link href="/registration" className={REGISTER_PILL}>
+          {apiReady && <Link href={LOGIN_HREF}>Log in</Link>}
+          <Link href={REGISTER_HREF} className={REGISTER_PILL}>
             Registration
           </Link>
         </nav>

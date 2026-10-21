@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { api, ApiError, apiReady, getMe, payExhibitionFee, studentSignupOpen, type Me } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, LOGIN_HREF, payExhibitionFee, studentSignupOpen, type Me } from "@/lib/api";
 import { AccountShell, FormError, OpensSoon, styles } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
 import { Tile, useLoad, useTabs } from "../admin/ui";
@@ -30,7 +30,7 @@ export default function DashboardPage() {
     if (!apiReady) return;
     (async () => {
       const m = await getMe();
-      if (!m) return router.replace("/login");
+      if (!m) return router.replace(LOGIN_HREF);
       if (!m.profileComplete) return router.replace("/profile");
       setMe(m);
       setProfile(await api<Profile>("/profile"));
@@ -39,7 +39,7 @@ export default function DashboardPage() {
 
   async function logout() {
     await api("/auth/logout", {}).catch(() => {});
-    router.push("/login");
+    router.push(LOGIN_HREF);
   }
 
   if (me && profile?.student) return <StudentDashboard me={me} s={profile.student} logout={logout} onPaid={async () => setProfile(await api<Profile>("/profile"))} />;
@@ -182,7 +182,7 @@ type Referral = { grade: number; schoolName: string; feePaidAt: string | null; u
 function AmbassadorDashboard({ me, a, logout }: { me: Me; a: Ambassador; logout: () => void }) {
   const { data: friends, error, reload } = useLoad<Referral[]>("/ambassador/referrals");
   const [copied, setCopied] = useState(false);
-  const link = `${window.location.origin}/registration?as=student&ref=${a.code}`;
+  const link = `${window.location.origin}/registration?ref=${a.code}`;
   const all = friends ?? [];
   const paid = all.filter((f) => f.feePaidAt).length;
 

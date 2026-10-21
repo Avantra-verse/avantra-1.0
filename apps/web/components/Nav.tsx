@@ -5,16 +5,16 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { apiReady } from "@/lib/api";
+import { apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
 
 // Log in only appears once accounts are live; until then it is one more "Opening soon".
 const LINKS = [
   { href: "/about", label: "About" },
   { href: "/venue", label: "Venue" },
   { href: "/contact", label: "Contact" },
-  { href: "/login", label: "Log in" },
-  { href: "/registration", label: "Registration" },
-].filter((l) => apiReady || l.href !== "/login");
+  { href: LOGIN_HREF, label: "Log in" },
+  { href: REGISTER_HREF, label: "Registration" },
+].filter((l) => apiReady || l.href !== LOGIN_HREF);
 
 // Registration is the one call to action in every header.
 export const REGISTER_PILL =
@@ -39,7 +39,7 @@ export default function Nav() {
               href={link.href}
               aria-current={pathname === link.href ? "page" : undefined}
               className={
-                link.href === "/registration"
+                link.href === REGISTER_HREF
                   ? REGISTER_PILL
                   : pathname === link.href
                     ? "text-starlight"

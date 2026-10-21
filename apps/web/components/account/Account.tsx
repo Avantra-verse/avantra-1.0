@@ -86,45 +86,6 @@ export function SelectField({ name, label, error, children, ...select }: React.S
   );
 }
 
-// Radio choices drawn as chips (Meena's "Choose your universe" control).
-export function Chips<T extends string>({ name, legend, value, onChange, options }: {
-  name: string;
-  legend: string;
-  value: T;
-  onChange: (v: T) => void;
-  options: { value: T; title: string; sub: string }[];
-}) {
-  return (
-    <fieldset className={styles.fieldset}>
-      <legend className={styles.fieldsetLegend}>{legend}</legend>
-      <div className={styles.chipsGrid}>
-        {options.map((o) => (
-          <div key={o.value} className={styles.chipWrapper}>
-            <input
-              type="radio"
-              id={`${name}-${o.value}`}
-              name={name}
-              value={o.value}
-              checked={value === o.value}
-              onChange={() => onChange(o.value)}
-              className={styles.radioInput}
-            />
-            <label htmlFor={`${name}-${o.value}`} className={styles.chipLabel}>
-              <span className={styles.chipTitle}>{o.title}</span>
-              <span className={styles.chipSubtext}>{o.sub}</span>
-            </label>
-          </div>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
-
-export const ROLE_OPTIONS = [
-  { value: "STUDENT" as const, title: "Student", sub: "Classes 6–12" },
-  { value: "AMBASSADOR" as const, title: "Ambassador", sub: "Bring your friends" },
-];
-
 // Shown on account pages while the site isn't connected to the API (NEXT_PUBLIC_API_URL unset).
 export function OpensSoon({ what }: { what: string }) {
   return (

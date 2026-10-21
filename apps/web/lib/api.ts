@@ -5,6 +5,9 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 export const apiReady = API_URL !== "";
 // Ambassadors sign up first. Set to "open" (with STUDENT_SIGNUP=open on the API) to open student sign-up.
 export const studentSignupOpen = process.env.NEXT_PUBLIC_STUDENT_SIGNUP === "open";
+// Site-wide "Log in" and "Registration" buttons: ambassador pages until students open.
+export const LOGIN_HREF = studentSignupOpen ? "/login" : "/ambassador/login";
+export const REGISTER_HREF = studentSignupOpen ? "/registration" : "/ambassador/registration";
 
 export class ApiError extends Error {
   constructor(

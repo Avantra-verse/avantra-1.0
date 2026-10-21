@@ -6,7 +6,7 @@ import Link from "next/link";
 import { startScene } from "./scene";
 import "./multiverse.css";
 import { MobileMenu, REGISTER_PILL } from "@/components/Nav";
-import { apiReady } from "@/lib/api";
+import { apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
 
 const LOGO = "/brand/avantra-logo.png";
 
@@ -49,8 +49,8 @@ export default function Multiverse() {
           <Link href="/about" data-hover>About</Link>
           <Link href="/venue" data-hover>Venue</Link>
           <Link href="/contact" data-hover>Contact</Link>
-          {apiReady && <Link href="/login" data-hover>Log in</Link>}
-          <Link className={REGISTER_PILL} href="/registration" data-hover>Registration</Link>
+          {apiReady && <Link href={LOGIN_HREF} data-hover>Log in</Link>}
+          <Link className={REGISTER_PILL} href={REGISTER_HREF} data-hover>Registration</Link>
         </nav>
         <MobileMenu className="min-[821px]:hidden" />
       </header>
@@ -230,8 +230,8 @@ export default function Multiverse() {
             <Link href="/about">About</Link>
             <Link href="/venue">Venue</Link>
             <Link href="/contact">Contact</Link>
-            {apiReady && <Link href="/login">Log in</Link>}
-            <Link href="/registration">Registration</Link>
+            {apiReady && <Link href={LOGIN_HREF}>Log in</Link>}
+            <Link href={REGISTER_HREF}>Registration</Link>
           </nav>
           <span>AVANTRA 2026 · Hosted by SSRVM IEMS · Event partner ARITHI</span>
         </div>
