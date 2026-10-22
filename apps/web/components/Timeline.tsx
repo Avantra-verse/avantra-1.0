@@ -19,7 +19,7 @@ const TIMELINE_STEPS = [
   {
     step: "03",
     title: "The festival",
-    detail: "Two days in December 2026.",
+    detail: "19–20 December 2026.",
     accent: "#9ad2fb",
   },
 ];

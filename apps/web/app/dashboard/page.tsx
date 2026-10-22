@@ -138,7 +138,7 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
             <section className={t.panel} aria-labelledby="fest">
               <h2 id="fest">AVANTRA 2026</h2>
               <p className={t.mute} style={{ marginBottom: 0 }}>
-                December 2026, dates soon. <a className={styles.link} href="/venue">How to reach the venue</a>
+                19–20 December 2026. <a className={styles.link} href="/venue">How to reach the venue</a>
               </p>
             </section>
           </>

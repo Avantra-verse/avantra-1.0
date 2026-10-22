@@ -168,7 +168,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
         <Link href="/" aria-label="AVANTRA home">
           <img src="/brand/avantra-logo.png" alt="Avantra" />
         </Link>
-        <em>December 2026, dates soon</em>
+        <em>19–20 December 2026</em>
         <nav className={styles.nav}>
           <button ref={nARef} id="nA" className={styles.on} onClick={() => go(0)}>
             About
@@ -201,7 +201,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
             AVANTRA 2026 is a two-day festival where school students bring their own science and technology projects,
             show what they have built, and take on hands-on challenges with students from other schools.
           </p>
-          <p className={styles.facts}>December 2026 · SSRVM IEMS Sec-20 · 2 days</p>
+          <p className={styles.facts}>19–20 December 2026 · SSRVM IEMS Sec-20 · 2 days</p>
         </div>
         <div ref={capRefs[1]} className={styles.cap}>
           <h2>
@@ -241,7 +241,7 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
                   </p>
                   <div className={styles.cards}>
                     <div className={styles.card}>
-                      <b>When</b>December 2026, dates soon
+                      <b>When</b>19–20 December 2026
                     </div>
                     <div className={styles.card}>
                       <b>Where</b>SSRVM IEMS Sec-20

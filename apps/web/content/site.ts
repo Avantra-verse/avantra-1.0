@@ -19,9 +19,9 @@ export interface SiteConfig {
 export const siteConfig: SiteConfig = {
   eventName: "AVANTRA",
   tagline: "A Multiverse-Themed Science Fair & Exhibition",
-  eventDateISO: "2026-12-01T00:00:00",
+  eventDateISO: "2026-12-19T00:00:00",
   overview:
-    "AVANTRA is a three-day science fair and exhibition hosted by SSRVM IEMS, " +
+    "AVANTRA is a two-day science fair and exhibition hosted by SSRVM IEMS, " +
     "organized in partnership with ARITHI. Student clubs from NIT Rourkela " +
     "showcase projects and run sessions, bringing college-level science " +
     "exposure to school students, all built around a Multiverse theme.",
@@ -33,8 +33,7 @@ export const siteConfig: SiteConfig = {
   ],
   days: [
     { title: "Day 1", description: "Opening and science exhibition. Exhibits from school students and NIT Rourkela clubs open to view, plus the inaugural session." },
-    { title: "Day 2", description: "Science-related competitive events and challenges run across the day, alongside continuing exhibition." },
-    { title: "Day 3", description: "Remaining events, NIT Rourkela club showcases and sessions, results, and closing ceremony." },
+    { title: "Day 2", description: "Competitive events and challenges run across the day, alongside continuing exhibition, followed by results and the closing ceremony." },
   ],
   rules: [
     "Details to be published closer to the event by the organizing committee.",

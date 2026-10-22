@@ -44,7 +44,7 @@ export default function Multiverse() {
         <a className="logo" href="#hero" data-hover aria-label="AVANTRA home">
           <img src={LOGO} alt="AVANTRA" />
         </a>
-        <span className="when">December 2026, dates soon</span>
+        <span className="when">19–20 December 2026</span>
         <nav aria-label="Main">
           <Link href="/about" data-hover>About</Link>
           <Link href="/venue" data-hover>Venue</Link>
@@ -197,7 +197,7 @@ export default function Multiverse() {
           <dl className="facts">
             <div className="fact" style={{ "--c": "#ff5560" } as React.CSSProperties}>
               <dt>When</dt>
-              <dd>December 2026, dates soon</dd>
+              <dd>19–20 December 2026</dd>
             </div>
             <div className="fact" style={{ "--c": "#9fd4ff" } as React.CSSProperties}>
               <dt>Where</dt>

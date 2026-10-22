@@ -29,7 +29,7 @@ export default function About() {
                 WHEN
               </span>
               <p className="mt-2 text-sm font-bold text-[#edebf5]">
-                December 2026, dates soon
+                19–20 December 2026
               </p>
             </div>
 

@@ -23,7 +23,7 @@ export default function Venue() {
             <h2 id="venue-name" className="t-title text-starlight">
               {siteConfig.venue.name}
             </h2>
-            <p className="mt-3 font-[family-name:var(--font-display)] text-lg text-sky">December 2026, dates soon</p>
+            <p className="mt-3 font-[family-name:var(--font-display)] text-lg text-sky">19–20 December 2026</p>
             <p className="t-body mt-6 max-w-[46ch] text-secondary">{siteConfig.venue.address}</p>
             <p className="t-body mt-2 max-w-[46ch] text-secondary">{siteConfig.venue.directions}</p>
             <a

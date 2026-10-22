@@ -22,7 +22,7 @@ export default function Footer() {
             <img src="/brand/avantra-logo-500w.png" alt="AVANTRA" className="h-[42px] w-auto object-contain" />
           </Link>
           <p className="max-w-sm text-secondary">A Multiverse-themed inter-school science &amp; innovation festival</p>
-          <p className="font-[family-name:var(--font-display)] text-sky">December 2026</p>
+          <p className="font-[family-name:var(--font-display)] text-sky">19–20 December 2026</p>
         </div>
 
         <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-6 font-semibold text-secondary">
