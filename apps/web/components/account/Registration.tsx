@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterRequest } from "@avantra/shared";
-import { api, ApiError, apiReady, REF_KEY, studentSignupOpen, type Role } from "@/lib/api";
+import { accountsOpen, api, ApiError, REF_KEY, studentSignupOpen, type Role } from "@/lib/api";
 import { AccountShell, Field, FooterLink, FormError, OpensSoon, styles } from "./Account";
 
 export function Registration({ role }: { role: Extract<Role, "STUDENT" | "AMBASSADOR"> }) {
@@ -76,7 +76,7 @@ export function Registration({ role }: { role: Extract<Role, "STUDENT" | "AMBASS
 
   return (
     <AccountShell tagline="Every universe has a doorway. Create your account and step through.">
-      {!apiReady ? (
+      {!accountsOpen ? (
         <OpensSoon what="Registration" />
       ) : step === "code" ? (
         <>

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { siteConfig } from "@/content/site";
 import PageHeader from "@/components/PageHeader";
 import Reveal from "@/components/Reveal";
@@ -5,6 +6,8 @@ import Reveal from "@/components/Reveal";
 // Ember card (DESIGN.md): panel fill, sky border, red outer ring.
 const card =
   "rounded-[26px] border-[3px] border-sky bg-panel p-7 shadow-[0_0_0_6px_var(--color-ember),0_24px_60px_rgb(0_0_0/0.45)] sm:p-9";
+
+export const metadata: Metadata = { title: "Venue" };
 
 export default function Venue() {
   return (

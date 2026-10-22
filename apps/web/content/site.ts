@@ -1,3 +1,5 @@
+export const SITE_URL = "https://avantra.arithi.in";
+
 export interface SiteConfig {
   eventName: string;
   tagline: string;

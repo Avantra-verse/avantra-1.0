@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Gaegu, Instrument_Serif, Instrument_Sans } from "next/font/google";
 import "./globals.css";
+import { SITE_URL } from "@/content/site";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
@@ -34,7 +35,8 @@ const description =
   "A science fair and exhibition hosted by SSRVM IEMS with student clubs from NIT Rourkela.";
 
 export const metadata: Metadata = {
-  title: "AVANTRA, a multiverse science fair",
+  metadataBase: new URL(SITE_URL),
+  title: { default: "AVANTRA, a multiverse science fair", template: "%s | AVANTRA 2026" },
   description,
   openGraph: {
     title: "AVANTRA, a multiverse science fair",

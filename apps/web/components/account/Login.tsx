@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoginRequest } from "@avantra/shared";
-import { api, ApiError, apiReady, studentSignupOpen, type Me, type Role } from "@/lib/api";
+import { accountsOpen, api, ApiError, studentSignupOpen, type Me, type Role } from "@/lib/api";
 import { AccountShell, Field, FooterLink, FormError, OpensSoon, styles } from "./Account";
 
 // Log in for one role (students: /login, ambassadors: /ambassador/login).
@@ -43,7 +43,7 @@ export function Login({ role }: { role: Extract<Role, "STUDENT" | "AMBASSADOR"> 
 
   return (
     <AccountShell tagline="Welcome back, traveller. Your universe is waiting.">
-      {!apiReady ? (
+      {!accountsOpen ? (
         <OpensSoon what="Log in" />
       ) : !ambassador && !studentSignupOpen ? (
         <>

@@ -90,7 +90,7 @@ export function SelectField({ name, label, error, children, ...select }: React.S
 export function OpensSoon({ what }: { what: string }) {
   return (
     <div className={styles.successBox} role="status">
-      <h1 className={styles.successHeading}>Opening soon</h1>
+      <h1 className={styles.successHeading}>Coming soon</h1>
       <p className={styles.successText}>{what} opens soon. Check back closer to AVANTRA 2026.</p>
       <div className={styles.soonActions}>
         <Link href="/contact" className={styles.submitBtn}>

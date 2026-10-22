@@ -3,6 +3,8 @@
 // pages show "opens soon" instead of forms that can't work.
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 export const apiReady = API_URL !== "";
+// Student and ambassador log in / registration pages show "Coming soon" for now. Set to apiReady to open them.
+export const accountsOpen = false;
 // Ambassadors sign up first. Set to "open" (with STUDENT_SIGNUP=open on the API) to open student sign-up.
 export const studentSignupOpen = process.env.NEXT_PUBLIC_STUDENT_SIGNUP === "open";
 // Site-wide "Log in" and "Registration" buttons: ambassador pages until students open.
