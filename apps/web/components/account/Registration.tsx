@@ -117,7 +117,7 @@ export function Registration({ role }: { role: Extract<Role, "STUDENT" | "AMBASS
       ) : !ambassador && !studentSignupOpen ? (
         <>
           <OpensSoon what="Student registration" />
-          <FooterLink text="Want to bring your friends?" href="/ambassador/registration" link="Become an ambassador" />
+          <FooterLink text="Want to bring your friends?" href="/ambassadors" link="Become an ambassador" />
         </>
       ) : (
         <>
