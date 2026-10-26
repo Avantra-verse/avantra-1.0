@@ -1,7 +1,8 @@
 "use client";
 
-// Sign-up for one role (students: /registration, ambassadors: /ambassador/registration). ?ref=CODE from an ambassador's link is kept for the profile step. -> details -> 6-digit code emailed -> account created and logged in -> profile step.
+// Student sign-up: /registration. -> details -> 6-digit code emailed -> account created and logged in -> profile step.
 // The account only exists once the code is verified (POST /auth/register, then /auth/register/verify).
+// Ambassador sign-up is handled externally via Google Forms at /ambassador.
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterRequest } from "@avantra/shared";
@@ -117,7 +118,7 @@ export function Registration({ role }: { role: Extract<Role, "STUDENT" | "AMBASS
       ) : !ambassador && !studentSignupOpen ? (
         <>
           <OpensSoon what="Student registration" />
-          <FooterLink text="Want to bring your friends?" href="/ambassadors" link="Become an ambassador" />
+          <FooterLink text="Want to bring your friends?" href="/ambassador" link="Become an ambassador" />
         </>
       ) : (
         <>
@@ -142,7 +143,7 @@ export function Registration({ role }: { role: Extract<Role, "STUDENT" | "AMBASS
               {busy ? "Sending code…" : "Create account"}
             </button>
           </form>
-          <FooterLink text="Already have an account?" href={ambassador ? "/ambassador/login" : "/login"} link="Log in" />
+          <FooterLink text="Already have an account?" href="/login" link="Log in" />
         </>
       )}
     </AccountShell>

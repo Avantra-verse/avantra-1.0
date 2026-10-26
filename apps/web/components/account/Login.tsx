@@ -6,10 +6,9 @@ import { LoginRequest } from "@avantra/shared";
 import { accountsOpen, api, ApiError, studentSignupOpen, type Me, type Role } from "@/lib/api";
 import { AccountShell, Field, FooterLink, FormError, OpensSoon, styles } from "./Account";
 
-// Log in for one role (students: /login, ambassadors: /ambassador/login).
+// Student log in (/login). Ambassador sign-up is Google Forms at /ambassador.
 export function Login({ role }: { role: Extract<Role, "STUDENT" | "AMBASSADOR"> }) {
   const router = useRouter();
-  const ambassador = role === "AMBASSADOR";
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -45,14 +44,14 @@ export function Login({ role }: { role: Extract<Role, "STUDENT" | "AMBASSADOR"> 
     <AccountShell tagline="Welcome back, traveller. Your universe is waiting.">
       {!accountsOpen ? (
         <OpensSoon what="Log in" />
-      ) : !ambassador && !studentSignupOpen ? (
+      ) : !studentSignupOpen ? (
         <>
           <OpensSoon what="Student log in" />
-          <FooterLink text="Ambassador?" href="/ambassador/login" link="Log in here" />
+          <FooterLink text="Want to be an ambassador?" href="/ambassador" link="Apply here" />
         </>
       ) : (
         <>
-          <h1 className={styles.heading}>{ambassador ? "Ambassador log in" : "Log in"}</h1>
+          <h1 className={styles.heading}>Log in</h1>
           <form className={styles.form} onSubmit={submit} noValidate>
             <Field name="email" label="Email" type="email" autoComplete="email" value={form.email} onChange={set} error={errors.email} />
             <Field name="password" label="Password" type="password" autoComplete="current-password" value={form.password} onChange={set} error={errors.password} />
@@ -62,12 +61,8 @@ export function Login({ role }: { role: Extract<Role, "STUDENT" | "AMBASSADOR"> 
             </button>
           </form>
           <FooterLink text="Forgot your password?" href="/forgot-password" link="Reset it" />
-          <FooterLink text="New to Avantra?" href={ambassador ? "/ambassador/registration" : "/registration"} link="Create an account" />
-          {ambassador ? (
-            studentSignupOpen && <FooterLink text="Student?" href="/login" link="Student log in" />
-          ) : (
-            <FooterLink text="Ambassador?" href="/ambassador/login" link="Ambassador log in" />
-          )}
+          <FooterLink text="New to Avantra?" href="/registration" link="Create an account" />
+          <FooterLink text="Want to be an ambassador?" href="/ambassador" link="Apply here" />
           <FooterLink text="Volunteer or judge?" href="/staff/login" link="Staff log in" />
         </>
       )}

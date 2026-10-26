@@ -1,10 +1,9 @@
 "use client";
 
 // First step after sign-up (Me.profileComplete = false). Students: class, school, parent contact.
-// Ambassadors: phone and school, which gives them their code to share.
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AmbassadorProfile, StudentProfile } from "@avantra/shared";
+import { StudentProfile } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, LOGIN_HREF, REF_KEY, type Me } from "@/lib/api";
 import { AccountShell, Field, FormError, OpensSoon, SelectField, styles } from "@/components/account/Account";
 
@@ -34,8 +33,6 @@ export default function ProfilePage() {
         <FormError message={failed} />
       ) : !me ? (
         <p className={styles.subtext} role="status">Loading…</p>
-      ) : me.role === "AMBASSADOR" ? (
-        <AmbassadorForm onDone={() => router.push("/dashboard")} />
       ) : (
         <StudentForm name={me.name} onDone={() => router.push("/dashboard")} />
       )}
@@ -132,60 +129,6 @@ function StudentForm({ name, onDone }: { name: string; onDone: () => void }) {
         <FormError message={errors.form} />
         <button type="submit" className={styles.submitBtn} disabled={busy}>
           {busy ? "Saving…" : "Get my AVANTRA ID"}
-        </button>
-      </form>
-    </>
-  );
-}
-
-function AmbassadorForm({ onDone }: { onDone: () => void }) {
-  const [f, setF] = useState({ schoolName: "", schoolCity: "", grade: "", phone: "" });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false);
-
-  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setF((v) => ({ ...v, [e.target.name]: e.target.value }));
-    setErrors((x) => ({ ...x, [e.target.name]: "", form: "" })); // fixing a field clears its message
-  };
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const parsed = AmbassadorProfile.safeParse({ ...f, grade: Number(f.grade) || undefined, phone: f.phone.replace(/\D/g, "").slice(-10) });
-    if (!parsed.success) {
-      const found = issues(parsed.error);
-      if (!f.grade) found.grade = "Pick your class.";
-      return setErrors(found);
-    }
-    setBusy(true);
-    try {
-      await api("/profile/ambassador", parsed.data);
-      onDone();
-    } catch (err) {
-      const ae = err as ApiError;
-      setErrors({ ...ae.fields, form: ae.message });
-      setBusy(false);
-    }
-  }
-
-  return (
-    <>
-      <h1 className={styles.heading}>Your details</h1>
-      <p className={styles.subtext}>Next you get your ambassador code to share with friends.</p>
-      <form className={styles.form} onSubmit={submit} noValidate>
-        <Field name="schoolName" label="School name" placeholder="e.g. SSRVM" value={f.schoolName} onChange={set} error={errors.schoolName} />
-        <Field name="schoolCity" label="School location" placeholder="City or town, e.g. Rourkela" autoComplete="address-level2" value={f.schoolCity} onChange={set} error={errors.schoolCity} />
-        <SelectField name="grade" label="Class" value={f.grade} onChange={set} error={errors.grade}>
-          <option value="">Select</option>
-          {GRADES.map((g) => (
-            <option key={g} value={g}>
-              Class {g}
-            </option>
-          ))}
-        </SelectField>
-        <Field name="phone" label="Your phone" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile" value={f.phone} onChange={set} error={errors.phone} />
-        <FormError message={errors.form} />
-        <button type="submit" className={styles.submitBtn} disabled={busy}>
-          {busy ? "Saving…" : "Get my code"}
         </button>
       </form>
     </>

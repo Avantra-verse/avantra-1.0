@@ -144,7 +144,7 @@ export default function Starfield({ activeDimension = 0 }: StarFieldProps) {
     };
   }, [activeDimension]);
 
-  if (pathname === "/" || pathname === "/about" || pathname === "/contact" || pathname === "/registration" || pathname === "/ambassador/registration") {
+  if (pathname === "/" || pathname === "/about" || pathname === "/contact" || pathname === "/registration") {
     return null;
   }
 

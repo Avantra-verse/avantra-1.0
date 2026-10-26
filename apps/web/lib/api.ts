@@ -5,11 +5,11 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 export const apiReady = API_URL !== "";
 // Student and ambassador log in / registration pages show "Coming soon" for now. Set to apiReady to open them.
 export const accountsOpen = false;
-// Ambassadors sign up first. Set to "open" (with STUDENT_SIGNUP=open on the API) to open student sign-up.
+// Ambassadors sign up via Google Forms at /ambassador. Set to "open" (with STUDENT_SIGNUP=open on the API) to open student sign-up.
 export const studentSignupOpen = process.env.NEXT_PUBLIC_STUDENT_SIGNUP === "open";
-// Site-wide "Log in" and "Registration" buttons: ambassador pages until students open.
-export const LOGIN_HREF = studentSignupOpen ? "/login" : "/ambassador/login";
-export const REGISTER_HREF = studentSignupOpen ? "/registration" : "/ambassador/registration";
+// Site-wide "Log in" and "Registration" buttons.
+export const LOGIN_HREF = "/login";
+export const REGISTER_HREF = "/registration";
 
 export class ApiError extends Error {
   constructor(
