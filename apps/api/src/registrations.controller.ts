@@ -80,14 +80,18 @@ export class RegistrationsController {
       throw new ConflictException('Your payment is already being checked');
     }
     // A UTR pays once. One the school marked Not paid may be sent again (it may have been checked too early).
-    if (await this.prisma.payment.findFirst({ where: { utr, status: { in: ['CREATED', 'PAID'] } } })) {
-      const message = 'This UTR has already been sent. Check the number in your UPI app.';
-      throw new ConflictException({ message, issues: [{ path: 'utr', message }] });
-    }
-    return this.prisma.payment.create({
-      data: { studentId: user.id, amountPaise: AVANTRA_FEE_PAISE, method: 'UPI', utr },
-      select: { method: true, status: true, utr: true, createdAt: true },
-    });
+    const message = 'This UTR has already been sent. Check the number in your UPI app.';
+    const utrTaken = new ConflictException({ message, issues: [{ path: 'utr', message }] });
+    if (await this.prisma.payment.findFirst({ where: { utr, status: { in: ['CREATED', 'PAID'] } } })) throw utrTaken;
+    // The partial unique index (migration 0017) catches two students sending the same UTR at once.
+    return this.prisma.payment
+      .create({
+        data: { studentId: user.id, amountPaise: AVANTRA_FEE_PAISE, method: 'UPI', utr },
+        select: { method: true, status: true, utr: true, createdAt: true },
+      })
+      .catch((e) => {
+        throw isUniqueViolation(e) ? utrTaken : e;
+      });
   }
 
   // Fast path: the browser reports success. The webhook below confirms it independently.

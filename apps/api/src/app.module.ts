@@ -21,13 +21,13 @@ import { TeamsController } from './teams.controller';
 import { WallController } from './wall.controller';
 
 // Rate limits count per person, not per IP: at the venue hundreds of phones share one Wi-Fi IP, and mobile
-// networks put many phones behind one IP too. Person = the session (logged in), else the email in a login or
-// sign-up form, else the IP.
+// networks put many phones behind one IP too. Person = the email in a login or sign-up form, else the session,
+// else the IP. Email first: anyone can send a made-up session cookie, which would reset a per-session count.
 const person = (req: Record<string, any>): string => {
-  const token = readCookie(req as never, SESSION_COOKIE);
-  if (token) return `s:${sha256(token)}`;
   const email = req.body?.email;
-  return typeof email === 'string' ? `e:${email.trim().toLowerCase()}` : req.ip;
+  if (typeof email === 'string') return `e:${email.trim().toLowerCase()}`;
+  const token = readCookie(req as never, SESSION_COOKIE);
+  return token ? `s:${sha256(token)}` : req.ip;
 };
 
 @Module({

@@ -200,7 +200,7 @@ model Payment {
   razorpayPaymentId String?       @unique // unique = idempotent webhook handling
   recordedById      String? // OFFLINE: the admin who took the cash. UPI: the admin who imported the school's answer
   note              String? // OFFLINE: receipt number etc.
-  utr               String? // UPI: the 12-digit transaction number the student typed
+  utr               String? // UPI: the 12-digit number the student typed. Unique while CREATED/PAID: partial index in migration 0017
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
