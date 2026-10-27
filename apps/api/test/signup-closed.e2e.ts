@@ -1,4 +1,4 @@
-// Before STUDENT_SIGNUP=open: ambassadors can sign up, students can't.
+// Before STUDENT_SIGNUP=open: students can't sign up (ambassadors apply on a Google Form).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { call, startApi } from './helpers.ts';
@@ -11,5 +11,4 @@ test('student sign-up stays closed until STUDENT_SIGNUP=open', async () => {
   assert.equal(student.status, 403);
   assert.equal(student.json.message, 'Student registration opens soon');
   assert.equal((await call('/auth/register/verify', { ...body('STUDENT'), code: '123456' })).status, 403);
-  assert.equal((await call('/auth/register', body('AMBASSADOR'))).status, 202);
 });

@@ -104,12 +104,18 @@ Dev data: `pnpm --filter @avantra/api seed-events` creates the brochure's 9 even
 
 ## Exhibition fee and event registration (students)
 
-Entry to AVANTRA, every event and the Engagement Wall are **free** for any student with a profile. The only paid thing is the **Science & Innovation Exhibition**: ₹199 (`AVANTRA_FEE_PAISE` in shared), paid **once per student**, needed before registering for an `EXHIBITION` event. Show fee status from `GET /profile` → `student.feePaidAt` (null = unpaid).
+Entry to AVANTRA, every event and the Engagement Wall are **free** for any student with a profile. The only paid thing is the **Science & Innovation Exhibition**: ₹199 (`AVANTRA_FEE_PAISE` in shared), paid **once per student**, needed before registering for an `EXHIBITION` event. Show fee status from `GET /profile` → `student.feePaidAt` (null = unpaid) and `student.payments[0]` (the latest payment: a UPI one with `status: CREATED` is under review, `FAILED` means try again).
+
+Two ways to pay; the web app picks one with `NEXT_PUBLIC_PAYMENTS` (`upi` by default, or `razorpay`):
+
+- **UPI QR (AVANTRA 2026):** the student pays the school's UPI QR and sends the 12-digit UTR. Admins download the payments waiting as Excel, the school marks each one Paid / Not paid from its bank statement, and admins upload the file back (admin table below).
+- **Razorpay:** kept for other events; needs the `RAZORPAY_*` keys.
 
 | Method + path | Body | Success | Notes |
 |---|---|---|---|
 | `POST /payments/fee` | none | 201 `{ keyId, orderId, amount, currency, description }` | Opens Razorpay Checkout (below). Call again to retry a failed payment. 403 = no profile yet, 409 = already paid, 503 until Razorpay keys are set. |
 | `POST /payments/verify` | `VerifyPaymentRequest` (Razorpay's 3 fields) | 200 | Call from Checkout's success handler, then re-fetch `/profile`. |
+| `POST /payments/upi` | `UpiPaymentRequest` `{ utr }` (12 digits, spaces ignored) | 201 `{ method, status: 'CREATED', utr, createdAt }` | After paying the school's QR. 403 = no profile, 409 = already paid, a payment already under review, or the UTR was already sent (a UTR the school marked Not paid may be sent again). |
 | `POST /registrations` | `CreateRegistrationRequest` `{ eventId }` | 201 | 403 = no profile, or exhibition fee not paid; 400 = closed, 409 = full or already registered. |
 | `GET /registrations/mine` | none | 200 list | With event and `teamMember.team` (null = no team yet). The team carries `joinRequests: [{ registrationId, createdAt, registration.student { avantraId, user.name } }]`, oldest first. |
 | `DELETE /registrations/:id` | none | 204 | Withdraw from an event. 409 = leave your team first. The fee is not refunded. |
@@ -180,7 +186,10 @@ Team (judge view): `{ id, name, projectTitle, topic, members: [{ name, avantraId
 | `POST /admin/teams/:id/rank` | `SetRankRequest` `{ rank: 1 \| 2 \| 3 \| null }` | Winners, after judging. Shows on certificates. |
 | `GET /admin/export/students.csv` | none | Download. Opens in Excel. |
 | `GET /admin/export/registrations.csv?eventId=` | none | `eventId` optional. Teams, ranks, certificate IDs. |
-| `GET /admin/export/payments.csv` | none | Reconcile with Razorpay settlements and the cash box (`cashTakenBy`). |
+| `GET /admin/export/payments.csv` | none | Reconcile with Razorpay settlements, the school's UPI statement and the cash box (`recordedBy` = the admin who took the cash or imported the UPI check). |
+| `GET /admin/payments/upi` | none | UPI payments waiting for the school: `[{ id, avantraId, name, utr, createdAt }]`, oldest first. |
+| `GET /admin/payments/upi.xlsx` | none | The same as Excel for the school: AVANTRA ID, name, school, class, submitted (IST), UTR, amount, and **Verified** (a Paid / Not paid dropdown). Only payments still waiting. |
+| `POST /admin/payments/upi/import` | `UpiImportRequest` `{ file }` (the .xlsx, base64) | Applies the school's answers, matching rows on UTR + AVANTRA ID. Paid = fee confirmed + email; Not paid = `FAILED` + "try again" email; empty = stays waiting. Returns `{ paid, failed, already, unchecked, problems[] }`; rows with problems are skipped. Importing the same file twice is safe. |
 
 CSV downloads need the session cookie: open them with `fetch(..., { credentials: 'include' })` and save the blob, or a plain link on the same site.
 
@@ -196,7 +205,7 @@ Students find their codes in `GET /registrations/mine` → `certificateCode` (nu
 
 ## ARITHI Engagement Wall
 
-Physical chits around the venue each carry a 6-character code, a challenge number, category, difficulty (1–8), points and the question. A student opens the Wall page (one QR on posters points to `/wall`), logs in (any student with a profile, no fee), types the chit's code and answers. Answers are checked automatically: case, spaces, a trailing full stop and number formats (`1,000` = `1000`) don't matter. Wrong tries lock that challenge for that student: **3 for typed answers, 1 for multiple choice** (`wallAttempts()` in shared), so guessing doesn't pay. Points are earned once per challenge.
+Physical chits around the venue each carry a 6-character code, a challenge number, category, difficulty (1–5), points and the question. A student opens the Wall page (one QR on posters points to `/wall`), logs in (any student with a profile, no fee), types the chit's code and answers. Answers are checked automatically: case, spaces, a trailing full stop and number formats (`1,000` = `1000`) don't matter. Wrong tries lock that challenge for that student: **3 for typed answers, 1 for multiple choice** (`wallAttempts()` in shared), so guessing doesn't pay. Points are earned once per challenge.
 
 Ranking: points, then more challenges solved, then whoever reached that score first. School score = sum of its students. "Others" students rank individually but not for a school until an admin links them. Disabled accounts drop off.
 

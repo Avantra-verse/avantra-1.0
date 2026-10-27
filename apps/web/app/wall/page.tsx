@@ -206,6 +206,15 @@ function Home({ wall, failed, onOpen }: { wall: WallMe; failed: string; onOpen: 
   );
 }
 
+// Each level has its own colour on the question page, always with its name so colour isn't the only signal.
+const LEVELS = [
+  { name: "Easy", colour: "#5fd38d" },
+  { name: "Steady", colour: "#9fd4ff" },
+  { name: "Tricky", colour: "#f2c14e" },
+  { name: "Hard", colour: "#ff9f5a" },
+  { name: "Expert", colour: "#ff5560" },
+];
+
 function Play({ code, challenge: c, onBack, onAnswer }: { code: string; challenge: Challenge; onBack: () => void; onAnswer: (r: Answer) => void }) {
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
@@ -231,10 +240,19 @@ function Play({ code, challenge: c, onBack, onAnswer }: { code: string; challeng
   }
 
   const closed = c.status !== "OPEN";
+  const level = Math.min(Math.max(c.difficulty, 1), LEVELS.length);
   return (
-    <>
+    <div className={styles.play} style={{ "--level": LEVELS[level - 1].colour } as React.CSSProperties}>
+      <p className={styles.level}>
+        <span className={styles.levelDots} aria-hidden="true">
+          {LEVELS.map((l, i) => (
+            <span key={l.name} className={i < level ? styles.on : undefined} />
+          ))}
+        </span>
+        Level {level} · {LEVELS[level - 1].name}
+      </p>
       <p className={styles.meta}>
-        Challenge {c.number} · {c.category} · Level {c.difficulty} · {c.points} points
+        Challenge {c.number} · {c.category} · {c.points} points
       </p>
       <p className={styles.question}>{c.question}</p>
 
@@ -292,7 +310,7 @@ function Play({ code, challenge: c, onBack, onAnswer }: { code: string; challeng
           {closed ? "Enter another code" : "Back"}
         </button>
       </div>
-    </>
+    </div>
   );
 }
 

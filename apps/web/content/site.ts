@@ -12,6 +12,8 @@ export interface SiteConfig {
   prizes: { title: string; description: string }[];
   sponsors: { name: string; tier: string }[];
   contact: { org: string; email: string; phone: string }[];
+  // The school's UPI for the ₹199 exhibition fee. Empty id = the pay box says payments open soon.
+  upi: { id: string; payee: string; qrSrc: string };
   gallery: { src: string; alt: string }[];
   introVideoSrc: string;
 }
@@ -52,6 +54,8 @@ export const siteConfig: SiteConfig = {
     { org: "ARITHI", email: "contact@arithi.in", phone: "" },
     { org: "SSRVM IEMS", email: "info@ssrvmiems.example", phone: "" },
   ],
+  // TODO(school): fill in the school's UPI ID and save its QR as public/upi-qr.png.
+  upi: { id: "", payee: "SSRVM IEMS", qrSrc: "/upi-qr.png" },
   gallery: [],
   introVideoSrc: "/video/intro.mp4",
 };

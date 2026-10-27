@@ -51,7 +51,7 @@ function StudentForm({ name, onDone }: { name: string; onDone: () => void }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
-  // Code from an ambassador's share link (saved on /registration).
+  // Referral code from a share link (saved on /registration).
   useEffect(() => {
     try {
       const ref = localStorage.getItem(REF_KEY);

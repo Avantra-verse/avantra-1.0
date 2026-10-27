@@ -185,3 +185,49 @@
     display: none;
   }
 }
+
+/* Question page, coloured by level (--level is set per challenge in page.tsx). */
+.play {
+  --level: var(--sky);
+}
+
+.level {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 5px 14px;
+  border: 2px solid var(--level);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--level) 14%, transparent);
+  color: var(--level);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.levelDots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.levelDots > span {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--level);
+  border-radius: 50%;
+}
+
+.levelDots > .on {
+  background: var(--level);
+}
+
+.play .question {
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--level) 45%, transparent);
+}
+
+.play .option:hover:not(:disabled) {
+  border-color: var(--level);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--level) 35%, transparent);
+}

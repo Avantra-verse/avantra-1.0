@@ -11,9 +11,10 @@ import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/c
 import t from "../staff/tools.module.css";
 import { fileUrl, rupees, Tile, useAction, useLoad } from "./ui";
 import { Events } from "./events";
+import { UpiPayments } from "./payments";
 import { Wall } from "./wall";
 
-const TABS = { overview: "Overview", ambassadors: "Ambassadors", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall" } as const;
+const TABS = { overview: "Overview", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall" } as const;
 type Tab = keyof typeof TABS;
 
 export default function AdminPage() {
@@ -67,7 +68,8 @@ export default function AdminPage() {
               ))}
             </div>
             {tab === "overview" && <Overview />}
-            {tab === "ambassadors" && <Ambassadors />}
+            {tab === "referrals" && <Referrals />}
+            {tab === "payments" && <UpiPayments />}
             {tab === "desk" && <Desk />}
             {tab === "staff" && <Staff />}
             {tab === "events" && <Events />}
@@ -83,7 +85,7 @@ export default function AdminPage() {
 
 type Stats = {
   students: { total: number; paid: number; unpaid: number };
-  ambassadors: number;
+  referralCodes: number;
   fees: { onlinePaise: number; onlineCount: number; cashPaise: number; cashCount: number };
   gate: { checkedInToday: number };
   events: { id: string; name: string; capacity: number | null; registrations: number; teams: number; deskScans: number }[];
@@ -103,7 +105,7 @@ function Overview() {
           <Tile value={s.students.total} label="students" />
           <Tile value={s.students.paid} label="fee paid" />
           <Tile value={s.gate.checkedInToday} label="through the gate today" />
-          <Tile value={s.ambassadors} label="ambassadors" />
+          <Tile value={s.referralCodes} label="referral codes used" />
           <Tile value={rupees(s.fees.onlinePaise)} label={`online (${s.fees.onlineCount})`} />
           <Tile value={rupees(s.fees.cashPaise)} label={`cash at desk (${s.fees.cashCount})`} />
         </div>
@@ -150,52 +152,39 @@ function Overview() {
   );
 }
 
-// ---- ambassadors ----
+// ---- referral codes ----
 
-type AmbassadorRow = {
-  userId: string;
-  code: string;
-  schoolName: string;
-  schoolCity: string;
-  grade: number;
-  signups: number;
-  paid: number;
-  user: { name: string; email: string; phone: string | null; disabledAt: string | null };
-};
+type ReferralRow = { code: string; signups: number; paid: number };
 
-function Ambassadors() {
-  const { data, error, reload } = useLoad<AmbassadorRow[]>("/admin/ambassadors");
+// Codes are given to ambassadors by hand (Google Form, then email), so this is just a count per code.
+function Referrals() {
+  const { data, error, reload } = useLoad<ReferralRow[]>("/admin/referrals");
   return (
-    <section className={t.panel} aria-labelledby="ambassadors">
+    <section className={t.panel} aria-labelledby="referrals">
       <div className={t.head}>
-        <h2 id="ambassadors">Ambassadors</h2>
+        <h2 id="referrals">Referral codes</h2>
         <button type="button" className={t.ghost} onClick={reload}>Refresh</button>
       </div>
-      <p className={t.mute}>Most sign-ups first. Students enter an ambassador&apos;s code on their profile step.</p>
+      <p className={t.mute}>Most sign-ups first. Students enter a code on their profile step; any code they typed shows here, so check for typos.</p>
       <FormError message={error} />
       {!data ? null : data.length === 0 ? (
-        <p className={t.mute}>No ambassadors yet.</p>
+        <p className={t.mute}>No student has used a code yet.</p>
       ) : (
         <div className={t.scroll}>
           <table className={`${t.table} ${t.stack}`}>
             <thead>
               <tr>
-                <th>Ambassador</th>
                 <th>Code</th>
                 <th className={t.num}>Sign-ups</th>
                 <th className={t.num}>Paid</th>
               </tr>
             </thead>
             <tbody>
-              {data.map((a) => (
-                <tr key={a.userId}>
-                  <td>
-                    {a.user.name} {a.user.disabledAt && <span className={`${t.pill} ${t.off}`}>disabled</span>}
-                    <div className={t.mute}>Class {a.grade} · {a.schoolName}, {a.schoolCity} · {a.user.email}{a.user.phone && ` · ${a.user.phone}`}</div>
-                  </td>
-                  <td className={t.mono} data-label="Code">{a.code}</td>
-                  <td className={t.num} data-label="Sign-ups">{a.signups}</td>
-                  <td className={t.num} data-label="Paid">{a.paid}</td>
+              {data.map((r) => (
+                <tr key={r.code}>
+                  <td className={t.mono} data-label="Code">{r.code}</td>
+                  <td className={t.num} data-label="Sign-ups">{r.signups}</td>
+                  <td className={t.num} data-label="Paid">{r.paid}</td>
                 </tr>
               ))}
             </tbody>

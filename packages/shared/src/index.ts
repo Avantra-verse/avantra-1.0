@@ -1,11 +1,11 @@
 // Contract shared by apps/web and apps/api. Validate with these on both sides.
 import { z } from 'zod';
 
-export const Role = z.enum(['STUDENT', 'AMBASSADOR', 'JUDGE', 'VOLUNTEER', 'ADMIN']);
+export const Role = z.enum(['STUDENT', 'JUDGE', 'VOLUNTEER', 'ADMIN']);
 export type Role = z.infer<typeof Role>;
 
-// The two roles that can sign up / log in on the public /login page.
-export const PublicRole = z.enum(['STUDENT', 'AMBASSADOR']);
+// The role that can sign up / log in on the public /login page.
+export const PublicRole = z.enum(['STUDENT']);
 export type PublicRole = z.infer<typeof PublicRole>;
 
 const email = z.string().trim().toLowerCase().pipe(z.email('Enter a valid email'));
@@ -48,10 +48,7 @@ const schoolName = z.string().trim().min(3, 'Type your school name').max(200);
 
 const grade = z.number().int().min(1).max(12);
 
-export const AmbassadorProfile = z.object({ schoolName, schoolCity: z.string().trim().min(2, 'Type your school\'s city or town').max(100), grade, phone });
-export type AmbassadorProfile = z.infer<typeof AmbassadorProfile>;
-
-// The code an ambassador shares. Codes are 6 characters; case and spaces don't matter.
+// The code an ambassador shares (we email it to them by hand). Codes are 6 characters; case and spaces don't matter.
 export const ReferralCode = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{6}$/, 'Ambassador codes are 6 letters and numbers');
 
 const studentProfileFields = z.object({
@@ -171,6 +168,16 @@ export const VerifyPaymentRequest = z.object({
 });
 export type VerifyPaymentRequest = z.infer<typeof VerifyPaymentRequest>;
 
+// UPI QR payment: the student pays the school's QR in any UPI app, then sends the UTR from the payment details.
+export const UpiPaymentRequest = z.object({
+  utr: z.string().transform((v) => v.replace(/\s/g, '')).pipe(z.string().regex(/^\d{12}$/, 'The UTR is the 12-digit number in your UPI app\'s payment details')),
+});
+export type UpiPaymentRequest = z.infer<typeof UpiPaymentRequest>;
+
+// The school's checked Excel file, base64. A few thousand rows is well under 2 MB.
+export const UpiImportRequest = z.object({ file: z.string().min(1).max(3_000_000) });
+export type UpiImportRequest = z.infer<typeof UpiImportRequest>;
+
 // ---- event day: QR scans and judging ----
 
 export const MAX_POINTS = 10; // per judging criterion
@@ -267,7 +274,8 @@ const text = (max: number) => z.string().trim().min(1).max(max);
 const wallFields = z.object({
   number: z.number().int().min(1).max(9999),
   category: z.enum(WALL_CATEGORIES),
-  difficulty: z.number().int().min(1).max(8),
+  // 1–5. Sheets made on the old 1–8 scale still upload: 6–8 count as 5.
+  difficulty: z.number().int().min(1, 'Difficulty is 1 to 5').max(8, 'Difficulty is 1 to 5').transform((d) => Math.min(d, 5)),
   points: z.number().int().min(1).max(1000).optional(), // default 10 × difficulty
   question: text(1000),
   options: z.array(text(200)).max(6).optional(), // multiple choice (2–6); omit for a typed answer

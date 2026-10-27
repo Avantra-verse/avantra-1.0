@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { api, ApiError, apiReady, getMe, LOGIN_HREF, payExhibitionFee, type Me } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, LOGIN_HREF, payExhibitionFee, paymentMode, type LastPayment, type Me } from "@/lib/api";
 import { AccountShell, FormError, OpensSoon, styles } from "@/components/account/Account";
+import { UpiFee } from "@/components/account/UpiFee";
 import t from "../staff/tools.module.css";
 import { Tile, useLoad, useTabs } from "../admin/ui";
 
@@ -16,6 +17,7 @@ type Student = {
   schoolName: string;
   feePaidAt: string | null;
   _count: { checkIns: number };
+  payments: LastPayment[]; // the latest only
 };
 type WallMe = { open: boolean; points: number; solved: number; rank: number | null; players: number };
 type Profile = { student: Student | null };
@@ -43,7 +45,6 @@ export default function DashboardPage() {
   }
 
   if (me && profile?.student) return <StudentDashboard me={me} s={profile.student} logout={logout} onPaid={async () => setProfile(await api<Profile>("/profile"))} />;
-
 
   return (
     <AccountShell tagline={me ? `Welcome, ${me.name.split(" ")[0]}.` : "Your universe, at a glance."}>
@@ -94,6 +95,7 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
 
   const days = s._count.checkIns;
   const w = wall.data;
+  const reviewing = s.payments[0]?.method === "UPI" && s.payments[0].status === "CREATED";
 
   return (
     <div className={styles.registrationPage}>
@@ -118,7 +120,7 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
             <section className={t.panel} aria-labelledby="glance">
               <h2 id="glance">At a glance</h2>
               <div className={t.tiles}>
-                <Tile value={s.feePaidAt ? "Paid" : "₹199"} label={s.feePaidAt ? "exhibition fee" : "exhibition fee, not paid yet"} />
+                <Tile value={s.feePaidAt ? "Paid" : reviewing ? "Checking" : "₹199"} label={s.feePaidAt ? "exhibition fee" : reviewing ? "exhibition fee, payment under review" : "exhibition fee, not paid yet"} />
                 <Tile value={days === 0 ? "Not yet" : days === 1 ? "1 day" : `${days} days`} label="checked in at the fest" />
                 <Tile value={w ? w.points : "…"} label={w ? `Wall points · ${w.solved} solved` : "Wall points"} />
                 <Tile value={w?.rank ? `#${w.rank}` : "–"} label={w?.rank ? `Wall rank of ${w.players}` : "Wall rank, after your first answer"} />
@@ -126,14 +128,17 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
               <p className={t.mute} style={{ marginBottom: s.feePaidAt ? 0 : undefined }}>
                 Entry and all other events are free. The ₹199 fee is only for the Science Exhibition.
               </p>
-              {!s.feePaidAt && (
-                <>
-                  <button type="button" className={t.btn} onClick={pay} disabled={paying}>
-                    {paying ? "Opening…" : "Pay ₹199 online"}
-                  </button>
-                  <FormError message={payError} />
-                </>
-              )}
+              {!s.feePaidAt &&
+                (paymentMode === "razorpay" ? (
+                  <>
+                    <button type="button" className={t.btn} onClick={pay} disabled={paying}>
+                      {paying ? "Opening…" : "Pay ₹199 online"}
+                    </button>
+                    <FormError message={payError} />
+                  </>
+                ) : (
+                  <UpiFee last={s.payments[0]} onSent={onPaid} />
+                ))}
             </section>
             <section className={t.panel} aria-labelledby="fest">
               <h2 id="fest">AVANTRA 2026</h2>

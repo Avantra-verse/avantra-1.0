@@ -17,7 +17,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { AVANTRA_FEE_PAISE, CreateRegistrationRequest, VerifyPaymentRequest } from '@avantra/shared';
+import { AVANTRA_FEE_PAISE, CreateRegistrationRequest, UpiPaymentRequest, VerifyPaymentRequest } from '@avantra/shared';
 import type { Event, User } from '@prisma/client';
 import type { Request } from 'express';
 import { CurrentUser, Public, Roles } from './auth/session.guard';
@@ -28,13 +28,22 @@ import { createOrder, hmacMatches, razorpayConfigured } from './razorpay';
 import { createSoloTeamIfNeeded, joinRequestsInclude, teamInclude } from './teams.controller';
 import { ZodPipe } from './zod.pipe';
 
-// Same email for online (webhook) and cash (admin desk) payments.
+// Same email for every way of paying: Razorpay (webhook), UPI (school's check imported) and cash (admin desk).
 export const feeConfirmedMail = (to: string, avantraId: string, amountPaise: number, reference: string) => ({
   to,
   subject: 'AVANTRA 2026: exhibition fee received',
   text:
     `Payment of ₹${amountPaise / 100} received. You can now register for the Science & Innovation Exhibition.\n` +
     `Your AVANTRA ID: ${avantraId}\n\nNext: register for the exhibition and form your team.\nPayment reference: ${reference}`,
+});
+
+// The school's bank statement doesn't show this UPI payment: the student can check the UTR and send it again.
+export const upiFailedMail = (to: string, avantraId: string, utr: string) => ({
+  to,
+  subject: 'AVANTRA 2026: we could not confirm your payment',
+  text:
+    `The school could not find your ₹199 UPI payment with UTR ${utr} in its bank statement.\n` +
+    `Your AVANTRA ID: ${avantraId}\n\nOpen your dashboard to check the UTR and send it again, or pay again if the payment did not go through.`,
 });
 
 @Controller()
@@ -58,6 +67,27 @@ export class RegistrationsController {
     await this.prisma.payment.create({ data: { studentId: user.id, amountPaise: AVANTRA_FEE_PAISE, razorpayOrderId: order.id } });
     // Everything Razorpay Checkout needs on the web page.
     return { keyId: process.env.RAZORPAY_KEY_ID, orderId: order.id, amount: AVANTRA_FEE_PAISE, currency: 'INR', description: 'AVANTRA 2026 Science Exhibition' };
+  }
+
+  // UPI QR: the student pays the school's QR in any UPI app and sends the UTR. It waits (CREATED) until an admin
+  // imports the school's checked Excel file (admin.controller). One waiting payment per student.
+  @Roles('STUDENT') @Post('payments/upi')
+  async payUpi(@CurrentUser() user: User, @Body(new ZodPipe(UpiPaymentRequest)) { utr }: UpiPaymentRequest) {
+    const student = await this.prisma.student.findUnique({ where: { userId: user.id } });
+    if (!student) throw new ForbiddenException('Complete your profile first');
+    if (student.feePaidAt) throw new ConflictException('Exhibition fee already paid');
+    if (await this.prisma.payment.findFirst({ where: { studentId: user.id, method: 'UPI', status: 'CREATED' } })) {
+      throw new ConflictException('Your payment is already being checked');
+    }
+    // A UTR pays once. One the school marked Not paid may be sent again (it may have been checked too early).
+    if (await this.prisma.payment.findFirst({ where: { utr, status: { in: ['CREATED', 'PAID'] } } })) {
+      const message = 'This UTR has already been sent. Check the number in your UPI app.';
+      throw new ConflictException({ message, issues: [{ path: 'utr', message }] });
+    }
+    return this.prisma.payment.create({
+      data: { studentId: user.id, amountPaise: AVANTRA_FEE_PAISE, method: 'UPI', utr },
+      select: { method: true, status: true, utr: true, createdAt: true },
+    });
   }
 
   // Fast path: the browser reports success. The webhook below confirms it independently.

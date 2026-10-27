@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { EXHIBITION_TOPICS, InviteCode } from "@avantra/shared";
-import { api, ApiError, apiReady, getMe, payExhibitionFee, type Me } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, payExhibitionFee, paymentMode, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import styles from "./events.module.css";
 
@@ -163,11 +163,16 @@ function FeeBox({ me, paid, onPaid }: { me: Me; paid: boolean; onPaid: () => Pro
       <span>
         Science Exhibition fee: <strong>{paid ? "Paid ✓" : "₹199, not paid yet"}</strong>
       </span>
-      {!paid && (
-        <button type="button" className={styles.btn} onClick={pay} disabled={busy}>
-          {busy ? "Opening…" : "Pay ₹199"}
-        </button>
-      )}
+      {!paid &&
+        (paymentMode === "razorpay" ? (
+          <button type="button" className={styles.btn} onClick={pay} disabled={busy}>
+            {busy ? "Opening…" : "Pay ₹199"}
+          </button>
+        ) : (
+          <Link className={styles.btn} href="/dashboard">
+            Pay ₹199 on your dashboard
+          </Link>
+        ))}
       <FormError message={error} />
     </div>
   );

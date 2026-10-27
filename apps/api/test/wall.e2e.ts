@@ -12,7 +12,7 @@ test('wall: play, tries, re-grade, lost chit, ranks, school board, admin control
   const { cookie: adminCookie } = await admin();
   const n = 1000 + Math.floor(Math.random() * 8000);
   const typed = { number: n, category: 'Mathematics', difficulty: 3, question: 'What is 25 × 40?', answers: ['1000'] };
-  const mcq = { number: n + 1, category: 'Science', difficulty: 8, points: 100, question: 'Which planet is red?', options: ['Venus', 'Mars', 'Jupiter', 'Saturn'], answers: ['Mars'] };
+  const mcq = { number: n + 1, category: 'Science', difficulty: 5, points: 100, question: 'Which planet is red?', options: ['Venus', 'Mars', 'Jupiter', 'Saturn'], answers: ['Mars'] };
 
   // Admin adds a sheet. Bad multiple choice and reused numbers are refused; points default to 10 × difficulty.
   assert.equal((await call('/admin/wall/challenges', [{ ...mcq, answers: ['Pluto'] }], adminCookie)).status, 400);

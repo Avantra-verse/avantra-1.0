@@ -9,9 +9,8 @@ import { RegisterRequest } from "@avantra/shared";
 import { accountsOpen, api, ApiError, REF_KEY, studentSignupOpen, type Role } from "@/lib/api";
 import { AccountShell, Field, FooterLink, FormError, OpensSoon, styles } from "./Account";
 
-export function Registration({ role }: { role: Extract<Role, "STUDENT" | "AMBASSADOR"> }) {
+export function Registration({ role }: { role: Extract<Role, "STUDENT"> }) {
   const router = useRouter();
-  const ambassador = role === "AMBASSADOR";
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", terms: false });
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"details" | "code">("details");
@@ -115,15 +114,15 @@ export function Registration({ role }: { role: Extract<Role, "STUDENT" | "AMBASS
             </button>
           </div>
         </>
-      ) : !ambassador && !studentSignupOpen ? (
+      ) : !studentSignupOpen ? (
         <>
           <OpensSoon what="Student registration" />
           <FooterLink text="Want to bring your friends?" href="/ambassador" link="Become an ambassador" />
         </>
       ) : (
         <>
-          <h1 className={styles.heading}>{ambassador ? "Become an ambassador" : "Join as a student"}</h1>
-          <p className={styles.subtext}>{ambassador ? "Create your account first. You get your code to share next." : "Create your account for AVANTRA 2026."}</p>
+          <h1 className={styles.heading}>Join as a student</h1>
+          <p className={styles.subtext}>Create your account for AVANTRA 2026.</p>
           <form className={styles.form} onSubmit={send} noValidate>
             <Field name="name" label="Full name" autoComplete="name" value={form.name} onChange={set} error={errors.name} />
             <Field name="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={set} error={errors.email} />

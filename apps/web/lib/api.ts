@@ -3,7 +3,7 @@
 // pages show "opens soon" instead of forms that can't work.
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 export const apiReady = API_URL !== "";
-// Student and ambassador log in / registration pages show "Coming soon" for now. Set to apiReady to open them.
+// Student log in / registration pages show "Coming soon" for now. Set to apiReady to open them.
 export const accountsOpen = false;
 // Ambassadors sign up via Google Forms at /ambassador. Set to "open" (with STUDENT_SIGNUP=open on the API) to open student sign-up.
 export const studentSignupOpen = process.env.NEXT_PUBLIC_STUDENT_SIGNUP === "open";
@@ -44,14 +44,21 @@ export async function api<T = unknown>(path: string, body?: unknown, method = bo
   throw new ApiError(res.status, message, fields, data);
 }
 
-export type Role = "STUDENT" | "AMBASSADOR" | "JUDGE" | "VOLUNTEER" | "ADMIN";
+export type Role = "STUDENT" | "JUDGE" | "VOLUNTEER" | "ADMIN";
 export type Me = { id: string; email: string; name: string; role: Role; profileComplete: boolean };
 
-// localStorage key: ambassador code from a share link (/registration?ref=CODE), filled in on the profile step.
+// localStorage key: referral code from a share link (/registration?ref=CODE), filled in on the profile step.
 export const REF_KEY = "avantra.ref";
 
 // null = not logged in
 export const getMe = () => api<Me>("/auth/me").catch((e) => (e instanceof ApiError && e.status === 401 ? null : Promise.reject(e)));
+
+// How students pay the ₹199 exhibition fee: "upi" (default) = the school's QR + UTR, checked by the school in Excel;
+// "razorpay" = Razorpay Checkout (needs the RAZORPAY_* keys on the API). Kept for reuse at other events.
+export const paymentMode = process.env.NEXT_PUBLIC_PAYMENTS === "razorpay" ? "razorpay" : "upi";
+
+// The latest fee payment, from GET /profile (student.payments). Shows "under review" or "failed, try again".
+export type LastPayment = { method: "ONLINE" | "OFFLINE" | "UPI"; status: "CREATED" | "PAID" | "FAILED" | "REFUNDED"; utr: string | null; createdAt: string };
 
 // ₹199 Science Exhibition fee through Razorpay Checkout. Resolves once the API has confirmed the
 // payment; rejects with an ApiError if it fails. Closing the popup just resolves `false`.

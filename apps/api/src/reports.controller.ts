@@ -12,10 +12,10 @@ export class ReportsController {
   @Get('stats')
   async stats() {
     const p = this.prisma;
-    const [students, paid, ambassadors, revenue, events, regs, teams, checkIns, gateToday] = await Promise.all([
+    const [students, paid, referralCodes, revenue, events, regs, teams, checkIns, gateToday] = await Promise.all([
       p.student.count(),
       p.student.count({ where: { feePaidAt: { not: null } } }),
-      p.ambassador.count(),
+      p.student.findMany({ where: { referralCode: { not: null } }, distinct: ['referralCode'], select: { referralCode: true } }),
       p.payment.groupBy({ by: ['method'], where: { status: 'PAID' }, _sum: { amountPaise: true }, _count: true }),
       p.event.findMany({ select: { id: true, name: true, capacity: true }, orderBy: { name: 'asc' } }),
       p.registration.groupBy({ by: ['eventId'], _count: true }),
@@ -30,7 +30,7 @@ export class ReportsController {
     const money = (m: 'ONLINE' | 'OFFLINE') => revenue.find((r) => r.method === m);
     return {
       students: { total: students, paid, unpaid: students - paid },
-      ambassadors,
+      referralCodes: referralCodes.length,
       fees: {
         onlinePaise: money('ONLINE')?._sum.amountPaise ?? 0,
         onlineCount: money('ONLINE')?._count ?? 0,
@@ -52,11 +52,11 @@ export class ReportsController {
   @Get('export/students.csv') @CsvFile('students')
   async studentsCsv() {
     const rows = await this.prisma.student.findMany({
-      include: { user: true, referredBy: { select: { code: true } }, payments: { where: { status: 'PAID' }, take: 1 }, _count: { select: { checkIns: true } } },
+      include: { user: true, payments: { where: { status: 'PAID' }, take: 1 }, _count: { select: { checkIns: true } } },
       orderBy: { avantraId: 'asc' },
     });
     return toCsv(
-      ['avantraId', 'name', 'email', 'phone', 'grade', 'school', 'ambassadorCode', 'guardianPhone', 'guardianEmail', 'feePaidAt', 'paidBy', 'paymentRef', 'checkIns', 'signedUpAt'],
+      ['avantraId', 'name', 'email', 'phone', 'grade', 'school', 'referralCode', 'guardianPhone', 'guardianEmail', 'feePaidAt', 'paidBy', 'paymentRef', 'checkIns', 'signedUpAt'],
       rows.map((s) => ({
         avantraId: s.avantraId,
         name: s.user.name,
@@ -64,12 +64,12 @@ export class ReportsController {
         phone: s.user.phone,
         grade: s.grade,
         school: s.schoolName,
-        ambassadorCode: s.referredBy?.code,
+        referralCode: s.referralCode,
         guardianPhone: s.guardianPhone,
         guardianEmail: s.guardianEmail,
         feePaidAt: s.feePaidAt,
         paidBy: s.payments[0]?.method,
-        paymentRef: s.payments[0]?.razorpayPaymentId ?? s.payments[0]?.note,
+        paymentRef: s.payments[0]?.razorpayPaymentId ?? s.payments[0]?.utr ?? s.payments[0]?.note,
         checkIns: s._count.checkIns,
         signedUpAt: s.user.createdAt,
       })),
@@ -106,7 +106,7 @@ export class ReportsController {
     );
   }
 
-  // Reconciliation with Razorpay settlements and the cash box.
+  // Reconciliation with Razorpay settlements, the school's UPI statement and the cash box.
   @Get('export/payments.csv') @CsvFile('payments')
   async paymentsCsv() {
     const rows = await this.prisma.payment.findMany({ include: { student: { include: { user: true } } }, orderBy: { createdAt: 'asc' } });
@@ -114,7 +114,7 @@ export class ReportsController {
       (await this.prisma.user.findMany({ where: { id: { in: rows.flatMap((r) => (r.recordedById ? [r.recordedById] : [])) } } })).map((u) => [u.id, u.email]),
     );
     return toCsv(
-      ['createdAt', 'avantraId', 'name', 'amountRupees', 'method', 'status', 'razorpayOrderId', 'razorpayPaymentId', 'cashTakenBy', 'note'],
+      ['createdAt', 'avantraId', 'name', 'amountRupees', 'method', 'status', 'razorpayOrderId', 'razorpayPaymentId', 'utr', 'recordedBy', 'note'],
       rows.map((p) => ({
         createdAt: p.createdAt,
         avantraId: p.student.avantraId,
@@ -124,7 +124,8 @@ export class ReportsController {
         status: p.status,
         razorpayOrderId: p.razorpayOrderId,
         razorpayPaymentId: p.razorpayPaymentId,
-        cashTakenBy: p.recordedById ? admins.get(p.recordedById) : undefined,
+        utr: p.utr,
+        recordedBy: p.recordedById ? admins.get(p.recordedById) : undefined, // cash taken, or UPI check imported, by
         note: p.note,
       })),
     );

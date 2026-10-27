@@ -59,7 +59,7 @@ export async function codeFor(email: string): Promise<string> {
 
 const unique = (tag: string) => `e2e-${tag}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`;
 
-export async function signUp(role: 'STUDENT' | 'AMBASSADOR', tag: string) {
+export async function signUp(role: 'STUDENT', tag: string) {
   const email = unique(tag);
   const body = { role, name: `Test ${tag}`, email, password: 'a-good-password' };
   assert.equal((await call('/auth/register', body)).status, 202);

@@ -12,7 +12,6 @@ datasource db {
 
 enum Role {
   STUDENT
-  AMBASSADOR
   JUDGE
   VOLUNTEER
   ADMIN
@@ -34,10 +33,11 @@ enum EventCategory {
 enum PaymentMethod {
   ONLINE // Razorpay
   OFFLINE // cash, recorded by an admin
+  UPI // paid to the school's UPI QR; the student sends the UTR and the school checks it (exported/imported as Excel)
 }
 
 enum PaymentStatus {
-  CREATED
+  CREATED // Razorpay: order made, not paid yet. UPI: UTR sent, waiting for the school to check it
   PAID
   FAILED
   REFUNDED
@@ -58,7 +58,6 @@ model User {
   assignedEvent   Event?    @relation("JudgeEvent", fields: [assignedEventId], references: [id])
   createdAt       DateTime  @default(now())
   student         Student?
-  ambassador      Ambassador? // set when role = AMBASSADOR
   sessions        Session[]
   scans           CheckIn[]
   scores          Score[]
@@ -89,24 +88,11 @@ model EmailCode {
   @@unique([email, purpose])
 }
 
-// A student who brings friends: they share `code`, friends enter it on their profile step.
-model Ambassador {
-  userId     String    @id
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  code       String    @unique // 6 characters, what friends type
-  schoolName String
-  schoolCity String
-  grade      Int
-  referrals  Student[]
-  createdAt  DateTime  @default(now())
-}
-
 model Student {
   userId            String         @id
   user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   schoolName        String // typed by the student
-  referredById      String? // the ambassador whose code they entered
-  referredBy        Ambassador?    @relation(fields: [referredById], references: [userId], onDelete: SetNull)
+  referralCode      String? // ambassador code typed at sign-up; codes are handed out by hand, not linked to accounts
   grade             Int
   section           String?
   guardianEmail     String?
@@ -121,7 +107,7 @@ model Student {
   wallAttempts      WallAttempt[]
   wallSolves        WallSolve[]
 
-  @@index([referredById])
+  @@index([referralCode])
 }
 
 model Event {
@@ -212,12 +198,14 @@ model Payment {
   status            PaymentStatus @default(CREATED)
   razorpayOrderId   String?       @unique // null for OFFLINE
   razorpayPaymentId String?       @unique // unique = idempotent webhook handling
-  recordedById      String? // OFFLINE: the admin who took the cash
+  recordedById      String? // OFFLINE: the admin who took the cash. UPI: the admin who imported the school's answer
   note              String? // OFFLINE: receipt number etc.
+  utr               String? // UPI: the 12-digit transaction number the student typed
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
   @@index([studentId])
+  @@index([utr])
 }
 
 // eventId null = main gate entry. scannedAt can be the scanner's time when an offline scan syncs later.
@@ -255,7 +243,7 @@ model WallChallenge {
   code       String        @unique // 6 characters, printed on the chit
   number     Int           @unique // challenge number, printed on the chit
   category   String
-  difficulty Int // 1–8
+  difficulty Int // 1–5
   points     Int
   question   String
   options    String[] // multiple choice; empty = typed answer

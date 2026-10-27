@@ -7,7 +7,7 @@ import { accountsOpen, api, ApiError, studentSignupOpen, type Me, type Role } fr
 import { AccountShell, Field, FooterLink, FormError, OpensSoon, styles } from "./Account";
 
 // Student log in (/login). Ambassador sign-up is Google Forms at /ambassador.
-export function Login({ role }: { role: Extract<Role, "STUDENT" | "AMBASSADOR"> }) {
+export function Login({ role }: { role: Extract<Role, "STUDENT"> }) {
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});

@@ -63,8 +63,8 @@ async function drawChit(page: PDFPage, x: number, y: number, c: Chit, regular: P
   const infoTop = top - PAD - 22 - 10;
   text(`#${c.number}`, x + PAD, infoTop - 22, 24, bold);
   text(c.category.toUpperCase(), x + PAD, infoTop - 38, 9, bold, GREY);
-  text(`Level ${c.difficulty}/8`, x + PAD, infoTop - 54, 9);
-  for (let d = 0; d < 8; d++) {
+  text(`Level ${c.difficulty}/5`, x + PAD, infoTop - 54, 9);
+  for (let d = 0; d < 5; d++) {
     const filled = d < c.difficulty;
     page.drawCircle({ x: x + PAD + 4 + d * 11, y: infoTop - 66, size: 4, color: filled ? ACCENT : undefined, borderColor: ACCENT, borderWidth: 0.8 });
   }
