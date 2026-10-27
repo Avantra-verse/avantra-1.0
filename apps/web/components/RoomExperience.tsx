@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { siteConfig } from "@/content/site";
 import { ContactRequest } from "@avantra/shared";
 import { api, ApiError, apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
 import styles from "./RoomExperience.module.css";
@@ -341,7 +342,8 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
             </h2>
             <p>Registration opens with the line-up. Ask anything before then.</p>
             <p>
-              Or email <a href="mailto:contact@arithi.in">contact@arithi.in</a>
+              Or email <a href="mailto:contact@arithi.in">contact@arithi.in</a>, or message us on Instagram{" "}
+              <a href={siteConfig.instagram} target="_blank" rel="noopener noreferrer">@avantra.verse</a>
             </p>
             <button className={styles.bk} id="bk" onClick={() => go(0)}>
               Back to About

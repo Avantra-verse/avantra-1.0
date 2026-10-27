@@ -3,6 +3,7 @@
 // AVANTRA home: Meena's multiverse page (was public/multiverse/index.html), same markup, styles and motion.
 import { useLayoutEffect } from "react";
 import Link from "next/link";
+import { siteConfig } from "@/content/site";
 import { startScene } from "./scene";
 import "./multiverse.css";
 import { MobileMenu, REGISTER_PILL } from "@/components/Nav";
@@ -234,6 +235,7 @@ export default function Multiverse() {
             <Link href="/contact">Contact</Link>
             {apiReady && <Link href={LOGIN_HREF}>Log in</Link>}
             <Link href={REGISTER_HREF}>Registration</Link>
+            <a href={siteConfig.instagram} target="_blank" rel="noopener noreferrer">Instagram</a>
           </nav>
           <span>AVANTRA 2026 · Hosted by SSRVM IEMS · Event partner ARITHI</span>
         </div>

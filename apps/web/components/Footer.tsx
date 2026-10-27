@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { REGISTER_HREF } from "@/lib/api";
+import { siteConfig } from "@/content/site";
 
 const LINKS = [
   { href: "/about", label: "About" },
@@ -24,6 +25,14 @@ export default function Footer() {
           </Link>
           <p className="max-w-sm text-secondary">A Multiverse-themed inter-school science &amp; innovation festival</p>
           <p className="font-[family-name:var(--font-display)] text-sky">19–20 December 2026</p>
+          <a
+            href={siteConfig.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center font-semibold text-secondary underline-offset-4 transition-colors hover:text-sky hover:underline"
+          >
+            Instagram @avantra.verse
+          </a>
         </div>
 
         <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-6 font-semibold text-secondary">
