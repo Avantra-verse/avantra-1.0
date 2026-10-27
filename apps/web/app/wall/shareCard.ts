@@ -1,6 +1,7 @@
 // Instagram Story / WhatsApp Status card for a Wall score, drawn in the browser (spec: docs/api.md, "Share card").
 // 1080×1920. Everything sits inside y 250–1670 because Instagram covers the top and bottom 250 px.
 import QRCode from "qrcode";
+import { shareOrDownload } from "@/lib/share";
 import type { WallMe } from "./page";
 
 const W = 1080;
@@ -125,21 +126,8 @@ export async function drawScoreCard(name: string, s: Omit<WallMe, "open">) {
   return canvas;
 }
 
-// Phones: the share sheet (Instagram, WhatsApp…). Elsewhere, or if sharing isn't allowed: download the PNG.
 export async function shareScoreCard(name: string, s: Omit<WallMe, "open">) {
   const canvas = await drawScoreCard(name, s);
   const blob = await new Promise<Blob>((ok, fail) => canvas.toBlob((b) => (b ? ok(b) : fail(new Error("toBlob"))), "image/png"));
-  const file = new File([blob], "avantra-wall-score.png", { type: "image/png" });
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      return await navigator.share({ files: [file], text: `My ARITHI Engagement Wall score at AVANTRA 2026. Join: ${window.location.origin}/wall` });
-    } catch (e) {
-      if ((e as Error).name === "AbortError") return; // they closed the share sheet
-    }
-  }
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = file.name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+  await shareOrDownload(blob, "avantra-wall-score.png", `My ARITHI Engagement Wall score at AVANTRA 2026. Join: ${window.location.origin}/wall`);
 }
