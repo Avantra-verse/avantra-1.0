@@ -7,6 +7,7 @@ import { REGISTER_HREF } from "@/lib/api";
 const LINKS = [
   { href: "/about", label: "About" },
   { href: "/venue", label: "Venue" },
+  { href: "/ambassador", label: "Ambassadors" },
   { href: "/contact", label: "Contact" },
   { href: REGISTER_HREF, label: "Registration" },
 ];

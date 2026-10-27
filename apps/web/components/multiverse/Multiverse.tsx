@@ -48,6 +48,7 @@ export default function Multiverse() {
         <nav aria-label="Main">
           <Link href="/about" data-hover>About</Link>
           <Link href="/venue" data-hover>Venue</Link>
+          <Link href="/ambassador" data-hover>Ambassadors</Link>
           <Link href="/contact" data-hover>Contact</Link>
           {apiReady && <Link href={LOGIN_HREF} data-hover>Log in</Link>}
           <Link className={REGISTER_PILL} href={REGISTER_HREF} data-hover>Registration</Link>
@@ -229,6 +230,7 @@ export default function Multiverse() {
           <nav aria-label="Footer">
             <Link href="/about">About</Link>
             <Link href="/venue">Venue</Link>
+            <Link href="/ambassador">Ambassadors</Link>
             <Link href="/contact">Contact</Link>
             {apiReady && <Link href={LOGIN_HREF}>Log in</Link>}
             <Link href={REGISTER_HREF}>Registration</Link>

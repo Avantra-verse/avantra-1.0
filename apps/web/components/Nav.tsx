@@ -11,6 +11,7 @@ import { apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
 const LINKS = [
   { href: "/about", label: "About" },
   { href: "/venue", label: "Venue" },
+  { href: "/ambassador", label: "Ambassadors" },
   { href: "/contact", label: "Contact" },
   { href: LOGIN_HREF, label: "Log in" },
   { href: REGISTER_HREF, label: "Registration" },
