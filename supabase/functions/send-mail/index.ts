@@ -14,6 +14,38 @@ const smtp = user
 
 type Mail = { id: number; to: string; subject: string; text: string; replyTo: string | null };
 
+// The Ember look of supabase/templates/*.html around the queued plain text (kept as the text part).
+// Text is escaped: the contact form puts visitors' words in it.
+const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const FONT = "Mukta,'Segoe UI',Helvetica,Arial,sans-serif";
+function html(m: Mail) {
+  const [, label, title] = m.subject.match(/^(AVANTRA[^:]*):\s*(.+)$/) ?? [null, "AVANTRA 2026", m.subject];
+  const body = m.text.split(/\n{2,}/).map((p) =>
+    `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#b9ab9a;">${esc(p).replace(/\n/g, "<br>")}</p>`).join("");
+  // Students' emails (AVANTRA 2026: …) point to their dashboard; the contact form goes to admins.
+  const button = label === "AVANTRA 2026"
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 0;"><tr><td style="background:#b3121e;border-radius:10px;">
+        <a href="https://avantra.arithi.in/dashboard" style="display:inline-block;padding:12px 22px;font-family:${FONT};font-size:16px;font-weight:700;color:#f4ead9;text-decoration:none;">Open your dashboard</a></td></tr></table>`
+    : "";
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark"><title>${esc(m.subject)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;700&display=swap" rel="stylesheet"></head>
+<body style="margin:0;padding:0;background:#120e0c;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#120e0c;"><tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+<tr><td align="center" style="padding:0 0 24px;"><img src="https://avantra.arithi.in/brand/avantra-logo-500w.png" width="180" alt="AVANTRA 2026" style="display:block;width:180px;max-width:60%;height:auto;border:0;font-family:${FONT};font-size:30px;font-weight:700;letter-spacing:3px;color:#ff5560;"></td></tr>
+<tr><td style="background:#1b1613;border:2px solid #b3121e;border-radius:16px;padding:32px 28px;font-family:${FONT};color:#f4ead9;">
+<p style="margin:0 0 8px;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#9fd4ff;font-weight:700;">${esc(label)}</p>
+<h1 style="margin:0 0 16px;font-size:24px;line-height:1.3;font-weight:700;color:#f4ead9;">${esc(title.charAt(0).toUpperCase() + title.slice(1))}</h1>
+${body}${button}</td></tr>
+<tr><td align="center" style="padding:24px 8px 0;font-family:${FONT};font-size:13px;line-height:1.7;color:#b9ab9a;">
+<b style="color:#f4ead9;">AVANTRA 2026</b> &middot; SSRVM IEMS, Sector 20<br>
+<a href="https://avantra.arithi.in" style="color:#9fd4ff;text-decoration:none;">avantra.arithi.in</a> &middot;
+<a href="https://instagram.com/avantra.verse" style="color:#9fd4ff;text-decoration:none;">@avantra.verse</a> &middot;
+<a href="mailto:contact@arithi.in" style="color:#9fd4ff;text-decoration:none;">contact@arithi.in</a></td></tr>
+</table></td></tr></table></body></html>`;
+}
+
 Deno.serve(async () => {
   if (!smtp) {
     console.error("SMTP_USER is not set: emails stay queued");
@@ -29,7 +61,7 @@ Deno.serve(async () => {
   let sent = 0;
   for (const m of due) {
     try {
-      await smtp.sendMail({ from: Deno.env.get("MAIL_FROM") ?? user, to: m.to, replyTo: m.replyTo ?? undefined, subject: m.subject, text: m.text });
+      await smtp.sendMail({ from: Deno.env.get("MAIL_FROM") ?? user, to: m.to, replyTo: m.replyTo ?? undefined, subject: m.subject, text: m.text, html: html(m) });
       await sql`UPDATE private.mail_outbox SET "sentAt" = now(), "lastError" = NULL WHERE "id" = ${m.id}`;
       sent++;
     } catch (e) {

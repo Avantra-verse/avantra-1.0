@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PasswordLoginRequest } from "@avantra/shared";
 import { api, ApiError, apiReady } from "@/lib/api";
-import { AccountShell, Field, FormError, OpensSoon, styles } from "@/components/account/Account";
+import { AccountShell, Field, FooterLink, FormError, OpensSoon, styles } from "@/components/account/Account";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -52,6 +52,7 @@ export default function AdminLoginPage() {
               {busy ? "Logging in…" : "Log in"}
             </button>
           </form>
+          <FooterLink text="Forgot your password?" href="/forgot-password" link="Reset it" />
         </>
       )}
     </AccountShell>
