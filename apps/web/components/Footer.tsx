@@ -8,6 +8,7 @@ import { siteConfig } from "@/content/site";
 const LINKS = [
   { href: "/about", label: "About" },
   { href: "/venue", label: "Venue" },
+  { href: "/organizers", label: "Committee" },
   { href: "/ambassador", label: "Ambassadors" },
   { href: "/contact", label: "Contact" },
   { href: REGISTER_HREF, label: "Registration" },
