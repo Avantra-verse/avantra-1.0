@@ -46,7 +46,7 @@ brand/                logos and brand assets
 | `/ambassador` | Google Form for school ambassadors; `/card/[code]` and `/ambassador-card/[code].png` = their share card |
 | `/wall`, `/wall/leaderboard` | Engagement Wall: type a chit code, answer, climb the boards |
 | `/staff`, `/staff/login` | phone scanner for volunteers (check-in) and judges (scoring); queues scans offline |
-| `/admin`, `/admin/login` | admin dashboard (unlinked; needs an emailed code) |
+| `/admin`, `/admin/login` | admin dashboard (unlinked; password only) |
 | `/verify/[code]` | public certificate check |
 | `_sponsors/` | hidden; rename to `sponsors/` to re-enable |
 

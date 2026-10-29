@@ -3,7 +3,7 @@
 // Public check for a certificate. The URL is printed on every certificate (and in its QR).
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { api, API_URL, ApiError, apiReady } from "@/lib/api";
+import { api, ApiError, apiReady } from "@/lib/api";
 import { AccountShell, FormError, OpensSoon, styles } from "@/components/account/Account";
 
 type Certificate = { code: string; name: string; school: string | null; event: string; rank: number | null; issuedAt: string };
@@ -44,7 +44,7 @@ export default function VerifyPage() {
           <p className={styles.subtext}>
             Certificate ID {cert.code} · issued {new Date(cert.issuedAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
           </p>
-          <a className={styles.link} href={`${API_URL}/certificates/${cert.code}/pdf`}>
+          <a className={styles.link} href={`/certificates/${cert.code}/pdf`}>
             Open the certificate (PDF)
           </a>
         </div>

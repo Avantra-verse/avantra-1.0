@@ -2,7 +2,7 @@
 
 // Small helpers shared by the admin sections.
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import { api, API_URL, ApiError } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import t from "../staff/tools.module.css";
 
 // GET a path, with a reload after changes.
@@ -46,8 +46,8 @@ export function useAction() {
   return { busy, error, note, run, setError };
 }
 
-// Downloads: a plain link works because the session cookie goes with top-level GETs to the API.
-export const fileUrl = (path: string) => API_URL + path;
+// Downloads: route handlers on this site (app/admin/**/route.ts) read the session cookie a plain link sends.
+export const fileUrl = (path: string) => path;
 
 export const rupees = (paise: number) => `₹${(paise / 100).toLocaleString("en-IN")}`;
 

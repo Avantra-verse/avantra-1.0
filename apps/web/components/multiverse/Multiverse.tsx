@@ -92,6 +92,14 @@ export default function Multiverse() {
           </div>
         </section>
 
+        <section className="bless" aria-label="Blessing">
+          <img src="/gurudev-sri-sri-ravi-shankar.webp" alt="Gurudev Sri Sri Ravi Shankar" width={640} height={640} loading="lazy" />
+          <p>
+            Under the blessing of{" "}
+            <b>Gurudev Sri Sri Ravi Shankar</b>
+          </p>
+        </section>
+
         <div className="marq" aria-hidden="true">
           <div>
             <span>Bring a project</span>

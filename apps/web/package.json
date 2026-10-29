@@ -11,12 +11,17 @@
   },
   "dependencies": {
     "@avantra/shared": "workspace:*",
+    "@pdf-lib/fontkit": "1.1.1",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "exceljs": "4.4.0",
     "framer-motion": "^13.2.0",
     "jsqr": "1.4.0",
     "lenis": "^1.3.26",
     "next": "16.3.4",
+    "pdf-lib": "1.17.1",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8"

@@ -86,7 +86,7 @@ export function SelectField({ name, label, error, children, ...select }: React.S
   );
 }
 
-// Shown on account pages while the site isn't connected to the API (NEXT_PUBLIC_API_URL unset).
+// Shown on account pages while the site isn't connected to the API (NEXT_PUBLIC_SUPABASE_* unset).
 export function OpensSoon({ what }: { what: string }) {
   return (
     <div className={styles.successBox} role="status">
