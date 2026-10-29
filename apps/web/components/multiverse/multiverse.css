@@ -90,6 +90,11 @@
 .mv .btn:hover{transform:translateY(-3px)}
 .mv .btn.solid:hover{background:var(--blue);border-color:var(--blue);color:var(--bg)}
 .mv .btn:not(.solid):hover{background:var(--ink);color:var(--bg)}
+.mv /* ---------- blessing ---------- */
+.bless{position:relative;z-index:2;background:var(--bg);display:flex;align-items:center;justify-content:center;gap:clamp(1.2rem,4vw,3rem);padding:clamp(3rem,8vw,6rem) clamp(1rem,5vw,5rem);flex-wrap:wrap;text-align:left}
+.mv .bless img{width:clamp(140px,22vw,220px);height:auto;aspect-ratio:1;border-radius:50%;object-fit:cover;border:2px solid var(--line);box-shadow:0 0 48px rgba(159,212,255,.18)}
+.mv .bless p{margin:0;font-family:var(--serif);font-style:italic;color:var(--mute);font-size:clamp(1.3rem,2.2vw,1.8rem);line-height:1.2}
+.mv .bless b{display:block;margin-top:.3rem;font-family:var(--disp);font-style:normal;font-weight:400;color:var(--ink);font-size:clamp(1.9rem,4.4vw,3.6rem);line-height:1.05}
 .mv /* ---------- marquee ---------- */
 .marq{overflow:hidden;border-block:1px solid var(--line);padding:1.1rem 0;white-space:nowrap;background:var(--bg);position:relative;z-index:2}
 .mv .marq div{display:inline-flex;gap:3.2rem;animation:mv-slide 44s linear infinite;font-family:var(--disp);font-size:clamp(2rem,5.4vw,4.6rem);line-height:1.1}
