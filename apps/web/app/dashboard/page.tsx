@@ -81,6 +81,7 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
 
   const days = s._count.checkIns;
   const w = wall.data;
+  const live = !!w?.open; // the admin's "Open the Wall" is the event-day switch; until then the Wall and check-ins stay hidden
   const reviewing = s.payments[0]?.method === "UPI" && s.payments[0].status === "CREATED";
 
   return (
@@ -106,13 +107,17 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
             <section className={t.panel} aria-labelledby="glance">
               <h2 id="glance">At a glance</h2>
               <div className={t.tiles}>
-                <Tile value={s.feePaidAt ? "Paid" : reviewing ? "Checking" : "₹199"} label={s.feePaidAt ? "exhibition fee" : reviewing ? "exhibition fee, payment under review" : "exhibition fee, not paid yet"} />
-                <Tile value={days === 0 ? "Not yet" : days === 1 ? "1 day" : `${days} days`} label="checked in at the fest" />
-                <Tile value={w ? w.points : "…"} label={w ? `Wall points · ${w.solved} solved` : "Wall points"} />
-                <Tile value={w?.rank ? `#${w.rank}` : "–"} label={w?.rank ? `Wall rank of ${w.players}` : "Wall rank, after your first answer"} />
+                <Tile value={s.feePaidAt ? "Paid" : reviewing ? "Checking" : "₹299"} label={s.feePaidAt ? "exhibition fee" : reviewing ? "exhibition fee, payment under review" : "exhibition fee, not paid yet"} />
+                {live && (
+                  <>
+                    <Tile value={days === 0 ? "Not yet" : days === 1 ? "1 day" : `${days} days`} label="checked in at the fest" />
+                    <Tile value={w.points} label={`Wall points · ${w.solved} solved`} />
+                    <Tile value={w.rank ? `#${w.rank}` : "–"} label={w.rank ? `Wall rank of ${w.players}` : "Wall rank, after your first answer"} />
+                  </>
+                )}
               </div>
               <p className={t.mute} style={{ marginBottom: s.feePaidAt ? 0 : undefined }}>
-                Entry and all other events are free. The ₹199 fee is only for the Science Exhibition.
+                Entry and all other events are free. The ₹299 fee is only for the Science Exhibition.
               </p>
               {!s.feePaidAt && <UpiFee last={s.payments[0]} onSent={onPaid} />}
             </section>
@@ -142,14 +147,17 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
         {tab === "wall" && (
           <section className={t.panel} aria-labelledby="wall">
             <h2 id="wall">Engagement Wall</h2>
-            <p className={t.mute}>
-              Find challenge chits around the venue, scan one and answer to win points for you and your school.
-              {w && !w.open && " The Wall opens on event day."}
-            </p>
-            <div className={t.inline}>
-              <a className={t.btn} href="/wall" style={{ textDecoration: "none" }}>Play the Wall</a>
-              <a className={t.ghost} href="/wall/leaderboard" style={{ textDecoration: "none" }}>Leaderboard</a>
-            </div>
+            {live ? (
+              <>
+                <p className={t.mute}>Find challenge chits around the venue, scan one and answer to win points for you and your school.</p>
+                <div className={t.inline}>
+                  <a className={t.btn} href="/wall" style={{ textDecoration: "none" }}>Play the Wall</a>
+                  <a className={t.ghost} href="/wall/leaderboard" style={{ textDecoration: "none" }}>Leaderboard</a>
+                </div>
+              </>
+            ) : (
+              <p className={t.mute} style={{ marginBottom: 0 }}>Revealed on event day.</p>
+            )}
           </section>
         )}
       </div>

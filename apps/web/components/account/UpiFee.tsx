@@ -1,6 +1,6 @@
 "use client";
 
-// The ₹199 exhibition fee by UPI: pay the school's QR in any UPI app, send the UTR, and wait while the school
+// The ₹299 exhibition fee by UPI: pay the school's QR in any UPI app, send the UTR, and wait while the school
 // checks it against its bank statement (admin exports it to Excel and imports the school's answer).
 import React, { useState } from "react";
 import { UpiPaymentRequest } from "@avantra/shared";
@@ -63,7 +63,7 @@ export function UpiFee({ last, onSent }: { last?: LastPayment; onSent: () => Pro
         <img src={upi.qrSrc} alt={`UPI QR code to pay ${upi.payee}`} width={200} height={200} style={{ borderRadius: 12, background: "#fff", maxWidth: "100%", height: "auto" }} />
         <div>
           <p style={{ margin: "0 0 4px" }}>
-            Pay <strong>₹199</strong> to {upi.payee}
+            Pay <strong>₹299</strong> to {upi.payee}
           </p>
           <p className={t.mono} style={{ margin: "0 0 12px", wordBreak: "break-all" }}>
             {upi.id}{" "}
@@ -73,7 +73,7 @@ export function UpiFee({ last, onSent }: { last?: LastPayment; onSent: () => Pro
           </p>
           <ol className={t.mute} style={{ margin: 0, paddingLeft: 20 }}>
             <li>Scan the QR with any UPI app, or pay to the UPI ID.</li>
-            <li>Pay exactly ₹199.</li>
+            <li>Pay exactly ₹299.</li>
             <li>Open the payment details in your app and copy the 12-digit UTR (sometimes called UPI Ref No.).</li>
           </ol>
         </div>

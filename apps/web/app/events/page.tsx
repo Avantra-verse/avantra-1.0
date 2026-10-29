@@ -1,6 +1,6 @@
 "use client";
 
-// Every event, open to anyone. Students with a profile register here, pay the ₹199 exhibition
+// Every event, open to anyone. Students with a profile register here, pay the ₹299 exhibition
 // fee, and create or join teams: by 6-letter invite code, by scanning the team's QR, or by asking a team
 // that has room and waiting for its leader. Solo events need no team.
 import React, { useCallback, useEffect, useState } from "react";
@@ -86,7 +86,7 @@ export default function EventsPage() {
         <div className={styles.page}>
           <div className={account.card}>
             <h1 className={account.heading}>Events</h1>
-            <p className={account.subtext}>Entry and every event are free. Only the Science Exhibition has a ₹199 fee, paid once.</p>
+            <p className={account.subtext}>Entry and every event are free. Only the Science Exhibition has a ₹299 fee, paid once.</p>
             {!apiReady ? (
               <OpensSoon what="Event registration" />
             ) : failed ? (
@@ -146,11 +146,11 @@ function FeeBox({ paid }: { paid: boolean }) {
   return (
     <div className={styles.fee}>
       <span>
-        Science Exhibition fee: <strong>{paid ? "Paid ✓" : "₹199, not paid yet"}</strong>
+        Science Exhibition fee: <strong>{paid ? "Paid ✓" : "₹299, not paid yet"}</strong>
       </span>
       {!paid && (
         <Link className={styles.btn} href="/dashboard">
-          Pay ₹199 on your dashboard
+          Pay ₹299 on your dashboard
         </Link>
       )}
     </div>
@@ -209,7 +209,7 @@ function EventCard({ event: e, reg, student, feePaid, onChange }: { event: Event
               )}
             </>
           ) : !e.registrationOpen || e.spotsLeft === 0 ? null : e.category === "EXHIBITION" && !feePaid ? (
-            <span className={styles.meta}>Pay the ₹199 fee above, then register here.</span>
+            <span className={styles.meta}>Pay the ₹299 fee above, then register here.</span>
           ) : (
             <button type="button" className={styles.btn} onClick={() => run(() => api("/registrations", { eventId: e.id }))} disabled={busy}>
               {busy ? "Registering…" : "Register"}

@@ -105,7 +105,7 @@ New migrations: add a file to `supabase/migrations/` and apply it (`supabase db 
   profile (`Student.referralCode`).
 - The fee is paid by UPI: the student submits the UTR, admin exports an .xlsx, the school marks Paid / Not paid,
   admin uploads it back.
-- Still to do: the school's UPI ID in `apps/web/content/site.ts` and QR at `apps/web/public/upi-qr.png`,
+- Still to do:
   GitHub secrets for `backup.yml`, delete the e2e test accounts, event-week dry run.
 
 ## Gotchas

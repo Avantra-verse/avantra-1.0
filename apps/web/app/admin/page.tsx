@@ -216,7 +216,7 @@ function MarkPaid() {
     if (!id.trim()) return act.setError("Type the AVANTRA ID.");
     const ok = await act.run(
       () => api<{ avantraId: string; name: string }>(`/admin/students/${encodeURIComponent(id.trim())}/mark-paid`, { note: note.trim() || undefined }),
-      (r) => `${r.name} (${r.avantraId}): ₹199 cash recorded. A receipt email is on its way.`,
+      (r) => `${r.name} (${r.avantraId}): ₹299 cash recorded. A receipt email is on its way.`,
     );
     if (ok) {
       setId("");
@@ -230,7 +230,7 @@ function MarkPaid() {
       <form className={t.inline} onSubmit={submit} noValidate>
         <Field name="payId" label="AVANTRA ID" placeholder="AV26-K7M2Q" autoComplete="off" value={id} onChange={(e) => setId(e.target.value)} />
         <Field name="payNote" label="Receipt no. (optional)" autoComplete="off" value={note} onChange={(e) => setNote(e.target.value)} />
-        <button type="submit" className={t.btn} disabled={act.busy} style={{ marginBottom: 4 }}>Mark ₹199 paid</button>
+        <button type="submit" className={t.btn} disabled={act.busy} style={{ marginBottom: 4 }}>Mark ₹299 paid</button>
       </form>
       <FormError message={act.error} />
       {act.note && <p role="status">{act.note}</p>}
@@ -284,7 +284,7 @@ function WalkIn() {
   return (
     <section className={t.panel} aria-labelledby="walkin">
       <h2 id="walkin">Walk-in (new student, pays cash)</h2>
-      <p className={t.mute}>Creates the account, profile and ₹199 payment in one go. They set a password later with &ldquo;Forgot password&rdquo;.</p>
+      <p className={t.mute}>Creates the account, profile and ₹299 payment in one go. They set a password later with &ldquo;Forgot password&rdquo;.</p>
       {badge && (
         <div className={`${t.result} ${t.ok}`} role="status" style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "center", marginBottom: 18 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -320,7 +320,7 @@ function WalkIn() {
         {errors.guardianConsent && <span className={account.errorText}>Needed before registering.</span>}
         <FormError message={act.error} />
         <button type="submit" className={t.btn} disabled={act.busy} style={{ marginTop: 12 }}>
-          {act.busy ? "Registering…" : "Register and record ₹199 cash"}
+          {act.busy ? "Registering…" : "Register and record ₹299 cash"}
         </button>
       </form>
     </section>

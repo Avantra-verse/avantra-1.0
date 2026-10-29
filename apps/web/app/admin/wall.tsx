@@ -43,6 +43,10 @@ export function Wall() {
             </span>
           )}
         </p>
+        <p className={t.mute}>
+          This is also the event-day switch: while the Wall is closed, students don&apos;t see the Wall, their check-ins, or event
+          descriptions and judging criteria.
+        </p>
         <div className={t.inline}>
           <button type="button" className={t.btn} disabled={act.busy} onClick={() => state({ open: !w.open }, w.open ? "Wall closed." : "Wall open.")}>
             {w.open ? "Close the Wall" : "Open the Wall"}

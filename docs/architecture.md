@@ -29,7 +29,7 @@ Planned API modules (add each as a folder in `apps/api/src/` when built):
 | API | NestJS 12 + Prisma 6 | typed, modular, fits auth + jobs + webhooks |
 | DB | Supabase Postgres (free), **Singapore** | same region as API; use pooler URL + `directUrl` for migrations |
 | Queue / cache | Redis + BullMQ | email queue (retries 5×). Rate limits and the Wall board cache are in API memory |
-| Payments | Razorpay — **school's own account** | brochure: ₹199 goes directly to SSRVM IEMS |
+| Payments | Razorpay — **school's own account** | brochure: ₹299 goes directly to SSRVM IEMS |
 | Email | Google Workspace `noreply@arithi.in` via SMTP (`nodemailer`) | 2,000/day; provider swap = `.env` change only (Brevo / SES as fallback) |
 | Files | Cloudflare R2 (free) | certificate PDFs, DB backups |
 | Auth libs | `google-auth-library`, Node `crypto.argon2` (argon2id, 19 MiB, 2 passes) | OWASP first choice, built into Node ≥24.7, no native build |
@@ -64,7 +64,7 @@ Domains: **`avantra.arithi.in`** (web) and **`api.avantra.arithi.in`** (api). Au
 
 1. **School sign-up** → School `PENDING` → ARITHI admin approves → appears in student dropdown.
 2. **Student sign-up** → email OTP → picks school → gets `avantraId` (AV26-00123) + random `qrToken`.
-3. **Science Exhibition fee (₹199, once per student; everything else is free)** → API creates Razorpay order → Checkout → client callback (signature verified, optimistic) → **webhook `payment.captured` is source of truth** → Payment `PAID`, `Student.feePaidAt` set. Unique `razorpayPaymentId` makes webhook retries harmless. Unpaid = can't register for the exhibition; entry, other events and the Engagement Wall are free.
+3. **Science Exhibition fee (₹299, once per student; everything else is free)** → API creates Razorpay order → Checkout → client callback (signature verified, optimistic) → **webhook `payment.captured` is source of truth** → Payment `PAID`, `Student.feePaidAt` set. Unique `razorpayPaymentId` makes webhook retries harmless. Unpaid = can't register for the exhibition; entry, other events and the Engagement Wall are free.
 4. **Event registration** (free, paid students only) → **teams** of 3 form per event (required for the exhibition, optional elsewhere) via 6-char invite code, its QR, or a join request the leader accepts; solo events get a team of one.
 5. **Check-in** → QR encodes only the opaque `qrToken` (no personal data) → volunteer scans in `/staff` → API records CheckIn.
 6. **Scoring** → judge scans student QR in `/staff` → opens that student's registration in the judge's event → scores per criterion → leaderboard computed by query.
@@ -141,11 +141,11 @@ A real event day is well under the first row. If more headroom is wanted, give t
 | Vercel, Render, Supabase, R2, Sentry, UptimeRobot | ₹0 |
 | **Total** | **~₹1,050–1,950** |
 
-Optional: Supabase Pro ~₹2,200/mo. Razorpay fee ~2% + GST ≈ ₹4.70 per ₹199 payment, deducted from the school's settlement — agree with SSRVM who bears it.
+Optional: Supabase Pro ~₹2,200/mo. Razorpay fee ~2% + GST ≈ ₹7 per ₹299 payment, deducted from the school's settlement — agree with SSRVM who bears it.
 
 ## Open questions
 
 1. School's Razorpay account + KYC — start now, KYC can take days.
-2. ~~Are ARITHI events paid?~~ Resolved: only the Science Exhibition is paid (₹199 once); all else free.
+2. ~~Are ARITHI events paid?~~ Resolved: only the Science Exhibition is paid (₹299 once); all else free.
 3. Do visitors need a free entry pass / QR, or only participants?
 4. Who bears the Razorpay fee: school, or a convenience fee to students?
