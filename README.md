@@ -3,36 +3,34 @@
 Website, registration, payments, QR check-in, judging, the Engagement Wall and certificates for AVANTRA 2026,
 a two-day school science fest (19–20 Dec 2026, SSRVM IEMS Sec-20). Built and run by ARITHI.
 
-Live: web https://avantra.arithi.in · API https://api.avantra.arithi.in (`/health`)
+Runs on two services only: **Vercel** (the Next.js site) and **Supabase** (Postgres, Auth, Edge Functions).
 
 ## Docs
 
 | File | Read it for |
 |---|---|
-| [docs/architecture.md](docs/architecture.md) | the original plan: stack choices, auth rules, core flows, event-day checklist, load test. Partly out of date: see [Current state](#current-state) |
-| [docs/api.md](docs/api.md) | every endpoint, its body and responses, for frontend work |
+| [supabase/README.md](supabase/README.md) | one-time project setup: migrations, mail function, secrets, checking email |
+| [supabase/migrations/](supabase/migrations) | the data model, RLS, and every write as a database function (source of truth) |
 | [apps/web/DESIGN.md](apps/web/DESIGN.md) | the "Ember" design system (colours, type, components) |
-| [apps/api/prisma/schema.prisma](apps/api/prisma/schema.prisma) | the data model (source of truth) |
-| [apps/api/.env.example](apps/api/.env.example) | every API env var, with comments |
+| [docs/architecture.md](docs/architecture.md) | the original plan and event-day checklist. Written for the old NestJS API: flows still hold, the stack doesn't |
 
 ## Repo layout
 
-pnpm monorepo (`pnpm@12.8.1`). The API is the only thing that touches the database.
+pnpm monorepo (`pnpm@12.8.1`).
 
 ```
-apps/
-  web/                Next.js 16 (Tailwind v4, framer-motion), deployed on Vercel
-    app/              routes (see below)
-    components/       site sections; account/ = login, registration, UPI fee; multiverse/ = home scroll animation
-    content/site.ts   event copy, dates, UPI details, gallery
-    lib/              api.ts (API_URL, feature flags), countdown, share
-  api/                NestJS 12 + Prisma 6 + BullMQ (Redis), deployed on Render
-    src/              one controller per area (below); auth/ = sessions, passwords, guards
-    prisma/           schema.prisma + migrations/ (0001–0017)
-    scripts/          create-admin, seed-events
-    test/             end-to-end tests (*.e2e.ts)
-packages/shared/      zod schemas + enums used by web and API: forms validate with the server's rules
-infra/                docker-compose for local Postgres + Redis
+apps/web/             Next.js 16 (Tailwind v4, framer-motion), deployed on Vercel
+  app/                routes (see below); app/admin/**/route.ts = admin downloads/uploads, staff and walk-in accounts
+  components/         site sections; account/ = login, registration, UPI fee; multiverse/ = home scroll animation
+  content/site.ts     event copy, dates, UPI details, gallery
+  lib/api.ts          every data call: Supabase Auth, reads under RLS, writes through database functions
+  lib/server/         server-only helpers for the admin route handlers (uses SUPABASE_SECRET_KEY)
+  scripts/            access.e2e.mjs (attacker checks), flows.e2e.mjs (every role end to end)
+supabase/
+  migrations/         schema, RLS, SECURITY DEFINER functions that check the caller's role
+  functions/send-mail emails queued in private.mail_outbox, sent over SMTP 465, retried by pg_cron
+  templates/          Auth email templates (sign-up and reset codes)
+packages/shared/      zod schemas the web forms validate with (the database functions enforce the same rules)
 brand/                logos and brand assets
 .github/workflows/    backup.yml: nightly pg_dump to Cloudflare R2
 ```
@@ -47,46 +45,27 @@ brand/                logos and brand assets
 | `/wall`, `/wall/leaderboard` | Engagement Wall: type a chit code, answer, climb the boards |
 | `/staff`, `/staff/login` | phone scanner for volunteers (check-in) and judges (scoring); queues scans offline |
 | `/admin`, `/admin/login` | admin dashboard (unlinked; password only) |
-| `/verify/[code]` | public certificate check |
+| `/verify/[code]`, `/certificates/[code]/pdf` | public certificate check and PDF |
 | `_sponsors/` | hidden; rename to `sponsors/` to re-enable |
-
-### API areas (`apps/api/src`)
-
-| File | Handles |
-|---|---|
-| `auth/` | sign-up with email code, login, Google sign-in, sessions, password reset, role guards |
-| `profile`, `events`, `registrations`, `teams` controllers | student profile, event list, registration, teams of 3 (invite code, QR, join requests) |
-| `upi-sheet.ts`, `razorpay.ts` | the ₹199 exhibition fee: UPI UTR checked by the school in Excel (default) or Razorpay |
-| `staff.controller.ts` | QR check-in and judge scoring |
-| `wall.controller.ts`, `wall-sheet.ts`, `chits.ts` | Engagement Wall challenges, attempts, leaderboards, chit printing |
-| `certificates.controller.ts`, `certificate.ts` | certificate PDFs and verification |
-| `admin.controller.ts`, `reports.controller.ts` | admin dashboard, exports (CSV / xlsx), referral-code counts |
-| `contact.controller.ts`, `mail.service.ts` | contact form; all email goes through a BullMQ queue (5 retries) |
 
 ## Run locally
 
-Needs Node ≥ 24.7, pnpm and Docker.
+Needs Node ≥ 24.7 and pnpm. Uses the Supabase project directly (no local database).
 
 ```bash
 pnpm install
-pnpm db:up                                     # Postgres + Redis in Docker
-cp apps/api/.env.example apps/api/.env
-pnpm --filter @avantra/api db:migrate          # create tables
-pnpm --filter @avantra/shared build            # required: without it /about and /contact return 500
-pnpm --filter @avantra/api seed-events         # the event list
-pnpm --filter @avantra/api create-admin you@example.com "Your Name"   # prints a password once
-pnpm dev:api                                   # http://localhost:4000/health
-pnpm dev:web                                   # http://localhost:3000
+pnpm --filter @avantra/shared build     # required: without it /about and /contact return 500
+cd apps/web && pnpm dev                 # http://localhost:3000
 ```
 
-Without `SMTP_HOST`, emails (sign-up codes, resets) are printed to the API console instead of sent.
+`apps/web/.env.local` (gitignored): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
+`SUPABASE_SECRET_KEY` (server only, for making staff and walk-in accounts), `NEXT_PUBLIC_STUDENT_SIGNUP`.
 
-| Command | Does |
+| Command (from `apps/web`) | Does |
 |---|---|
-| `pnpm test` | unit tests in every package |
-| `pnpm --filter @avantra/api test:e2e` | end-to-end tests against the local DB |
-| `pnpm --filter @avantra/api db:studio` | browse the database |
-| `pnpm build` | build everything |
+| `node scripts/access.e2e.mjs` | attacker-style checks with the publishable key (env vars at the top of the file) |
+| `node scripts/flows.e2e.mjs` | every role's happy path with throwaway accounts, cleaned up after |
+| `pnpm build` | production build |
 
 ## Roles
 
@@ -95,54 +74,43 @@ Without `SMTP_HOST`, emails (sign-up codes, resets) are printed to the API conso
 | STUDENT | themselves | `/login` | register for events, pay, join teams, play the Wall |
 | VOLUNTEER | admin | `/staff` | scan QR badges for check-in |
 | JUDGE | admin, for one event | `/staff` | scan a student and score their entry |
-| ADMIN | `create-admin` script | `/admin` | everything |
+| ADMIN | Supabase dashboard + `update "User" set role = 'ADMIN'` | `/admin` | everything |
 
-Every API route checks the role on the server. Sessions are a random token in an httpOnly cookie (only its
-SHA-256 is stored), passwords are argon2id, and errors never reveal whether an account exists.
+Roles live in the `"User"` table, never in user-editable metadata. Students read only their own rows (RLS);
+every write is a database function that checks the caller's role first. Nobody can write tables directly.
 
 ## Feature flags
 
 | Variable | Where | Effect |
 |---|---|---|
-| `STUDENT_SIGNUP=open` | API (Render) | allows student sign-up; otherwise 403 |
-| `NEXT_PUBLIC_STUDENT_SIGNUP=open` | web (Vercel) | shows the sign-up and login forms; otherwise "opens soon" |
-| `NEXT_PUBLIC_PAYMENTS=razorpay` | web | uses Razorpay checkout instead of the UPI QR |
-| `NEXT_PUBLIC_API_URL` | web | API base URL |
+| `NEXT_PUBLIC_STUDENT_SIGNUP=open` | Vercel | shows the sign-up and login forms; otherwise "opens soon" |
+| Auth → "Allow new users to sign up" | Supabase dashboard | the server-side gate for student sign-up |
 
-Open sign-up by setting both signup flags and redeploying both apps.
+Open sign-up by turning both on.
 
 ## Deployment
 
-| Piece | Host |
+| Piece | Where |
 |---|---|
-| Web | Vercel, root `apps/web`, deploys `main` |
-| API | Render web service (Singapore), auto-deploys on commit. Start: `cd apps/api && node dist/main` |
-| Database | Supabase Postgres (Mumbai). RLS on every table so the Data API is locked |
-| Redis | Render Key Value, `noeviction` (it holds the email queue, not a cache) |
+| Web | Vercel, root `apps/web`. Env: the four `.env.local` variables above |
+| Database, Auth, email | Supabase project `avantra` (Mumbai). Setup steps in [supabase/README.md](supabase/README.md) |
 
-Render build command (Render's `/usr/bin` is read-only, so no `corepack enable`):
-
-```
-corepack pnpm install --frozen-lockfile && corepack pnpm --filter @avantra/shared build && corepack pnpm --filter @avantra/api build
-```
-
-Migrations: `pnpm --filter @avantra/api db:deploy` with the production `DATABASE_URL` / `DIRECT_URL`.
-The API must stay on its own `api.avantra.arithi.in` domain: the session cookie is `SameSite=Lax` and would
-not be sent from `onrender.com`.
+New migrations: add a file to `supabase/migrations/` and apply it (`supabase db push` or the MCP `apply_migration`).
 
 ## Current state
 
-- Live: site, API, 9 events, admin tools. Student sign-up is gated (see flags).
+- This branch (`supabase`) replaces the old NestJS API, Render and Redis. `main` still runs the old stack
+  until Vercel is switched to this branch; then shut down the Render services.
 - Ambassadors have no accounts: they apply on the Google Form and get a code; students enter it on their
   profile (`Student.referralCode`).
 - The fee is paid by UPI: the student submits the UTR, admin exports an .xlsx, the school marks Paid / Not paid,
-  admin uploads it back. Razorpay code is kept for other events.
-- Still to do: email sending (Render free blocks SMTP), the school's UPI ID in `apps/web/content/site.ts` and
-  QR at `apps/web/public/upi-qr.png`, GitHub secrets for `backup.yml`, event-week dry run.
+  admin uploads it back.
+- Still to do: the school's UPI ID in `apps/web/content/site.ts` and QR at `apps/web/public/upi-qr.png`,
+  GitHub secrets for `backup.yml`, delete the e2e test accounts, event-week dry run.
 
 ## Gotchas
 
 - Next.js 16 has breaking changes: read `node_modules/next/dist/docs/` before writing Next code.
 - ESLint fails locally: typescript-eslint doesn't support TypeScript 7 yet.
 - Students are minors (DPDP Act 2023): collect only the data we need.
-- Never commit `.env` files; production secrets live in the Render, Vercel and Supabase dashboards.
+- Never commit `.env` files; secrets live in the Vercel and Supabase dashboards.

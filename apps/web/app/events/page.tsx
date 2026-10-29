@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { EXHIBITION_TOPICS, InviteCode } from "@avantra/shared";
-import { api, ApiError, apiReady, getMe, payExhibitionFee, paymentMode, type Me } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import styles from "./events.module.css";
 
@@ -96,7 +96,7 @@ export default function EventsPage() {
             ) : (
               <>
                 {student ? (
-                  <FeeBox me={student} paid={feePaid} onPaid={load} />
+                  <FeeBox paid={feePaid} />
                 ) : (
                   <p className={styles.fee}>
                     {!me ? (
@@ -142,38 +142,17 @@ export default function EventsPage() {
   );
 }
 
-function FeeBox({ me, paid, onPaid }: { me: Me; paid: boolean; onPaid: () => Promise<void> }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  async function pay() {
-    setBusy(true);
-    setError("");
-    try {
-      if (await payExhibitionFee(me)) await onPaid();
-    } catch (e) {
-      setError((e as ApiError).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
+function FeeBox({ paid }: { paid: boolean }) {
   return (
     <div className={styles.fee}>
       <span>
         Science Exhibition fee: <strong>{paid ? "Paid ✓" : "₹199, not paid yet"}</strong>
       </span>
-      {!paid &&
-        (paymentMode === "razorpay" ? (
-          <button type="button" className={styles.btn} onClick={pay} disabled={busy}>
-            {busy ? "Opening…" : "Pay ₹199"}
-          </button>
-        ) : (
-          <Link className={styles.btn} href="/dashboard">
-            Pay ₹199 on your dashboard
-          </Link>
-        ))}
-      <FormError message={error} />
+      {!paid && (
+        <Link className={styles.btn} href="/dashboard">
+          Pay ₹199 on your dashboard
+        </Link>
+      )}
     </div>
   );
 }

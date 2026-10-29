@@ -4,9 +4,7 @@
   "packageManager": "pnpm@12.8.1",
   "scripts": {
     "dev:web": "pnpm --filter avantra-site dev",
-    "dev:api": "pnpm --filter @avantra/api start:dev",
     "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "db:up": "docker compose -f infra/docker-compose.yml up -d"
+    "test": "pnpm -r test"
   }
 }

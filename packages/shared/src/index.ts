@@ -1,4 +1,4 @@
-// Contract shared by apps/web and apps/api. Validate with these on both sides.
+// Shapes and rules apps/web validates forms with (the database functions enforce the same rules).
 import { z } from 'zod';
 
 export const Role = z.enum(['STUDENT', 'JUDGE', 'VOLUNTEER', 'ADMIN']);

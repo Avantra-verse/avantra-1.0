@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { api, ApiError, apiReady, getMe, LOGIN_HREF, payExhibitionFee, paymentMode, type LastPayment, type Me } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, LOGIN_HREF, type LastPayment, type Me } from "@/lib/api";
 import { AccountShell, FormError, OpensSoon, styles } from "@/components/account/Account";
 import { UpiFee } from "@/components/account/UpiFee";
 import t from "../staff/tools.module.css";
@@ -73,20 +73,6 @@ const STUDENT_TABS = { overview: "Overview", badge: "Entry badge", wall: "Wall" 
 function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logout: () => void; onPaid: () => Promise<void> }) {
   const { tab, bar } = useTabs(STUDENT_TABS, "overview");
   const [qr, setQr] = useState("");
-  const [paying, setPaying] = useState(false);
-  const [payError, setPayError] = useState("");
-
-  async function pay() {
-    setPaying(true);
-    setPayError("");
-    try {
-      if (await payExhibitionFee(me)) await onPaid();
-    } catch (e) {
-      setPayError((e as ApiError).message);
-    } finally {
-      setPaying(false);
-    }
-  }
   const wall = useLoad<WallMe>("/wall/me");
   useEffect(() => {
     // Dark on cream so gate scanners read it easily, even off a dim phone screen.
@@ -128,17 +114,7 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
               <p className={t.mute} style={{ marginBottom: s.feePaidAt ? 0 : undefined }}>
                 Entry and all other events are free. The ₹199 fee is only for the Science Exhibition.
               </p>
-              {!s.feePaidAt &&
-                (paymentMode === "razorpay" ? (
-                  <>
-                    <button type="button" className={t.btn} onClick={pay} disabled={paying}>
-                      {paying ? "Opening…" : "Pay ₹199 online"}
-                    </button>
-                    <FormError message={payError} />
-                  </>
-                ) : (
-                  <UpiFee last={s.payments[0]} onSent={onPaid} />
-                ))}
+              {!s.feePaidAt && <UpiFee last={s.payments[0]} onSent={onPaid} />}
             </section>
             <section className={t.panel} aria-labelledby="fest">
               <h2 id="fest">AVANTRA 2026</h2>

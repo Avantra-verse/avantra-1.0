@@ -228,39 +228,5 @@ export const REF_KEY = "avantra.ref";
 // null = not logged in
 export const getMe = () => api<Me>("/auth/me").catch((e) => (e instanceof ApiError && e.status === 401 ? null : Promise.reject(e)));
 
-// How students pay the ₹199 exhibition fee: "upi" (default) = the school's QR + UTR, checked by the school in Excel;
-// "razorpay" = Razorpay Checkout (needs the RAZORPAY_* keys on the API). Kept for reuse at other events.
-export const paymentMode = process.env.NEXT_PUBLIC_PAYMENTS === "razorpay" ? "razorpay" : "upi";
-
 // The latest fee payment, from GET /profile (student.payments). Shows "under review" or "failed, try again".
 export type LastPayment = { method: "ONLINE" | "OFFLINE" | "UPI"; status: "CREATED" | "PAID" | "FAILED" | "REFUNDED"; utr: string | null; createdAt: string };
-
-// ₹199 Science Exhibition fee through Razorpay Checkout. Resolves once the API has confirmed the
-// payment; rejects with an ApiError if it fails. Closing the popup just resolves `false`.
-export async function payExhibitionFee(me: Me): Promise<boolean> {
-  const o = await api<{ keyId: string; orderId: string; amount: number; currency: string; description: string }>("/payments/fee", {});
-  const w = window as unknown as { Razorpay?: new (opts: object) => { open(): void } };
-  if (!w.Razorpay) {
-    await new Promise<void>((ok, fail) => {
-      const s = document.createElement("script");
-      s.src = "https://checkout.razorpay.com/v1/checkout.js";
-      s.onload = () => ok();
-      s.onerror = () => fail(new ApiError(0, "Couldn't open the payment window. Check your connection and try again."));
-      document.body.append(s);
-    });
-  }
-  return new Promise((ok, fail) =>
-    new w.Razorpay!({
-      key: o.keyId,
-      order_id: o.orderId,
-      amount: o.amount,
-      currency: o.currency,
-      name: "AVANTRA 2026",
-      description: o.description,
-      prefill: { name: me.name, email: me.email },
-      theme: { color: "#9d0006" },
-      handler: (r: object) => api("/payments/verify", r).then(() => ok(true), fail),
-      modal: { ondismiss: () => ok(false) },
-    }).open(),
-  );
-}
