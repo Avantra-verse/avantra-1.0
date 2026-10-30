@@ -77,7 +77,6 @@ for (const t of ["Team", "TeamMember", "TeamJoinRequest", "Score", "WallChalleng
 }
 assert.equal((await b.sb.from("Student").select("userId")).data.length, 1, "sees only own Student row");
 
-assert.equal(await code(a.sb.rpc("register_event", { p_event_id: ev.exhibition })), "PT403", "exhibition needs the fee");
 assert.equal(await code(a.sb.rpc("create_team", { p_event_id: ev.drone, p_name: "Rotor" })), "PT403", "register before a team");
 
 // Solo event: a team of one is made, and withdrawing removes it.
@@ -137,6 +136,9 @@ if (!waiting) {
 assert.equal(await code(a.sb.rpc("submit_upi_payment", { p_utr: "999999999999" })), "PT409", "one payment waiting at a time");
 assert.equal((await b.sb.rpc("submit_upi_payment", { p_utr: waiting.utr })).error?.hint, "utr", "a UTR pays once");
 assert.equal((await a.sb.from("Student").select("feePaidAt")).data[0].feePaidAt, null, "sending a UTR doesn't pay the fee");
+const exReg = (await a.sb.rpc("register_event", { p_event_id: ev.exhibition, p_topic: "Robotics" })).data;
+assert.equal(await code(a.sb.rpc("create_team", { p_event_id: ev.exhibition, p_name: "Unpaid", p_project_title: "Solar Purifier", p_topic: "Robotics" })), "PT403", "exhibition teams wait for the fee");
+assert.equal((await a.sb.rpc("withdraw_registration", { p_registration_id: exReg })).error, null);
 
 // ---- Engagement Wall: set E2E_WALL=1 after adding fresh chits TEST22 (typed, answer "1,000") and TEST33 (choice Mars/Venus,
 // answer Mars) and wall.open = true. Delete them after: the run leaves solves behind. ----

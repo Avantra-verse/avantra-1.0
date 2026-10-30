@@ -68,7 +68,6 @@ try {
   step(`students sign up and make profiles (${ida}, ${idb})`);
 
   console.log("fees");
-  assert.equal(await fails(a.sb.rpc("register_event", { p_event_id: ex.id })), "PT403", "exhibition needs the fee");
   const utr1 = utr();
   await ok(a.sb.rpc("submit_upi_payment", { p_utr: utr1 }), "UTR 1");
   let waiting = await ok(admin.sb.rpc("admin_upi_waiting"), "UPI waiting");
@@ -104,7 +103,7 @@ try {
   await ok(admin.sb.rpc("admin_set_registration_open", { p_event_id: events.drone.id, p_open: true }), "reopen drone");
   step("admin closes and reopens an event; closed refuses sign-ups");
 
-  for (const s of [a, b, c]) await ok(s.sb.rpc("register_event", { p_event_id: ex.id }), "register exhibition");
+  for (const s of [a, b, c]) await ok(s.sb.rpc("register_event", { p_event_id: ex.id, p_topic: "Robotics" }), "register exhibition");
   const team = await ok(a.sb.rpc("create_team", { p_event_id: ex.id, p_name: `E2E Team ${run}`, p_project_title: "Solar Water Purifier", p_topic: "Robotics" }), "team");
   made.teams.push(team);
   const invite = (await ok(a.sb.rpc("my_registrations"), "A regs")).find((r) => r.eventId === ex.id).teamMember.team.inviteCode;

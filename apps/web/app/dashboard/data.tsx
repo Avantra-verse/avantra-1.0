@@ -42,7 +42,7 @@ export function DashboardData({ children }: { children: React.ReactNode }) {
       api<{ student: Student | null }>("/profile").catch(() => null),
       api<WallMe>("/wall/me").catch(() => null),
     ]);
-    if (!me) return router.replace(LOGIN_HREF);
+    if (!me) return router.replace(`${LOGIN_HREF}?next=${encodeURIComponent(location.pathname + location.search)}`);
     if (!me.profileComplete) return router.replace("/profile");
     setState({ me, student: profile?.student ?? null, wall, loaded: true, failed: "" });
   }, [router]);

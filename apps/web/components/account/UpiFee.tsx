@@ -85,7 +85,7 @@ export function UpiFee({ paid, last, onSent }: { paid: boolean; last?: LastPayme
               </div>
             </div>
             <div className={t.stepNav}>
-              <a className={t.ghost} href="/dashboard">Back</a>
+              <a className={t.ghost} href="/dashboard/events?event=exhibition&step=theme">Back</a>
               <button type="button" className={t.btn} onClick={() => setStep(1)}>Next</button>
             </div>
           </>
@@ -124,7 +124,11 @@ export function UpiFee({ paid, last, onSent }: { paid: boolean; last?: LastPayme
       {step === 2 &&
         (paid ? (
           <div className={`${t.result} ${t.ok}`} role="status" style={{ marginTop: 0 }}>
-            <strong>Paid.</strong> Your Science Exhibition fee is confirmed. See you at AVANTRA!
+            <strong>Paid.</strong> Your Science Exhibition fee is confirmed. Next, form or join your team.
+            <div className={t.stepNav}>
+              <span />
+              <a className={t.btn} href="/dashboard/teams">Your team</a>
+            </div>
           </div>
         ) : reviewing ? (
           <>

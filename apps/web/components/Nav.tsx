@@ -66,7 +66,8 @@ const DASH_LINKS: { href: string; label: string; icon: string; soon?: boolean }[
   { href: "/dashboard", label: "Home", icon: "M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" },
   { href: "/dashboard/pay", label: "Payment", icon: "M3 6h18v12H3zM3 10h18M7 15h4" },
   { href: "/dashboard/settings", label: "Settings", icon: "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" },
-  { href: "/events", label: "Events", icon: "M4 5h16v15H4zM4 9h16M8 3v4M16 3v4", soon: true }, // shown, not linked, until event sign-ups open
+  { href: "/dashboard/events", label: "Events", icon: "M4 5h16v15H4zM4 9h16M8 3v4M16 3v4" },
+  { href: "/dashboard/teams", label: "Teams", icon: "M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.1a4 4 0 010 7.8M22 21v-1a6 6 0 00-4-5.7" },
 ];
 
 function DashboardNav() {
@@ -110,7 +111,7 @@ function DashboardNav() {
         aria-label="Dashboard"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-void/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
       >
-        <ul className="mx-auto grid max-w-md grid-cols-4">
+        <ul className="mx-auto grid max-w-md grid-cols-5">
           {DASH_LINKS.map((l) => {
             const on = pathname === l.href;
             const icon = (

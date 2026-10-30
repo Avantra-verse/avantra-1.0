@@ -138,7 +138,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
 
   // Event entries and teams: supabase/migrations/*_registrations_and_teams.sql
   "GET /registrations/mine": () => rpc("my_registrations"),
-  "POST /registrations": ({ eventId }) => rpc("register_event", { p_event_id: eventId }),
+  "POST /registrations": ({ eventId, topic }) => rpc("register_event", { p_event_id: eventId, p_topic: topic }),
   "DELETE /registrations/:id": ({ id }) => rpc("withdraw_registration", { p_registration_id: id }),
   "GET /teams": ({ eventId }) => rpc("open_teams", { p_event_id: eventId }),
   "POST /teams": ({ eventId, name, projectTitle, topic }) => rpc("create_team", { p_event_id: eventId, p_name: name, p_project_title: projectTitle, p_topic: topic }),
@@ -170,6 +170,9 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "GET /admin/stats": () => rpc("admin_stats"),
   "GET /admin/referrals": () => rpc("admin_referrals"),
   "GET /admin/payments/upi": () => rpc("admin_upi_waiting"),
+  // One row of the school's sheet, decided by hand: same checks and emails as the upload.
+  "POST /admin/payments/upi/decide": ({ avantraId, utr, status }) =>
+    rpc("admin_upi_decide", { p_decisions: [{ row: 1, avantraId, utr, status }] }),
   "POST /admin/students/:id/mark-paid": ({ id, note }) => rpc("admin_mark_paid", { p_avantra_id: id, p_note: note }),
   "PATCH /admin/events/:id": ({ id, registrationOpen }) => rpc("admin_set_registration_open", { p_event_id: id, p_open: registrationOpen }),
   "GET /admin/events/:id/leaderboard": ({ id }) => rpc("admin_event_leaderboard", { p_event_id: id }),

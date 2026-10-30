@@ -90,17 +90,26 @@ function StudentDashboard({ me, s, w }: { me: Me; s: Student; w: WallMe | null }
                   </>
                 )}
               </div>
-              <p className={t.mute} style={{ marginBottom: s.feePaidAt ? 0 : undefined }}>
-                Entry and all other events are free. The ₹299 fee is only for the Science Exhibition.
+              <p className={t.mute}>
+                Entry to the fest and its events is free. Taking part in the Science Exhibition costs ₹299 per student.
               </p>
-              {!s.feePaidAt && (
-                <a className={t.cta} href="/dashboard/pay">
+              {s.feePaidAt ? (
+                <a className={t.cta} href="/dashboard/teams">
+                  <span>
+                    <strong>Form your exhibition team</strong>
+                    <br />
+                    <span className={t.mute}>Start a team of 3 and share its code, or join a friend&apos;s team with theirs.</span>
+                  </span>
+                  <span className={t.btn}>Create team</span>
+                </a>
+              ) : (
+                <a className={t.cta} href={reviewing ? "/dashboard/pay" : "/dashboard/events?event=exhibition&step=theme"}>
                   <span>
                     <strong>{reviewing ? "Payment under review" : "Register for the Science Exhibition"}</strong>
                     <br />
-                    <span className={t.mute}>{reviewing ? "Check the status or change your UTR." : "Pay ₹299 by UPI in three quick steps."}</span>
+                    <span className={t.mute}>{reviewing ? "Check the status or change your UTR." : "Pick your theme, pay ₹299 by UPI, then form a team of 3."}</span>
                   </span>
-                  <span className={t.btn}>{reviewing ? "View" : "Pay now"}</span>
+                  <span className={t.btn}>{reviewing ? "View" : "Register"}</span>
                 </a>
               )}
             </section>

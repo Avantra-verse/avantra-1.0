@@ -27,6 +27,23 @@ export function UpiPayments() {
   const act = useAction();
   const [result, setResult] = useState<ImportResult | null>(null);
 
+  async function decide(p: Waiting, status: "PAID" | "FAILED") {
+    const ask = status === "PAID"
+      ? `Mark ${p.name}'s payment (UTR ${p.utr}) as paid? Only do this after finding it in the bank statement. They get a "fee confirmed" email.`
+      : `Mark UTR ${p.utr} from ${p.name} as not paid? They get a "try again" email.`;
+    if (!confirm(ask)) return;
+    setResult(null);
+    const r = await act.run(
+      () => api<{ result: string }[]>("/admin/payments/upi/decide", { avantraId: p.avantraId, utr: p.utr, status }),
+      ([d]) =>
+        d?.result === "paid" ? `${p.name}: fee confirmed.`
+        : d?.result === "failed" ? `${p.name}: marked not paid.`
+        : d?.result === "double" ? `${p.name} had already paid the fee. Refund one of the two payments.`
+        : `${p.name}: this payment was already decided.`,
+    );
+    if (r) reload();
+  }
+
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = ""; // the same file can be picked again
@@ -82,7 +99,9 @@ export function UpiPayments() {
 
       <section className={t.panel} aria-labelledby="upi-waiting">
         <h2 id="upi-waiting">Waiting</h2>
+        <p className={t.mute}>Found a payment in the bank statement yourself? Mark it here instead of waiting for the Excel file.</p>
         <FormError message={error} />
+        {act.note && <p role="status">{act.note}</p>}
         {!data ? null : data.length === 0 ? (
           <p className={t.mute}>No payments waiting to be checked.</p>
         ) : (
@@ -93,6 +112,7 @@ export function UpiPayments() {
                   <th>Student</th>
                   <th>UTR</th>
                   <th>Sent</th>
+                  <th>Checked by hand</th>
                 </tr>
               </thead>
               <tbody>
@@ -104,6 +124,12 @@ export function UpiPayments() {
                     </td>
                     <td className={t.mono} data-label="UTR">{p.utr}</td>
                     <td data-label="Sent">{when(p.createdAt)}</td>
+                    <td data-label="Checked by hand">
+                      <div className={t.inline}>
+                        <button type="button" className={t.btn} disabled={act.busy} onClick={() => decide(p, "PAID")}>Paid</button>
+                        <button type="button" className={t.ghost} disabled={act.busy} onClick={() => decide(p, "FAILED")}>Not paid</button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

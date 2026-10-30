@@ -1,28 +1,18 @@
 "use client";
 
-// Every event, open to anyone. Students with a profile register here, pay the ₹299 exhibition
-// fee, and create or join teams: by 6-letter invite code, by scanning the team's QR, or by asking a team
-// that has room and waiting for its leader. Solo events need no team.
+// The student's teams, one per team event they registered for. Opens once the ₹299 fee is paid.
+// Create a team, or join one by 6-letter invite code, by scanning the team's QR, or by asking a team
+// that has room and waiting for its leader.
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { EXHIBITION_TOPICS, InviteCode } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
-import styles from "./events.module.css";
+import styles from "../events/events.module.css";
+import { useTabs } from "../../admin/ui";
 
-type Category = "EXHIBITION" | "TECHNOLOGY" | "EXPERIENCE" | "WORKSHOP";
-type Event = {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  category: Category;
-  registrationOpen: boolean;
-  teamMin: number;
-  teamMax: number;
-  spotsLeft: number | null;
-};
+type Event = { id: string; slug: string; name: string; category: string; teamMin: number; teamMax: number };
 type Team = {
   id: string;
   name: string;
@@ -33,51 +23,48 @@ type Team = {
   joinRequests: { registrationId: string; registration: { student: { avantraId: string; user: { name: string } } } }[];
 };
 type OpenTeam = { id: string; name: string; projectTitle: string | null; members: number; leaderName: string | null; school: string | null; requested: boolean };
-type Reg = { id: string; eventId: string; teamMember: { isLeader: boolean; team: Team } | null };
+type Reg = { id: string; eventId: string; topic: string | null; teamMember: { isLeader: boolean; team: Team } | null };
 
-const CATEGORIES: [Category, string][] = [
-  ["EXHIBITION", "Science Exhibition"],
-  ["TECHNOLOGY", "Technology"],
-  ["EXPERIENCE", "Experiences"],
-  ["WORKSHOP", "Workshops"],
-];
-
-export default function EventsPage() {
-  const [events, setEvents] = useState<Event[] | null>(null);
-  const [me, setMe] = useState<Me | null>(null);
-  const [regs, setRegs] = useState<Reg[]>([]);
+export default function TeamsPage() {
+  const [me, setMe] = useState<Me | null | undefined>(undefined);
+  const [items, setItems] = useState<{ event: Event; reg: Reg }[] | null>(null);
   const [feePaid, setFeePaid] = useState(false);
   const [failed, setFailed] = useState("");
   const [joinNote, setJoinNote] = useState("");
 
   const load = useCallback(async () => {
-    const [ev, m] = await Promise.all([api<Event[]>("/events"), getMe()]);
-    // A scanned team QR opens /events?join=CODE. Logged out: log in first, then come back here.
-    const code = InviteCode.safeParse(new URLSearchParams(window.location.search).get("join"));
-    if (code.success) {
-      if (!m) return window.location.replace(`/login?next=${encodeURIComponent(`/events?join=${code.data}`)}`);
-      window.history.replaceState(null, "", "/events");
-      if (m.role === "STUDENT" && m.profileComplete) {
-        await api("/teams/join", { inviteCode: code.data }).then(
-          () => setJoinNote("You joined the team."),
-          (e: ApiError) => setJoinNote(e.message),
-        );
-      }
-    }
-    if (m?.role === "STUDENT" && m.profileComplete) {
-      const [p, r] = await Promise.all([api<{ student: { feePaidAt: string | null } | null }>("/profile"), api<Reg[]>("/registrations/mine")]);
-      setFeePaid(!!p.student?.feePaidAt);
-      setRegs(r);
-    }
+    const m = await getMe();
     setMe(m);
-    setEvents(ev);
+    if (m?.role !== "STUDENT" || !m.profileComplete) return;
+    const [ev, p, r] = await Promise.all([
+      api<Event[]>("/events"),
+      api<{ student: { feePaidAt: string | null } | null }>("/profile"),
+      api<Reg[]>("/registrations/mine"),
+    ]);
+    const paid = !!p.student?.feePaidAt;
+    // A scanned team QR opens /dashboard/teams?join=CODE; joining waits until the fee is paid.
+    const code = InviteCode.safeParse(new URLSearchParams(window.location.search).get("join"));
+    if (code.success && paid) {
+      window.history.replaceState(null, "", "/dashboard/teams");
+      await api("/teams/join", { inviteCode: code.data }).then(
+        () => setJoinNote("You joined the team."),
+        (e: ApiError) => setJoinNote(e.message),
+      );
+      return load();
+    }
+    setFeePaid(paid);
+    setItems(r.flatMap((reg) => ev.filter((e) => e.id === reg.eventId && e.teamMax > 1).map((event) => ({ event, reg }))));
   }, []);
 
   useEffect(() => {
-    if (apiReady) load().catch((e: ApiError) => setFailed(e.message));
+    if (!apiReady) return;
+    load().catch((e: ApiError) => setFailed(e.message));
   }, [load]);
 
-  const student = me?.role === "STUDENT" && me.profileComplete ? me : null;
+  // Logged out (e.g. after scanning a team QR): log in first, then come back here with the code.
+  useEffect(() => {
+    if (me === null) window.location.replace(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+  }, [me]);
 
   return (
     <div className={account.registrationPage}>
@@ -85,54 +72,46 @@ export default function EventsPage() {
       <main className={account.wrapper}>
         <div className={styles.page}>
           <div className={account.card}>
-            <h1 className={account.heading}>Events</h1>
-            <p className={account.subtext}>Entry and every event are free. Only the Science Exhibition has a ₹299 fee, paid once.</p>
+            <h1 className={account.heading}>Teams</h1>
             {!apiReady ? (
-              <OpensSoon what="Event registration" />
+              <OpensSoon what="Teams" />
             ) : failed ? (
               <FormError message={failed} />
-            ) : !events ? (
+            ) : me && (me.role !== "STUDENT" || !me.profileComplete) ? (
+              <p className={account.subtext}>
+                {me.role === "STUDENT" ? (
+                  <>
+                    <Link href="/profile" className={account.link}>Finish your profile</Link> first.
+                  </>
+                ) : (
+                  "Students form teams from their own account."
+                )}
+              </p>
+            ) : !items ? (
               <p className={account.subtext} role="status">Loading…</p>
+            ) : !feePaid ? (
+              <p className={account.subtext}>
+                Teams open once your ₹299 fee is paid.{" "}
+                <Link href={items.length ? "/dashboard/pay" : "/dashboard/events?event=exhibition&step=theme"} className={account.link}>
+                  {items.length ? "Pay now" : "Register for the Science Exhibition"}
+                </Link>
+              </p>
+            ) : !items.length ? (
+              <p className={account.subtext}>
+                You haven&apos;t registered for a team event yet. <Link href="/dashboard/events" className={account.link}>See events</Link>
+              </p>
             ) : (
               <>
-                {student ? (
-                  <FeeBox paid={feePaid} />
-                ) : (
-                  <p className={styles.fee}>
-                    {!me ? (
-                      <span>
-                        <Link href="/login" className={account.link}>Log in</Link> or{" "}
-                        <Link href="/registration" className={account.link}>sign up</Link> to register for events.
-                      </span>
-                    ) : me.role === "STUDENT" ? (
-                      <span>
-                        <Link href="/profile" className={account.link}>Finish your profile</Link> to register for events.
-                      </span>
-                    ) : (
-                      <span>Students register for events from their own account.</span>
-                    )}
-                  </p>
-                )}
                 {joinNote && (
                   <p className={styles.fee} role="status">
                     {joinNote}
                   </p>
                 )}
-                {events.length === 0 && <p className={account.subtext}>Events will be announced soon.</p>}
-                {CATEGORIES.map(([cat, title]) => {
-                  const list = events.filter((e) => e.category === cat);
-                  if (!list.length) return null;
-                  return (
-                    <section key={cat}>
-                      <h2 className={styles.category}>{title}</h2>
-                      <ul className={styles.list}>
-                        {list.map((e) => (
-                          <EventCard key={e.id} event={e} reg={regs.find((r) => r.eventId === e.id)} student={!!student} feePaid={feePaid} onChange={load} />
-                        ))}
-                      </ul>
-                    </section>
-                  );
-                })}
+                <ul className={styles.list}>
+                  {items.map(({ event, reg }) => (
+                    <TeamCard key={reg.id} event={event} reg={reg} onChange={load} />
+                  ))}
+                </ul>
               </>
             )}
           </div>
@@ -142,30 +121,9 @@ export default function EventsPage() {
   );
 }
 
-function FeeBox({ paid }: { paid: boolean }) {
-  return (
-    <div className={styles.fee}>
-      <span>
-        Science Exhibition fee: <strong>{paid ? "Paid ✓" : "₹299, not paid yet"}</strong>
-      </span>
-      {!paid && (
-        <Link className={styles.btn} href="/dashboard/pay">
-          Pay ₹299
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function teamSize(e: Event) {
-  if (e.teamMax === 1) return "Solo";
-  return e.teamMin === e.teamMax ? `Teams of ${e.teamMax}` : `Teams of ${e.teamMin}–${e.teamMax}`;
-}
-
-function EventCard({ event: e, reg, student, feePaid, onChange }: { event: Event; reg?: Reg; student: boolean; feePaid: boolean; onChange: () => Promise<void> }) {
+function TeamCard({ event: e, reg, onChange }: { event: Event; reg: Reg; onChange: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-
   // Every action: call the API, then reload the page's data so all cards stay in step.
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -179,63 +137,49 @@ function EventCard({ event: e, reg, student, feePaid, onChange }: { event: Event
       setBusy(false);
     }
   };
-
-  const team = reg?.teamMember?.team;
-  const withdraw = () => {
-    if (confirm(`Withdraw from ${e.name}?`)) run(() => api(`/registrations/${reg!.id}`, undefined, "DELETE"));
-  };
-
+  const team = reg.teamMember?.team;
   return (
-    <li className={styles.event} data-registered={!!reg}>
+    <li className={styles.event} data-registered>
       <div className={styles.eventHead}>
         <h3 className={styles.eventName}>{e.name}</h3>
-        <span className={styles.meta}>
-          {teamSize(e)}
-          {e.spotsLeft !== null && ` · ${e.spotsLeft} spots left`}
-          {!e.registrationOpen && " · Registration closed"}
-        </span>
+        <span className={styles.meta}>{e.teamMin === e.teamMax ? `Teams of ${e.teamMax}` : `Teams of ${e.teamMin}–${e.teamMax}`}</span>
       </div>
-      {e.description && <p className={styles.description}>{e.description}</p>}
-
-      {student && (
-        <div className={styles.actions}>
-          {reg ? (
-            <>
-              <span className={styles.done}>Registered ✓</span>
-              {(!team || e.teamMax === 1) && (
-                <button type="button" className={account.link} onClick={withdraw} disabled={busy}>
-                  Withdraw
-                </button>
-              )}
-            </>
-          ) : !e.registrationOpen || e.spotsLeft === 0 ? null : e.category === "EXHIBITION" && !feePaid ? (
-            <span className={styles.meta}>Pay the ₹299 fee above, then register here.</span>
-          ) : (
-            <button type="button" className={styles.btn} onClick={() => run(() => api("/registrations", { eventId: e.id }))} disabled={busy}>
-              {busy ? "Registering…" : "Register"}
-            </button>
-          )}
-        </div>
-      )}
-
-      {reg && e.teamMax > 1 && (
-        <div className={styles.team}>
-          {team ? <TeamView event={e} team={team} leader={reg.teamMember!.isLeader} busy={busy} run={run} /> : <TeamForms event={e} regId={reg.id} busy={busy} run={run} />}
-        </div>
-      )}
+      <div className={styles.team}>
+        {team ? <TeamView event={e} team={team} leader={reg.teamMember!.isLeader} busy={busy} run={run} /> : <TeamForms event={e} regId={reg.id} topic={reg.topic} busy={busy} run={run} />}
+      </div>
       <FormError message={error} />
     </li>
   );
 }
 
 type Run = (fn: () => Promise<unknown>) => Promise<void>;
+const TEAM_TABS = { create: "Create team", join: "Join team" } as const;
 
 function TeamView({ event: e, team, leader, busy, run }: { event: Event; team: Team; leader: boolean; busy: boolean; run: Run }) {
   const n = team.members.length;
   const [qr, setQr] = useState("");
+  const [shared, setShared] = useState("");
+  const link = () => `${window.location.origin}/dashboard/teams?join=${team.inviteCode}`; // logged-out friends log in, then come back here
   useEffect(() => {
-    QRCode.toDataURL(`${window.location.origin}/events?join=${team.inviteCode}`, { width: 320, margin: 2 }).then(setQr);
-  }, [team.inviteCode]);
+    QRCode.toDataURL(link(), { width: 320, margin: 2 }).then(setQr);
+  }, [team.inviteCode]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Phones open the share sheet (WhatsApp etc.); elsewhere the link is copied.
+  async function share() {
+    const text = `Join my team "${team.name}" for the ${e.name} at AVANTRA 2026. Invite code: ${team.inviteCode}`;
+    if (navigator.share) {
+      try {
+        return await navigator.share({ title: "Join my AVANTRA team", text, url: link() });
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return; // they closed the share sheet
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${link()}`);
+      setShared("Link copied. Paste it to your friends.");
+    } catch {
+      setShared(`Copy this link: ${link()}`);
+    }
+  }
   return (
     <>
       <p style={{ margin: 0 }}>
@@ -258,6 +202,14 @@ function TeamView({ event: e, team, leader, busy, run }: { event: Event; team: T
               </button>
             </>
           )}
+        </p>
+      )}
+      {n < e.teamMax && (
+        <p style={{ margin: "10px 0 0" }}>
+          <button type="button" className={styles.btn} onClick={share}>
+            Share invite link
+          </button>
+          {shared && <span className={styles.meta} role="status" style={{ display: "block", marginTop: 6, overflowWrap: "anywhere" }}>{shared}</span>}
         </p>
       )}
       {n < e.teamMax && qr && (
@@ -319,9 +271,9 @@ function TeamView({ event: e, team, leader, busy, run }: { event: Event; team: T
   );
 }
 
-function TeamForms({ event: e, regId, busy, run }: { event: Event; regId: string; busy: boolean; run: Run }) {
+function TeamForms({ event: e, regId, topic, busy, run }: { event: Event; regId: string; topic: string | null; busy: boolean; run: Run }) {
   const exhibition = e.category === "EXHIBITION";
-  const [f, setF] = useState({ name: "", projectTitle: "", topic: "", code: "" });
+  const [f, setF] = useState({ name: "", projectTitle: "", topic: topic ?? "", code: "" }); // exhibition: the leader's theme
   const [errors, setErrors] = useState<Record<string, string>>({});
   const id = (field: string) => `${e.slug}-${field}`; // several cards can show these forms at once
   const set = (field: keyof typeof f) => (ev: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -349,37 +301,43 @@ function TeamForms({ event: e, regId, busy, run }: { event: Event; regId: string
     run(() => api("/teams/join", { inviteCode: code.data }));
   }
 
+  const { tab, bar } = useTabs(TEAM_TABS, "create");
   return (
     <>
-      <p className={styles.meta} style={{ margin: 0 }}>
-        You&apos;re not in a team yet. Start one and share its code, join a friend&apos;s team with theirs, or ask a team below.
+      <p className={styles.meta} style={{ margin: "0 0 12px" }}>
+        You&apos;re not in a team yet. Start one and share its code, or join a friend&apos;s team.
       </p>
-      <div className={styles.forms}>
-        <form className={account.form} onSubmit={create} noValidate>
+      {bar}
+      {tab === "create" && (
+        <form className={`${account.form} ${styles.teamForm}`} onSubmit={create} noValidate>
           <Field name={id("name")} label="Team name" maxLength={60} value={f.name} onChange={set("name")} error={errors.name} />
           {exhibition && (
             <>
               <Field name={id("projectTitle")} label="Project title" maxLength={150} value={f.projectTitle} onChange={set("projectTitle")} error={errors.projectTitle} />
-              <SelectField name={id("topic")} label="Topic" value={f.topic} onChange={set("topic")} error={errors.topic}>
+              {!topic && <SelectField name={id("topic")} label="Topic" value={f.topic} onChange={set("topic")} error={errors.topic}>
                 <option value="">Select a topic</option>
                 {EXHIBITION_TOPICS.map((t) => (
                   <option key={t}>{t}</option>
                 ))}
-              </SelectField>
+              </SelectField>}
             </>
           )}
           <button type="submit" className={styles.btn} disabled={busy}>
             Start a team
           </button>
         </form>
-        <form className={account.form} onSubmit={join} noValidate>
-          <Field name={id("code")} label="Invite code" placeholder="e.g. K7Q2XM" maxLength={6} autoCapitalize="characters" value={f.code} onChange={set("code")} error={errors.code} />
-          <button type="submit" className={styles.btn} disabled={busy}>
-            Join team
-          </button>
-        </form>
-      </div>
-      <OpenTeams event={e} regId={regId} busy={busy} run={run} />
+      )}
+      {tab === "join" && (
+        <>
+          <form className={`${account.form} ${styles.teamForm}`} onSubmit={join} noValidate>
+            <Field name={id("code")} label="Have an invite code?" placeholder="e.g. K7Q2XM" maxLength={6} autoCapitalize="characters" value={f.code} onChange={set("code")} error={errors.code} />
+            <button type="submit" className={styles.btn} disabled={busy}>
+              Join with code
+            </button>
+          </form>
+          <OpenTeams event={e} regId={regId} busy={busy} run={run} />
+        </>
+      )}
     </>
   );
 }
@@ -392,14 +350,13 @@ function OpenTeams({ event: e, regId, busy, run }: { event: Event; regId: string
   useEffect(() => {
     reload();
   }, [reload]);
-  if (!teams.length) return null;
-
   const SHOWN = 8;
   const found = teams.filter((t) => `${t.name} ${t.leaderName} ${t.school}`.toLowerCase().includes(q.trim().toLowerCase()));
   return (
     <>
-      <p className={styles.meta} style={{ margin: "18px 0 0" }}>
-        Or ask to join a team that has room. Its leader decides.
+      <h4 className={styles.sub}>Teams with room</h4>
+      <p className={styles.meta} style={{ margin: 0 }}>
+        {teams.length ? "Ask to join one. Its leader accepts or declines." : "No teams with room yet. Check back soon, or start your own."}
       </p>
       {teams.length > SHOWN && <Field name={`${e.slug}-find`} label="Find a team" placeholder="Team, leader or school" value={q} onChange={(ev) => setQ(ev.target.value)} />}
       <ul className={styles.members}>
@@ -415,6 +372,7 @@ function OpenTeams({ event: e, regId, busy, run }: { event: Event; regId: string
             <button
               type="button"
               className={account.link}
+              style={{ whiteSpace: "nowrap", alignSelf: "flex-start" }}
               disabled={busy}
               onClick={() => run(() => (t.requested ? api(`/teams/${t.id}/requests/${regId}`, undefined, "DELETE") : api(`/teams/${t.id}/requests`, {})).then(reload))}
             >
