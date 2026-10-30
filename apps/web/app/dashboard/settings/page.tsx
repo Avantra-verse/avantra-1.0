@@ -1,7 +1,7 @@
 "use client";
 
 // Students edit their own name and details. Checks run in update_student_profile (same rules as sign-up);
-// email, AVANTRA ID and fee status are not editable.
+// email, AVANTRA ID and fee status are not editable; the ambassador code only while it is still blank.
 import React, { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { Field, FormError, SelectField, styles } from "@/components/account/Account";
@@ -13,7 +13,7 @@ const digits = (v: string) => v.replace(/\D/g, "").slice(-10);
 
 export default function SettingsPage() {
   const { me, student: s, failed, reload } = useDashboard();
-  const [f, setF] = useState({ name: "", phone: "", grade: "", section: "", schoolName: "", guardianPhone: "", guardianEmail: "" });
+  const [f, setF] = useState({ name: "", phone: "", grade: "", section: "", schoolName: "", guardianPhone: "", guardianEmail: "", referralCode: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -29,6 +29,7 @@ export default function SettingsPage() {
       schoolName: s.schoolName,
       guardianPhone: s.guardianPhone ?? "",
       guardianEmail: s.guardianEmail ?? "",
+      referralCode: s.referralCode ?? "",
     });
   }, [me, s]);
 
@@ -93,6 +94,12 @@ export default function SettingsPage() {
                 <Field name="guardianPhone" label="Parent's phone (optional)" type="tel" inputMode="numeric" value={f.guardianPhone} onChange={set} error={errors.guardianPhone} />
                 <Field name="guardianEmail" label="Parent's email (optional)" type="email" value={f.guardianEmail} onChange={set} error={errors.guardianEmail} />
               </div>
+              {/* Can be added once if skipped at sign-up; locked after, so sign-ups can't move between ambassadors. */}
+              {s.referralCode ? (
+                <Field name="referralCode" label="Ambassador code" value={s.referralCode} readOnly />
+              ) : (
+                <Field name="referralCode" label="Ambassador code (optional)" placeholder="e.g. ABC4XY" maxLength={8} autoCapitalize="characters" value={f.referralCode} onChange={set} error={errors.referralCode} />
+              )}
               <FormError message={errors.form} />
               {saved && (
                 <div className={`${t.result} ${t.ok}`} role="status" style={{ marginTop: 0 }}>

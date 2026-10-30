@@ -14,6 +14,7 @@ export type Student = {
   schoolName: string;
   guardianEmail: string | null;
   guardianPhone: string | null;
+  referralCode: string | null;
   feePaidAt: string | null;
   _count: { checkIns: number };
   payments: LastPayment[]; // the latest only

@@ -214,7 +214,7 @@ function toAvantraId(raw: string) {
   return AvantraId.safeParse(/^[A-Z0-9]{5}$/.test(s) ? `AV26-${s}` : s);
 }
 
-// Reads a badge: camera when the phone has one, typed AVANTRA ID always.
+// Reads a badge: camera when the phone has one, a photo or screenshot of it, or the typed AVANTRA ID.
 function BadgeInput({ onRef, busy, label }: { onRef: (r: Ref) => void; busy: boolean; label: string }) {
   const [id, setId] = useState("");
   const [error, setError] = useState("");
@@ -246,18 +246,59 @@ function BadgeInput({ onRef, busy, label }: { onRef: (r: Ref) => void; busy: boo
             Scan badge
           </button>
         ))}
+      <label className={t.ghost} style={{ display: "inline-flex", marginBottom: 16, cursor: busy ? "default" : "pointer" }}>
+        Scan from a photo
+        <input
+          type="file"
+          accept="image/*"
+          hidden
+          disabled={busy}
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = ""; // the same photo can be picked again
+            if (!file) return;
+            const qrToken = await qrFromImage(file);
+            if (!qrToken) return setError("No badge QR found in that photo. Try a sharper one, or type the AVANTRA ID.");
+            setError("");
+            onRef({ qrToken });
+          }}
+        />
+      </label>
       <form className={t.inline} onSubmit={typed} noValidate>
         <Field name="avantraId" label={label} placeholder="AV26-K7M2Q" autoCapitalize="characters" autoComplete="off" spellCheck={false} value={id} onChange={(e) => { setId(e.target.value); setError(""); }} error={error} />
         <button type="submit" className={t.btn} disabled={busy} style={{ marginBottom: error ? 30 : 4 }}>
           Check
         </button>
       </form>
-      {!canScan && <p className={t.mute}>No camera available here; type the ID printed under the QR.</p>}
+      {!canScan && <p className={t.mute}>No camera available here; pick a photo of the badge, or type the ID printed under the QR.</p>}
     </>
   );
 }
 
-type Detector = { detect(v: HTMLVideoElement): Promise<{ rawValue: string }[]> };
+type Detector = { detect(v: HTMLVideoElement | ImageBitmap): Promise<{ rawValue: string }[]> };
+
+// Reads the QR from a picked photo or screenshot, on this phone only: the image is never uploaded or kept,
+// just the token inside it goes to the check-in like a camera scan.
+async function qrFromImage(file: File): Promise<string | null> {
+  const img = await createImageBitmap(file).catch(() => null);
+  if (!img) return null;
+  try {
+    const w = window as unknown as { BarcodeDetector?: new (o: object) => Detector };
+    if (w.BarcodeDetector) {
+      const hit = (await new w.BarcodeDetector({ formats: ["qr_code"] }).detect(img).catch(() => []))[0]?.rawValue;
+      if (hit) return hit;
+    }
+    const scale = Math.min(1, 1200 / Math.max(img.width, img.height)); // phone photos are huge; jsQR is fine at ~1200px
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height)?.data || null;
+  } finally {
+    img.close();
+  }
+}
 
 function Camera({ onCode, onClose }: { onCode: (text: string) => void; onClose: () => void }) {
   const video = useRef<HTMLVideoElement>(null);
