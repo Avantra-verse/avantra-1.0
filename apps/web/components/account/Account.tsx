@@ -59,9 +59,9 @@ export function Field({ name, label, error, ...input }: FieldProps) {
       {password ? (
         <div className={styles.pwWrap}>
           {box}
-          <button type="button" className={styles.pwToggle} onClick={() => setShown((v) => !v)} aria-pressed={shown} aria-controls={name}>
+          {!!input.value && <button type="button" className={styles.pwToggle} onClick={() => setShown((v) => !v)} aria-pressed={shown} aria-controls={name}>
             {shown ? "Hide" : "Show"}
-          </button>
+          </button>}
         </div>
       ) : (
         box
