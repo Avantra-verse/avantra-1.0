@@ -84,6 +84,7 @@ export const ADMIN_LINKS: DashLink[] = [
   { href: "/admin#staff", label: "Staff", icon: "M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.1a4 4 0 010 7.8M22 21v-1a6 6 0 00-4-5.7" },
   { href: "/admin#events", label: "Results", icon: "M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM7 6H4a3 3 0 003 4M17 6h3a3 3 0 01-3 4" },
   { href: "/admin#wall", label: "Wall", icon: "M3 5h18v14H3zM3 12h18M9 5v7M15 12v7" },
+  { href: "/admin#admins", label: "Admins", icon: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4" }, // super admin only
 ];
 
 // Current #hash, kept in step with tab clicks and back/forward.

@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { EXHIBITION_TOPICS, InviteCode } from "@avantra/shared";
-import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, pendingInvite, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import styles from "../events/events.module.css";
 import t from "../../staff/tools.module.css";
@@ -46,16 +46,29 @@ export default function TeamsPage() {
       api<Reg[]>("/registrations/mine"),
     ]);
     const paid = !!p.student?.feePaidAt;
-    // A scanned team QR opens /dashboard/teams?join=CODE; joining waits until the fee is paid.
+    // A team QR or link opens /dashboard/teams?join=CODE. The code is kept on this phone (dashboard data.tsx)
+    // until the student has registered and paid; then they join here.
     const code = InviteCode.safeParse(new URLSearchParams(window.location.search).get("join"));
-    if (code.success && paid) {
+    if (code.success) {
+      pendingInvite.set(code.data);
       window.history.replaceState(null, "", "/dashboard/teams");
-      await api("/teams/join", { inviteCode: code.data }).then(
-        () => setJoinNote("You joined the team."),
-        (e: ApiError) => setJoinNote(e.message),
-      );
-      return load();
     }
+    const invite = pendingInvite.get();
+    if (invite && paid) {
+      const joined = await api("/teams/join", { inviteCode: invite }).then(
+        () => true,
+        (e: ApiError) => {
+          setJoinNote(e.message);
+          if (e.status !== 403) pendingInvite.clear(); // 403: not registered yet, so keep the invite for later
+          return false;
+        },
+      );
+      if (joined) {
+        pendingInvite.clear(); // cleared first, so the reload below doesn't join again
+        setJoinNote("You joined the team.");
+        return load();
+      }
+    } else if (invite) setJoinNote(r.length ? "You're invited to a team. You'll join it here as soon as your fee is confirmed." : "You're invited to a team. Register for the Science Exhibition and pay the fee; then you'll join it here.");
     setFeePaid(paid);
     setItems(r.flatMap((reg) => ev.filter((e) => e.id === reg.eventId && e.teamMax > 1).map((event) => ({ event, reg }))));
   }, []);

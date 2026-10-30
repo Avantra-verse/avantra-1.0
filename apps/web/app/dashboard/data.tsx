@@ -4,7 +4,8 @@
 // students move between pages, so switching pages makes no database calls; pages that change things call reload).
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, ApiError, apiReady, getMe, LOGIN_HREF, type LastPayment, type Me } from "@/lib/api";
+import { InviteCode } from "@avantra/shared";
+import { api, ApiError, apiReady, getMe, LOGIN_HREF, pendingInvite, type LastPayment, type Me } from "@/lib/api";
 
 export type Student = {
   avantraId: string;
@@ -47,6 +48,9 @@ export function DashboardData({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<Omit<Dashboard, "reload">>({ me: null, student: null, wall: null, regs: [], loaded: false, failed: "" });
 
   const reload = useCallback(async () => {
+    // Keep a team invite before any sign-up or log-in redirect can lose it.
+    const invite = InviteCode.safeParse(new URLSearchParams(location.search).get("join"));
+    if (invite.success) pendingInvite.set(invite.data);
     // All at once; profile, Wall and registrations fail harmlessly for someone not logged in (getMe decides).
     const [me, profile, wall, regs] = await Promise.all([
       getMe(),

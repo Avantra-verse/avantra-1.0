@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppNav, ADMIN_LINKS } from "@/components/Nav";
 import QRCode from "qrcode";
-import { CreateStaffRequest, WalkInRequest } from "@avantra/shared";
+import { CreateAdminRequest, CreateStaffRequest, WalkInRequest } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
@@ -15,7 +15,7 @@ import { Events } from "./events";
 import { UpiPayments } from "./payments";
 import { Wall } from "./wall";
 
-const TABS = { overview: "Overview", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall" } as const;
+const TABS = { overview: "Overview", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall", admins: "Admins" } as const;
 type Tab = keyof typeof TABS;
 
 // One line under each tab's title.
@@ -27,6 +27,7 @@ const INTRO: Record<Tab, string> = {
   staff: "Volunteer and judge accounts, and which event each judge scores.",
   events: "Open or close events and see the judges' results.",
   wall: "The Engagement Wall: switch it on for event day, add and print challenges.",
+  admins: "Add admins, switch them off or remove them. Only the super admin sees this.",
 };
 
 export default function AdminPage() {
@@ -44,7 +45,7 @@ export default function AdminPage() {
 
   return (
     <>
-      <AppNav links={ADMIN_LINKS} badge="ADMIN" loginHref="/admin/login" portal />
+      <AppNav links={me?.superAdmin ? ADMIN_LINKS : ADMIN_LINKS.filter((l) => l.href !== "/admin#admins")} badge={me?.superAdmin ? "SUPER ADMIN" : "ADMIN"} loginHref="/admin/login" portal />
       {/* md+: no top bar (the sidebar replaces it), so take back <main>'s top padding and clear the sidebar. */}
       <div className={`${account.registrationPage} md:-mt-16 md:pl-60`}>
         <div className={account.starfieldLayer} aria-hidden="true" />
@@ -68,6 +69,7 @@ export default function AdminPage() {
               {tab === "staff" && <Staff />}
               {tab === "events" && <Events />}
               {tab === "wall" && <Wall />}
+              {tab === "admins" && (me.superAdmin ? <Admins meId={me.id} /> : <FormError message="Only the super admin can manage admins." />)}
             </>
           )}
         </div>
@@ -448,6 +450,118 @@ function Staff() {
                       <button type="button" className={t.ghost} disabled={act.busy} onClick={() => (s.disabledAt || confirm(`Disable ${s.name}? They are logged out at once.`)) && toggle(s)}>
                         {s.disabledAt ? "Enable" : "Disable"}
                       </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
+// ---- admins (super admin only; every action is checked again in the database) ----
+
+type AdminRow = { id: string; name: string; email: string; superAdmin: boolean; disabledAt: string | null; createdAt: string };
+
+function Admins({ meId }: { meId: string }) {
+  const list = useLoad<AdminRow[]>("/admin/admins");
+  const act = useAction();
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const set = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    setErrors((x) => ({ ...x, [e.target.name]: "" }));
+  };
+
+  // Same readable 12 characters as staff passwords, plus a capital and a digit for the Auth password rule.
+  function generate() {
+    const abc = "abcdefghjkmnpqrstuvwxyz23456789";
+    const bytes = crypto.getRandomValues(new Uint8Array(10));
+    setForm((f) => ({ ...f, password: "A" + Array.from(bytes, (b) => abc[b % abc.length]).join("") + "7" }));
+    setErrors((x) => ({ ...x, password: "" }));
+  }
+
+  async function create(e: React.FormEvent) {
+    e.preventDefault();
+    const parsed = CreateAdminRequest.safeParse(form);
+    if (!parsed.success) {
+      const found: Record<string, string> = {};
+      for (const i of parsed.error.issues) found[String(i.path[0])] ??= i.message;
+      return setErrors(found);
+    }
+    const r = await act.run(
+      () => api<AdminRow>("/admin/admins", parsed.data),
+      (a) => `${a.name} can log in at /admin/login with ${a.email} and the password ${form.password}. Share it with them now; it isn't shown again.`,
+    );
+    if (r) {
+      setForm({ name: "", email: "", password: "" });
+      list.reload();
+    }
+  }
+
+  const toggle = (a: AdminRow) =>
+    act.run(() => api(`/admin/admins/${a.id}/${a.disabledAt ? "enable" : "disable"}`, {}), () => `${a.name} ${a.disabledAt ? "switched on" : "switched off and logged out"}.`).then(list.reload);
+  const remove = (a: AdminRow) =>
+    confirm(`Remove ${a.name} as an admin? Their account is deleted and can't be brought back.`) &&
+    act.run(() => api(`/admin/admins/${a.id}`, undefined, "DELETE"), () => `${a.name} removed.`).then(list.reload);
+
+  return (
+    <>
+      <section className={t.panel} aria-labelledby="new-admin">
+        <h2 id="new-admin">Add an admin</h2>
+        <p className={t.mute} style={{ marginTop: 0 }}>Admins see everything here except this tab: students, payments, staff, results and the Wall.</p>
+        <form onSubmit={create} noValidate>
+          <div className={t.formGrid}>
+            <Field name="name" label="Name" value={form.name} onChange={set} error={errors.name} />
+            <Field name="email" label="Email" type="email" autoComplete="off" value={form.email} onChange={set} error={errors.email} />
+            <div>
+              <Field name="password" label="Password" autoComplete="new-password" value={form.password} onChange={set} error={errors.password} />
+              <button type="button" className={account.link} onClick={generate}>Make one up</button>
+            </div>
+          </div>
+          <button type="submit" className={t.btn} disabled={act.busy} style={{ marginTop: 14 }}>Create admin</button>
+        </form>
+        <FormError message={act.error} />
+        {act.note && <p role="status">{act.note}</p>}
+      </section>
+
+      <section className={t.panel} aria-labelledby="admin-list">
+        <h2 id="admin-list">Admins</h2>
+        <FormError message={list.error} />
+        {list.data && (
+          <div className={t.scroll}>
+            <table className={`${t.table} ${t.stack}`}>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {list.data.map((a) => (
+                  <tr key={a.id}>
+                    <td>
+                      {a.name}
+                      {a.id === meId && " (you)"}
+                      <div className={t.mute}>{a.email}</div>
+                    </td>
+                    <td>{a.superAdmin ? "Super admin" : a.disabledAt ? "Switched off" : "Admin"}</td>
+                    <td className={t.num}>
+                      {!a.superAdmin && (
+                        <>
+                          <button type="button" className={t.ghost} disabled={act.busy} onClick={() => (a.disabledAt || confirm(`Switch off ${a.name}? They are logged out at once.`)) && toggle(a)}>
+                            {a.disabledAt ? "Switch on" : "Switch off"}
+                          </button>{" "}
+                          <button type="button" className={account.link} disabled={act.busy} onClick={() => remove(a)}>
+                            Remove
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}

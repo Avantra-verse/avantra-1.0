@@ -9,6 +9,13 @@ import { RegisterRequest } from "@avantra/shared";
 import { accountsOpen, api, ApiError, REF_KEY, studentSignupOpen, type Role } from "@/lib/api";
 import { AccountShell, Field, FooterLink, FormError, OpensSoon, styles } from "./Account";
 
+const PASSWORD_RULES: [string, (p: string) => boolean][] = [
+  ["At least 8 characters", (p) => p.length >= 8],
+  ["A small letter (a-z)", (p) => /[a-z]/.test(p)],
+  ["A capital letter (A-Z)", (p) => /[A-Z]/.test(p)],
+  ["A number (0-9)", (p) => /[0-9]/.test(p)],
+];
+
 export function Registration({ role }: { role: Extract<Role, "STUDENT"> }) {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", terms: false });
@@ -130,6 +137,18 @@ export function Registration({ role }: { role: Extract<Role, "STUDENT"> }) {
               <Field name="password" label="Password" type="password" autoComplete="new-password" placeholder="8+ chars, Aa + number" value={form.password} onChange={set} error={errors.password} />
               <Field name="confirmPassword" label="Confirm password" type="password" autoComplete="new-password" placeholder="Repeat password" value={form.confirmPassword} onChange={set} error={errors.confirmPassword} />
             </div>
+            {/* Same rules as the password schema in packages/shared (and Supabase Auth); each ticks as it's met. */}
+            <ul className={styles.pwRules} aria-label="Password rules">
+              {PASSWORD_RULES.map(([label, ok]) => {
+                const met = ok(form.password);
+                return (
+                  <li key={label} data-met={met || undefined}>
+                    <span aria-hidden>{met ? "✓" : "•"}</span> {label}
+                    <span className="sr-only">{met ? " (done)" : ""}</span>
+                  </li>
+                );
+              })}
+            </ul>
             <div className={styles.checkboxGroup}>
               <label htmlFor="terms" className={styles.checkboxLabel}>
                 <input id="terms" name="terms" type="checkbox" checked={form.terms} onChange={set} className={styles.checkboxInput} aria-invalid={!!errors.terms} />

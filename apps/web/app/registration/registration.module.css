@@ -256,6 +256,23 @@
   box-shadow: 0 0 0 3px rgba(157, 0, 6, 0.8);
 }
 
+/* Sign-up password rules under the boxes; each turns green with a tick once met. */
+.pwRules {
+  list-style: none;
+  margin: -4px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  font-family: "Mukta", sans-serif;
+  font-size: 0.92rem;
+  color: #a9b4be;
+}
+
+.pwRules li[data-met] {
+  color: #8fd9a1;
+}
+
 /* Password boxes: a Show/Hide button sits inside the right edge. */
 .pwWrap {
   position: relative;
