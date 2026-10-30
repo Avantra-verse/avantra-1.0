@@ -213,6 +213,7 @@ function TeamView({ event: e, team, leader, busy, run }: { event: Event; team: T
     }
   }
   const full = n >= e.teamMax;
+  const [editing, setEditing] = useState(false);
   return (
     <>
       <div className={styles.teamTop}>
@@ -221,6 +222,14 @@ function TeamView({ event: e, team, leader, busy, run }: { event: Event; team: T
           {full ? "Team complete" : `Needs ${e.teamMax - n} more`}
         </span>
       </div>
+      {leader && !editing && (
+        <button type="button" className={account.link} disabled={busy} onClick={() => setEditing(true)} style={{ marginTop: 6 }}>
+          Edit team details
+        </button>
+      )}
+      {editing ? (
+        <TeamEdit event={e} team={team} busy={busy} run={run} onDone={() => setEditing(false)} />
+      ) : (
       <dl className={t.facts} style={{ margin: "12px 0 0" }}>
         {team.projectTitle && (
           <div>
@@ -239,6 +248,7 @@ function TeamView({ event: e, team, leader, busy, run }: { event: Event; team: T
           <dd>{leader ? "Team leader" : "Member"}</dd>
         </div>
       </dl>
+      )}
 
       {full && (
         <div className={`${t.result} ${t.ok}`} style={{ marginTop: 16 }}>
@@ -351,6 +361,60 @@ function TeamView({ event: e, team, leader, busy, run }: { event: Event; team: T
         </button>
       </div>
     </>
+  );
+}
+
+// Leader only: fix the name, project title and theme (update_team; locked once judging starts).
+function TeamEdit({ event: e, team, busy, run, onDone }: { event: Event; team: Team; busy: boolean; run: Run; onDone: () => void }) {
+  const exhibition = e.category === "EXHIBITION";
+  const [f, setF] = useState({ name: team.name, projectTitle: team.projectTitle ?? "", topic: team.topic ?? "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const id = (field: string) => `${e.slug}-edit-${field}`;
+  const set = (field: keyof typeof f) => (ev: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setF((v) => ({ ...v, [field]: ev.target.value }));
+    setErrors((x) => ({ ...x, [field]: "" }));
+  };
+
+  function save(ev: React.FormEvent) {
+    ev.preventDefault();
+    const found: Record<string, string> = {};
+    const name = f.name.trim();
+    const projectTitle = f.projectTitle.trim();
+    if (name.length < 2 || name.length > 60) found.name = "2 to 60 characters.";
+    if (exhibition && (projectTitle.length < 3 || projectTitle.length > 150)) found.projectTitle = "3 to 150 characters.";
+    if (exhibition && !f.topic) found.topic = "Pick a theme.";
+    setErrors(found);
+    if (Object.keys(found).length) return;
+    run(async () => {
+      await api(`/teams/${team.id}`, { name, ...(exhibition && { projectTitle, topic: f.topic }) }, "PATCH");
+      onDone();
+    });
+  }
+
+  return (
+    <form className={`${account.form} ${styles.teamForm}`} onSubmit={save} noValidate style={{ marginTop: 12 }}>
+      <Field name={id("name")} label="Team name" maxLength={60} value={f.name} onChange={set("name")} error={errors.name} />
+      {exhibition && (
+        <>
+          <Field name={id("projectTitle")} label="Project title" maxLength={150} value={f.projectTitle} onChange={set("projectTitle")} error={errors.projectTitle} />
+          <SelectField name={id("topic")} label="Theme" value={f.topic} onChange={set("topic")} error={errors.topic}>
+            <option value="">Select a theme</option>
+            {EXHIBITION_TOPICS.map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </SelectField>
+          <p className={styles.meta} style={{ margin: 0 }}>A new theme applies to the whole team.</p>
+        </>
+      )}
+      <div className={styles.actions}>
+        <button type="submit" className={styles.btn} disabled={busy}>
+          {busy ? "Saving…" : "Save"}
+        </button>
+        <button type="button" className={account.link} disabled={busy} onClick={onDone}>
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 }
 

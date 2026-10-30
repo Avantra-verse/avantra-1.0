@@ -153,6 +153,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "POST /teams/:id/leave": ({ id }) => rpc("leave_team", { p_team_id: id }),
   "DELETE /teams/:id/members/:reg": ({ id, reg }) => rpc("remove_member", { p_team_id: id, p_registration_id: reg }),
   "POST /teams/:id/invite-code": ({ id }) => rpc("new_invite_code", { p_team_id: id }),
+  "PATCH /teams/:id": ({ id, name, projectTitle, topic }) => rpc("update_team", { p_team_id: id, p_name: name, p_project_title: projectTitle, p_topic: topic }),
 
   // Fee by UPI and the Engagement Wall: supabase/migrations/*_fee_and_wall.sql
   "POST /payments/upi": ({ utr }) => rpc("submit_upi_payment", { p_utr: utr }),
