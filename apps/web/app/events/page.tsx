@@ -149,8 +149,8 @@ function FeeBox({ paid }: { paid: boolean }) {
         Science Exhibition fee: <strong>{paid ? "Paid ✓" : "₹299, not paid yet"}</strong>
       </span>
       {!paid && (
-        <Link className={styles.btn} href="/dashboard">
-          Pay ₹299 on your dashboard
+        <Link className={styles.btn} href="/dashboard/pay">
+          Pay ₹299
         </Link>
       )}
     </div>

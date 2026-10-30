@@ -17,6 +17,7 @@ const LINKS = [
 export default function Footer() {
   const pathname = usePathname();
   if (pathname === "/" || pathname === "/about" || pathname === "/contact") return null; // these pages have their own footer
+  if (pathname.startsWith("/dashboard")) return null; // the dashboard is an app screen, not a marketing page
   return (
     <footer className="relative z-30 border-t border-starlight/15 bg-void px-6 pt-14 pb-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 text-center md:flex-row md:items-start md:text-left">

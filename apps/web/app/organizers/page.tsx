@@ -42,7 +42,7 @@ export default function OrganizersPage() {
               {tier.people.map((p) => (
                 <li
                   key={p.name}
-                  className="group relative aspect-[3/4] w-[calc(50%-8px)] overflow-hidden rounded-2xl border-[3px] border-sky bg-panel shadow-[5px_5px_0_0_var(--color-ember)] transition-transform duration-300 hover:-translate-y-1 sm:w-48"
+                  className="group relative flex w-[calc(50%-8px)] flex-col overflow-hidden rounded-2xl border-[3px] border-sky bg-panel shadow-[5px_5px_0_0_var(--color-ember)] transition-transform duration-300 hover:-translate-y-1 sm:block sm:aspect-[3/4] sm:w-48"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -51,9 +51,10 @@ export default function OrganizersPage() {
                     width={600}
                     height={800}
                     loading="lazy"
-                    className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    className="aspect-[3/4] w-full object-cover object-top transition-transform duration-500 sm:absolute sm:inset-0 sm:aspect-auto sm:h-full group-hover:scale-105"
                   />
-                  <div className="absolute inset-x-2 bottom-2 rounded-xl border-2 border-sky bg-panel/95 px-2.5 py-2">
+                  {/* Phones: caption sits below the photo so it never covers the face; sm+: overlaid card. */}
+                  <div className="relative flex-1 border-t-[3px] border-sky bg-panel px-2.5 py-2 sm:absolute sm:inset-x-2 sm:bottom-2 sm:rounded-xl sm:border-2 sm:bg-panel/95">
                     <p className="font-[family-name:var(--font-display)] text-[11px] uppercase tracking-wider text-sky">{p.role}</p>
                     <h3 className="text-sm leading-tight font-bold text-starlight">{p.name}</h3>
                     <p className="mt-0.5 text-[11px] leading-snug text-secondary">{p.position}</p>

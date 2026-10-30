@@ -35,11 +35,19 @@
   border: 2px solid #4a6f88;
   border-radius: 999px;
   cursor: pointer;
+  min-height: 44px;
+  white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  border-color: var(--sky);
 }
 
 .tab[aria-selected="true"] {
   border-color: var(--sky);
-  color: var(--sky);
+  background: var(--sky);
+  color: var(--bg);
   font-weight: 700;
 }
 
@@ -53,7 +61,8 @@
   border: 2px solid rgba(154, 212, 251, 0.35);
   border-radius: 18px;
   padding: 20px;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
+  box-shadow: 5px 5px 0 0 var(--red);
 }
 
 .panel h2 {
@@ -64,6 +73,167 @@
   margin: 0 0 12px;
 }
 
+/* Hero card at the top of a dashboard: who you are, at a glance. */
+.hero {
+  composes: panel;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  border-color: var(--sky);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(154, 212, 251, 0.14), transparent 60%),
+    var(--panel);
+}
+
+.hero h1 {
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  line-height: 1.15;
+  margin: 0 0 2px;
+  overflow-wrap: anywhere;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 2px solid var(--sky);
+  border-radius: 999px;
+  color: var(--sky);
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Payment wizard: numbered step track, QR + details, Back/Next row. */
+.steps {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.steps li {
+  flex: 1;
+  padding: 6px 4px 6px;
+  border-top: 4px solid #4a6f88;
+  color: var(--mute);
+  font-size: 0.92rem;
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step) ". ";
+}
+
+.steps li[data-done] {
+  border-color: var(--sky);
+}
+
+.steps li[aria-current="step"] {
+  border-color: var(--red-hi);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.payQr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.payQr img {
+  width: 220px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.payQr > div {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.stepNav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* Dashboard call to action: a whole-row link. */
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 2px solid var(--sky);
+  border-radius: 14px;
+  background: rgba(154, 212, 251, 0.08);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.cta:hover {
+  background: rgba(154, 212, 251, 0.14);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 2px;
+}
+
+.badgeQr {
+  display: block;
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 14px;
+}
+
+/* Unpaid: the badge is blurred behind a lock. */
+.locked {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.locked img {
+  filter: blur(9px);
+  opacity: 0.7;
+}
+
+.lock {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 3rem;
+}
+
+/* Dashboard pages: room for the phone tab bar at the bottom. */
+@media (max-width: 767px) {
+  .page.appPage {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+}
+
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -72,6 +242,7 @@
 
 .tile {
   padding: 14px;
+  background: var(--bg);
   border: 2px solid rgba(154, 212, 251, 0.25);
   border-radius: 14px;
 }
@@ -85,6 +256,7 @@
 }
 
 .tileLabel {
+  display: block;
   color: var(--mute);
   font-size: 0.92rem;
 }
@@ -360,8 +532,22 @@
     font-size: 1.35rem;
   }
 
+  /* One swipeable row of tabs instead of a wrapped pile. */
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -12px 18px;
+    padding: 2px 12px 4px;
+  }
+
   .tab {
-    padding: 7px 13px;
+    flex: none;
+    padding: 7px 14px;
+  }
+
+  .panel {
+    box-shadow: 4px 4px 0 0 var(--red);
   }
 
   .points {

@@ -10,11 +10,13 @@ export default function PageTransition({ children }: { children: React.ReactNode
   const isRoomRoute = pathname === "/" || pathname === "/about" || pathname === "/contact";
 
   if (reduce || isRoomRoute) return <>{children}</>;
+  // Dashboard pages share one key: switching between them is instant and keeps the dashboard's loaded data.
+  const key = pathname.startsWith("/dashboard") ? "/dashboard" : pathname;
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={pathname}
+        key={key}
         initial={{ opacity: 0, scale: 0.985, filter: "blur(6px)" }}
         animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
         exit={{ opacity: 0, scale: 1.01, filter: "blur(6px)" }}

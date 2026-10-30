@@ -49,14 +49,20 @@ function fail(e: AuthError | PostgrestError): never {
 }
 const ok = <T>({ data, error }: { data: T; error: AuthError | PostgrestError | null }) => (error ? fail(error) : data);
 
+// The logged-in user's id. getClaims checks the session token's signature locally (keys cached), so there is
+// no Auth server round trip per call; the database still checks the token on every query (RLS).
+async function uid(): Promise<string> {
+  const { data } = await supabase().auth.getClaims();
+  if (!data?.claims.sub) throw new ApiError(401, "Log in first");
+  return data.claims.sub;
+}
+
 async function me(): Promise<Me> {
-  const sb = supabase();
-  const { data: auth } = await sb.auth.getUser();
-  if (!auth.user) throw new ApiError(401, "Log in first");
-  const u = ok(await sb.from("User").select("id, email, name, role, disabledAt, expiresAt, Student(userId)").eq("id", auth.user.id).maybeSingle());
+  const id = await uid();
+  const u = ok(await supabase().from("User").select("id, email, name, phone, role, disabledAt, expiresAt, Student(userId)").eq("id", id).maybeSingle());
   // Switched off by an admin, or a staff account past its end date: same as logged out.
   if (!u || u.disabledAt || (u.expiresAt && new Date(u.expiresAt) <= new Date())) throw new ApiError(401, "Log in first");
-  return { id: u.id, email: u.email, name: u.name, role: u.role, profileComplete: u.role !== "STUDENT" || !!u.Student };
+  return { id: u.id, email: u.email, name: u.name, phone: u.phone, role: u.role, profileComplete: u.role !== "STUDENT" || !!u.Student };
 }
 
 // Password log in for the given roles. One message for every failure, including the wrong page, so it never reveals the account type.
@@ -112,7 +118,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
 
   // Same shape as the old GET /profile: the latest payment only, and days through the main gate.
   "GET /profile": async () => {
-    const { id } = await me();
+    const id = await uid();
     const s = ok(
       await supabase()
         .from("Student")
@@ -128,6 +134,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
     return { student: { ...student, payments: Payment, _count: { checkIns: CheckIn[0]?.count ?? 0 } } };
   },
   "POST /profile/student": async (profile) => ok(await supabase().rpc("create_student_profile", { profile })),
+  "PUT /profile/student": (profile) => rpc("update_student_profile", { profile }),
 
   // Event entries and teams: supabase/migrations/*_registrations_and_teams.sql
   "GET /registrations/mine": () => rpc("my_registrations"),
@@ -220,7 +227,7 @@ async function call<T>(run: () => Promise<unknown>): Promise<T> {
 }
 
 export type Role = "STUDENT" | "JUDGE" | "VOLUNTEER" | "ADMIN";
-export type Me = { id: string; email: string; name: string; role: Role; profileComplete: boolean };
+export type Me = { id: string; email: string; name: string; phone: string | null; role: Role; profileComplete: boolean };
 
 // localStorage key: referral code from a share link (/registration?ref=CODE), filled in on the profile step.
 export const REF_KEY = "avantra.ref";

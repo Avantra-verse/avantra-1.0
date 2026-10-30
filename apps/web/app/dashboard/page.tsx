@@ -3,48 +3,22 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { api, ApiError, apiReady, getMe, LOGIN_HREF, type LastPayment, type Me } from "@/lib/api";
+import { api, apiReady, LOGIN_HREF, type Me } from "@/lib/api";
 import { AccountShell, FormError, OpensSoon, styles } from "@/components/account/Account";
-import { UpiFee } from "@/components/account/UpiFee";
 import t from "../staff/tools.module.css";
-import { Tile, useLoad, useTabs } from "../admin/ui";
-
-type Student = {
-  avantraId: string;
-  qrToken: string;
-  grade: number;
-  section: string | null;
-  schoolName: string;
-  feePaidAt: string | null;
-  _count: { checkIns: number };
-  payments: LastPayment[]; // the latest only
-};
-type WallMe = { open: boolean; points: number; solved: number; rank: number | null; players: number };
-type Profile = { student: Student | null };
+import { Tile, useTabs } from "../admin/ui";
+import { useDashboard, type Student, type WallMe } from "./data";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [me, setMe] = useState<Me | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [failed, setFailed] = useState("");
-
-  useEffect(() => {
-    if (!apiReady) return;
-    (async () => {
-      const m = await getMe();
-      if (!m) return router.replace(LOGIN_HREF);
-      if (!m.profileComplete) return router.replace("/profile");
-      setMe(m);
-      setProfile(await api<Profile>("/profile"));
-    })().catch((e: ApiError) => setFailed(e.message));
-  }, [router]);
+  const { me, student, wall, loaded, failed } = useDashboard();
 
   async function logout() {
     await api("/auth/logout", {}).catch(() => {});
     router.push(LOGIN_HREF);
   }
 
-  if (me && profile?.student) return <StudentDashboard me={me} s={profile.student} logout={logout} onPaid={async () => setProfile(await api<Profile>("/profile"))} />;
+  if (me && student) return <StudentDashboard me={me} s={student} w={wall} />;
 
   return (
     <AccountShell tagline={me ? `Welcome, ${me.name.split(" ")[0]}.` : "Your universe, at a glance."}>
@@ -52,7 +26,7 @@ export default function DashboardPage() {
         <OpensSoon what="Your dashboard" />
       ) : failed ? (
         <FormError message={failed} />
-      ) : !me || !profile ? (
+      ) : !loaded || !me ? (
         <p className={styles.subtext} role="status">Loading…</p>
       ) : (
         <>
@@ -68,38 +42,38 @@ export default function DashboardPage() {
   );
 }
 
-const STUDENT_TABS = { overview: "Overview", badge: "Entry badge", wall: "Wall" } as const;
+const STUDENT_TABS = { overview: "Overview", badge: "Entry badge" } as const;
+const EVENT_DAY_TABS = { ...STUDENT_TABS, wall: "Wall" } as const;
 
-function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logout: () => void; onPaid: () => Promise<void> }) {
-  const { tab, bar } = useTabs(STUDENT_TABS, "overview");
+function StudentDashboard({ me, s, w }: { me: Me; s: Student; w: WallMe | null }) {
   const [qr, setQr] = useState("");
-  const wall = useLoad<WallMe>("/wall/me");
   useEffect(() => {
     // Dark on cream so gate scanners read it easily, even off a dim phone screen.
-    QRCode.toDataURL(s.qrToken, { width: 480, margin: 2, color: { dark: "#120e0c", light: "#f4ead9" } }).then(setQr);
-  }, [s.qrToken]);
+    // Locked until the fee is paid: draw a stand-in code so the real one never shows under the blur.
+    QRCode.toDataURL(s.feePaidAt ? s.qrToken : "AVANTRA-LOCKED", { width: 480, margin: 2, color: { dark: "#120e0c", light: "#f4ead9" } }).then(setQr);
+  }, [s.qrToken, s.feePaidAt]);
 
   const days = s._count.checkIns;
-  const w = wall.data;
   const live = !!w?.open; // the admin's "Open the Wall" is the event-day switch; until then the Wall and check-ins stay hidden
+  // The Wall tab only exists on event day (the cast is safe: without it, "wall" is never a tab).
+  const { tab, bar } = useTabs((live ? EVENT_DAY_TABS : STUDENT_TABS) as typeof EVENT_DAY_TABS, "overview");
   const reviewing = s.payments[0]?.method === "UPI" && s.payments[0].status === "CREATED";
 
   return (
     <div className={styles.registrationPage}>
       <div className={styles.starfieldLayer} aria-hidden="true" />
-      <div className={t.page}>
-        <div className={t.head}>
+      <div className={`${t.page} ${t.appPage}`}>
+        <header className={t.hero}>
           <div>
-            <h1 className={styles.heading} style={{ fontSize: "2rem", margin: 0 }}>{me.name}</h1>
+            <h1>{me.name}</h1>
             <span className={t.mute}>
               Class {s.grade}
               {s.section ? `-${s.section}` : ""} · {s.schoolName}
             </span>
+            <div className={t.mute} style={{ marginTop: 4, overflowWrap: "anywhere" }}>{me.email}</div>
           </div>
-          <span className={t.mute}>
-            {me.email} · <button type="button" className={styles.link} onClick={logout}>Log out</button>
-          </span>
-        </div>
+          <span className={t.chip} aria-label={`AVANTRA ID ${s.avantraId}`}>{s.avantraId}</span>
+        </header>
 
         {bar}
         {tab === "overview" && (
@@ -119,7 +93,16 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
               <p className={t.mute} style={{ marginBottom: s.feePaidAt ? 0 : undefined }}>
                 Entry and all other events are free. The ₹299 fee is only for the Science Exhibition.
               </p>
-              {!s.feePaidAt && <UpiFee last={s.payments[0]} onSent={onPaid} />}
+              {!s.feePaidAt && (
+                <a className={t.cta} href="/dashboard/pay">
+                  <span>
+                    <strong>{reviewing ? "Payment under review" : "Register for the Science Exhibition"}</strong>
+                    <br />
+                    <span className={t.mute}>{reviewing ? "Check the status or change your UTR." : "Pay ₹299 by UPI in three quick steps."}</span>
+                  </span>
+                  <span className={t.btn}>{reviewing ? "View" : "Pay now"}</span>
+                </a>
+              )}
             </section>
             <section className={t.panel} aria-labelledby="fest">
               <h2 id="fest">AVANTRA 2026</h2>
@@ -132,19 +115,37 @@ function StudentDashboard({ me, s, logout, onPaid }: { me: Me; s: Student; logou
         {tab === "badge" && (
           <section className={t.panel} aria-labelledby="badge" style={{ textAlign: "center", maxWidth: 480, margin: "0 auto" }}>
             <h2 id="badge">Your entry badge</h2>
-            {qr && <img src={qr} alt={`Entry QR for ${s.avantraId}`} width={240} height={240} style={{ display: "block", margin: "0 auto", borderRadius: 14, maxWidth: "100%", height: "auto" }} />}
-            <p className={styles.label} style={{ margin: "10px 0 4px", fontSize: "1.6rem", letterSpacing: "0.06em" }}>
-              {s.avantraId}
-            </p>
-            <p className={t.mute}>Show this QR at the gate. If it won&apos;t scan, give your AVANTRA ID.</p>
-            {qr && (
-              <a className={t.ghost} href={qr} download={`avantra-badge-${s.avantraId}.png`} style={{ display: "inline-block", textDecoration: "none" }}>
-                Save badge to phone
-              </a>
+            {s.feePaidAt ? (
+              <>
+                {qr && <img src={qr} alt={`Entry QR for ${s.avantraId}`} width={240} height={240} className={t.badgeQr} />}
+                <p className={styles.label} style={{ margin: "10px 0 4px", fontSize: "1.6rem", letterSpacing: "0.06em" }}>
+                  {s.avantraId}
+                </p>
+                <p className={t.mute}>Show this QR at the gate. If it won&apos;t scan, give your AVANTRA ID.</p>
+                {qr && (
+                  <a className={t.ghost} href={qr} download={`avantra-badge-${s.avantraId}.png`}>
+                    Save badge to phone
+                  </a>
+                )}
+              </>
+            ) : (
+              <>
+                <div className={t.locked}>
+                  {qr && <img src={qr} alt="" width={240} height={240} className={t.badgeQr} />}
+                  <span className={t.lock} aria-hidden="true">🔒</span>
+                </div>
+                <p style={{ margin: "14px 0 4px", fontWeight: 700 }}>Locked</p>
+                <p className={t.mute}>
+                  {reviewing
+                    ? "Your badge unlocks as soon as the school confirms your payment."
+                    : "Your entry badge unlocks once you pay the ₹299 Science Exhibition fee."}
+                </p>
+                <a className={t.btn} href="/dashboard/pay">{reviewing ? "View payment" : "Pay now"}</a>
+              </>
             )}
           </section>
         )}
-        {tab === "wall" && (
+        {tab === "wall" && live && (
           <section className={t.panel} aria-labelledby="wall">
             <h2 id="wall">Engagement Wall</h2>
             {live ? (
