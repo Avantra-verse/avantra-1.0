@@ -256,6 +256,37 @@
   box-shadow: 0 0 0 3px rgba(157, 0, 6, 0.8);
 }
 
+/* Password boxes: a Show/Hide button sits inside the right edge. */
+.pwWrap {
+  position: relative;
+}
+
+.inputPw {
+  padding-right: 72px;
+}
+
+.pwToggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  min-height: 36px;
+  min-width: 56px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sky);
+  font-family: "Mukta", sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pwToggle:hover,
+.pwToggle:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .inputError {
   border-color: var(--err) !important;
 }

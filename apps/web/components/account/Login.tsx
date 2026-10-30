@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LoginRequest } from "@avantra/shared";
 import { accountsOpen, api, ApiError, studentSignupOpen, type Me, type Role } from "@/lib/api";
@@ -34,8 +35,10 @@ export function Login({ role }: { role: Extract<Role, "STUDENT"> }) {
       const safe = next && /^\/(?![/\\])/.test(next) ? next : "/dashboard";
       router.push(me.profileComplete ? safe : "/profile");
     } catch (err) {
-      // The API gives the same message for a wrong password, unknown email or the wrong tab, on purpose.
-      setErrors({ form: (err as ApiError).message });
+      // The API gives the same message for a wrong password, unknown email or the wrong tab, on purpose;
+      // so the sign-up hint goes to everyone and never says whether the email exists.
+      const e = err as ApiError;
+      setErrors({ form: e.status === 401 ? "Wrong email or password. Haven't signed up yet? Create an account first." : e.message, ...(e.status === 401 && { signup: "1" }) });
       setBusy(false);
     }
   }
@@ -56,6 +59,11 @@ export function Login({ role }: { role: Extract<Role, "STUDENT"> }) {
             <Field name="email" label="Email" type="email" autoComplete="email" value={form.email} onChange={set} error={errors.email} />
             <Field name="password" label="Password" type="password" autoComplete="current-password" value={form.password} onChange={set} error={errors.password} />
             <FormError message={errors.form} />
+            {errors.form && errors.signup && (
+              <Link href="/registration" className={styles.submitBtn} style={{ textAlign: "center", background: "transparent" }}>
+                Create an account
+              </Link>
+            )}
             <button type="submit" className={styles.submitBtn} disabled={busy}>
               {busy ? "Logging in…" : "Log in"}
             </button>

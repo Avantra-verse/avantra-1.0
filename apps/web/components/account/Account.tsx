@@ -38,19 +38,34 @@ export function AccountShell({ tagline, children }: { tagline: string; children:
 type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & { name: string; label: string; error?: string };
 
 export function Field({ name, label, error, ...input }: FieldProps) {
+  const [shown, setShown] = React.useState(false);
+  const password = input.type === "password";
+  const box = (
+    <input
+      id={name}
+      name={name}
+      {...input}
+      type={password && shown ? "text" : input.type}
+      className={`${styles.input} ${password ? styles.inputPw : ""} ${error ? styles.inputError : ""}`}
+      aria-invalid={!!error}
+      aria-describedby={error ? `${name}-error` : undefined}
+    />
+  );
   return (
     <div className={styles.fieldGroup}>
       <label htmlFor={name} className={styles.label}>
         {label}
       </label>
-      <input
-        id={name}
-        name={name}
-        {...input}
-        className={`${styles.input} ${error ? styles.inputError : ""}`}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${name}-error` : undefined}
-      />
+      {password ? (
+        <div className={styles.pwWrap}>
+          {box}
+          <button type="button" className={styles.pwToggle} onClick={() => setShown((v) => !v)} aria-pressed={shown} aria-controls={name}>
+            {shown ? "Hide" : "Show"}
+          </button>
+        </div>
+      ) : (
+        box
+      )}
       {error && (
         <span id={`${name}-error`} className={styles.errorText}>
           {error}
