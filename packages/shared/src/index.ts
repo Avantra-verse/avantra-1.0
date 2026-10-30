@@ -93,6 +93,10 @@ export const CreateStaffRequest = z
   .refine((v) => v.role !== 'JUDGE' || !!v.eventId, { message: 'Judges need an event', path: ['eventId'] });
 export type CreateStaffRequest = z.infer<typeof CreateStaffRequest>;
 
+// Super admin only (app/admin/admins/route.ts): a new admin account, password handed over like staff.
+export const CreateAdminRequest = z.object({ name, email, password });
+export type CreateAdminRequest = z.infer<typeof CreateAdminRequest>;
+
 // ---- events, registrations, payments ----
 
 // Science & Innovation Exhibition fee, paid once per student. Needed only to register for EXHIBITION events;

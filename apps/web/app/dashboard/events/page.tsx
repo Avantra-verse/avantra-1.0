@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { EXHIBITION_TOPICS } from "@avantra/shared";
-import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, pendingInvite, type Me } from "@/lib/api";
 import { FormError, OpensSoon, styles as account } from "@/components/account/Account";
 import styles from "./events.module.css";
 import { feeReviewing, useDashboard } from "../data";
@@ -272,9 +272,20 @@ function EventDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [topic, setTopic] = useState("");
+  // Came from a team's invite link: register on that team's theme instead of picking one.
+  const [invite, setInvite] = useState<{ name: string; topic: string | null; eventId: string } | null>(null);
   useEffect(() => {
     ref.current?.showModal();
   }, []);
+  useEffect(() => {
+    const code = pendingInvite.get();
+    if (!code || reg || !student || e.category !== "EXHIBITION") return;
+    api<{ name: string; topic: string | null; eventId: string }>("/teams/preview", { inviteCode: code }).then(
+      (t) => t.eventId === e.id && t.topic && setInvite(t),
+      () => {}, // a stale or wrong code: the normal theme picker shows
+    );
+  }, [e.id, e.category, reg, student]);
+  const teamTopic = invite?.topic ?? null;
 
   // Every action: call the API, then reload the page's data so the cards stay in step.
   const run = async (fn: () => Promise<unknown>) => {
@@ -404,13 +415,20 @@ function EventDialog({
               noValidate
               onSubmit={(ev) => {
                 ev.preventDefault();
-                if (!topic) return setError("Pick a theme.");
-                run(() => api("/registrations", { eventId: e.id, topic })).then((ok) => ok && router.push("/dashboard/pay"));
+                const chosen = teamTopic ?? topic;
+                if (!chosen) return setError("Pick a theme.");
+                run(() => api("/registrations", { eventId: e.id, topic: chosen })).then((ok) => ok && router.push("/dashboard/pay"));
               }}
             >
               <p className={styles.note} style={{ marginTop: 0 }}>
                 You compete as a <strong>{level(grade)}</strong>, from your class. Your team builds its project on this theme.
               </p>
+              {teamTopic ? (
+                <p className={styles.note}>
+                  You&apos;re joining team <strong>{invite!.name}</strong>, so your theme is the team&apos;s: <strong>{teamTopic}</strong>. After you pay,
+                  you&apos;ll join the team automatically.
+                </p>
+              ) : (
               <fieldset className={account.fieldset}>
                 <legend className={account.fieldsetLegend}>Pick your theme</legend>
                 <div className={styles.themes}>
@@ -432,6 +450,7 @@ function EventDialog({
                   ))}
                 </div>
               </fieldset>
+              )}
             </form>
           ) : (
             <>

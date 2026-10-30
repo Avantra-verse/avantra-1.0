@@ -63,10 +63,10 @@ async function uid(): Promise<string> {
 
 async function me(): Promise<Me> {
   const id = await uid();
-  const u = ok(await supabase().from("User").select("id, email, name, phone, role, disabledAt, expiresAt, Student(userId)").eq("id", id).maybeSingle());
+  const u = ok(await supabase().from("User").select("id, email, name, phone, role, superAdmin, disabledAt, expiresAt, Student(userId)").eq("id", id).maybeSingle());
   // Switched off by an admin, or a staff account past its end date: same as logged out.
   if (!u || u.disabledAt || (u.expiresAt && new Date(u.expiresAt) <= new Date())) throw new ApiError(401, "Log in first");
-  return { id: u.id, email: u.email, name: u.name, phone: u.phone, role: u.role, profileComplete: u.role !== "STUDENT" || !!u.Student };
+  return { id: u.id, email: u.email, name: u.name, phone: u.phone, role: u.role, profileComplete: u.role !== "STUDENT" || !!u.Student, superAdmin: u.superAdmin };
 }
 
 // Password log in for the given roles. One message for every failure, including the wrong page, so it never reveals the account type.
@@ -147,6 +147,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "GET /teams": ({ eventId }) => rpc("open_teams", { p_event_id: eventId }),
   "POST /teams": ({ eventId, name, projectTitle, topic }) => rpc("create_team", { p_event_id: eventId, p_name: name, p_project_title: projectTitle, p_topic: topic }),
   "POST /teams/join": ({ inviteCode }) => rpc("join_team", { p_invite_code: inviteCode }),
+  "POST /teams/preview": ({ inviteCode }) => rpc("team_preview", { p_invite_code: inviteCode }),
   "POST /teams/:id/requests": ({ id }) => rpc("request_join", { p_team_id: id }),
   "POST /teams/:id/requests/:reg/accept": ({ id, reg }) => rpc("accept_join", { p_team_id: id, p_registration_id: reg }),
   "DELETE /teams/:id/requests/:reg": ({ id, reg }) => rpc("drop_join_request", { p_team_id: id, p_registration_id: reg }),
@@ -187,6 +188,10 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "POST /admin/staff/:id/assign": ({ id, eventId }) => rpc("admin_assign_judge", { p_user_id: id, p_event_id: eventId }),
   "POST /admin/users/:id/disable": ({ id }) => rpc("admin_set_disabled", { p_user_id: id, p_disabled: true }),
   "POST /admin/users/:id/enable": ({ id }) => rpc("admin_set_disabled", { p_user_id: id, p_disabled: false }),
+  // Super admin only (checked in the database).
+  "GET /admin/admins": () => rpc("admin_admins"),
+  "POST /admin/admins/:id/disable": ({ id }) => rpc("admin_set_admin_disabled", { p_user_id: id, p_disabled: true }),
+  "POST /admin/admins/:id/enable": ({ id }) => rpc("admin_set_admin_disabled", { p_user_id: id, p_disabled: false }),
   "GET /admin/wall": () => rpc("admin_wall"),
   "PUT /admin/wall/state": ({ open, frozen }) => rpc("admin_wall_state", { p_open: open, p_frozen: frozen }),
   "PATCH /admin/wall/challenges/:id": ({ id, active, answers }) =>
@@ -199,6 +204,13 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "POST /admin/wall/import": (b) => post("/admin/wall/import", b),
   // Making accounts needs the secret key, so these run on the server too.
   "POST /admin/staff": (b) => post("/admin/staff", b),
+  "POST /admin/admins": (b) => post("/admin/admins", b),
+  "DELETE /admin/admins/:id": async ({ id }) => {
+    const res = await fetch(`/admin/admins?id=${encodeURIComponent(String(id))}`, { method: "DELETE" });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new ApiError(res.status, data?.message ?? OFFLINE, {}, data);
+    return data;
+  },
   "POST /admin/walk-in": (b) => post("/admin/walk-in", b),
 
   // "Write to the team": queued as an email to the team, reply-to the sender. A filled `website` trap field = a bot: pretend it worked.
@@ -235,10 +247,19 @@ async function call<T>(run: () => Promise<unknown>): Promise<T> {
 }
 
 export type Role = "STUDENT" | "JUDGE" | "VOLUNTEER" | "ADMIN";
-export type Me = { id: string; email: string; name: string; phone: string | null; role: Role; profileComplete: boolean };
+export type Me = { id: string; email: string; name: string; phone: string | null; role: Role; profileComplete: boolean; superAdmin?: boolean };
 
 // localStorage key: referral code from a share link (/registration?ref=CODE), filled in on the profile step.
 export const REF_KEY = "avantra.ref";
+
+// A team invite (/dashboard/teams?join=CODE) kept on this phone until the student has registered and paid,
+// even through sign-up and log in. The Events page shows the team's theme; the Teams page then joins.
+const JOIN_KEY = "avantra.join";
+export const pendingInvite = {
+  get: () => { try { return localStorage.getItem(JOIN_KEY); } catch { return null; } },
+  set: (code: string) => { try { localStorage.setItem(JOIN_KEY, code); } catch {} },
+  clear: () => { try { localStorage.removeItem(JOIN_KEY); } catch {} },
+};
 
 // null = not logged in
 export const getMe = () => api<Me>("/auth/me").catch((e) => (e instanceof ApiError && e.status === 401 ? null : Promise.reject(e)));
