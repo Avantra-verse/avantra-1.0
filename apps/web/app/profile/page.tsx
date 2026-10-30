@@ -113,7 +113,7 @@ function StudentForm({ name, onDone }: { name: string; onDone: () => void }) {
           <Field name="section" label="Section (optional)" placeholder="e.g. B" maxLength={10} value={f.section} onChange={set} error={errors.section} />
         </div>
         <Field name="schoolName" label="School name" placeholder="e.g. SSRVM, Rourkela" value={f.schoolName} onChange={set} error={errors.schoolName} />
-        <Field name="referralCode" label="Ambassador code (optional)" placeholder="6 letters and numbers" maxLength={8} autoCapitalize="characters" value={f.referralCode} onChange={set} error={errors.referralCode} />
+        <Field name="referralCode" label="Ambassador code (optional)" placeholder="e.g. ABC4XY" maxLength={8} autoCapitalize="characters" value={f.referralCode} onChange={set} error={errors.referralCode} />
         <Field name="phone" label="Your phone" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile" value={f.phone} onChange={set} error={errors.phone} />
         <div className={styles.twoColRow}>
           <Field name="guardianPhone" label="Parent's phone (optional)" type="tel" inputMode="numeric" placeholder="10-digit mobile" value={f.guardianPhone} onChange={set} error={errors.guardianPhone} />

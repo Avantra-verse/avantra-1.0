@@ -55,8 +55,9 @@ const schoolName = z.string().trim().min(3, 'Type your school name').max(200);
 
 const grade = z.number().int().min(1).max(12);
 
-// The code an ambassador shares (we email it to them by hand). Codes are 6 characters; case and spaces don't matter.
-export const ReferralCode = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{6}$/, 'Ambassador codes are 6 letters and numbers');
+// The code an ambassador shares (we email it to them by hand): 3 name letters + 3 letters or numbers, e.g. GRDN6T.
+// Case and spaces don't matter. Same rule as private.insert_student.
+export const ReferralCode = z.string().trim().toUpperCase().regex(/^[A-Z]{3}[A-Z0-9]{3}$/, 'That is not an ambassador code. Check it, or leave it blank.');
 
 const studentProfileFields = z.object({
   phone,
