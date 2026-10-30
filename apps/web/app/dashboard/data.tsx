@@ -26,7 +26,9 @@ export type MyReg = {
   event: { slug: string; name: string; teamMax: number };
   teamMember: { isLeader: boolean; team: { id: string; name: string; members: unknown[] } } | null;
 };
-export type WallMe = { open: boolean; points: number; solved: number; rank: number | null; players: number };
+// UTR sent, the school hasn't decided yet: every page shows "under review" instead of asking to pay again.
+export const feeReviewing = (s: Student | null) => !s?.feePaidAt && s?.payments[0]?.method === "UPI" && s.payments[0].status === "CREATED";
+export type WallMe ={ open: boolean; points: number; solved: number; rank: number | null; players: number };
 
 type Dashboard = {
   me: Me | null;

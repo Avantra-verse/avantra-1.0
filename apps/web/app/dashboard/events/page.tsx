@@ -11,7 +11,7 @@ import { EXHIBITION_TOPICS } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { FormError, OpensSoon, styles as account } from "@/components/account/Account";
 import styles from "./events.module.css";
-import { useDashboard } from "../data";
+import { feeReviewing, useDashboard } from "../data";
 import steps from "../../staff/tools.module.css";
 
 type Category = "EXHIBITION" | "TECHNOLOGY" | "EXPERIENCE" | "WORKSHOP";
@@ -48,7 +48,8 @@ function teamSize(e: Event) {
 }
 
 export default function EventsPage() {
-  const { reload: refreshDashboard } = useDashboard(); // Home shows registration and team status
+  const { reload: refreshDashboard, student: dash } = useDashboard(); // Home shows registration and team status
+  const reviewing = feeReviewing(dash);
   const [events, setEvents] = useState<Event[] | null>(null);
   const [me, setMe] = useState<Me | null>(null);
   const [regs, setRegs] = useState<Reg[]>([]);
@@ -130,7 +131,7 @@ export default function EventsPage() {
                         <span className={styles.pill}>{exhibition ? "₹299 per student" : "Free"}</span>
                         {reg ? (
                           <span className={styles.pill} data-on>
-                            {exhibition && !feePaid ? "Registered · pay to finish" : "Registered ✓"}
+                            {exhibition && !feePaid ? (reviewing ? "Registered · fee under review" : "Registered · pay to finish") : "Registered ✓"}
                           </span>
                         ) : (
                           !e.registrationOpen && <span className={styles.pill}>Registration closed</span>
@@ -152,7 +153,7 @@ export default function EventsPage() {
                           </button>
                         ) : reg && exhibition && !feePaid ? (
                           <Link href="/dashboard/pay" className={styles.btn}>
-                            Pay ₹299
+                            {reviewing ? "Payment under review" : "Pay ₹299"}
                           </Link>
                         ) : reg ? (
                           <Link href="/dashboard/teams" className={styles.btn}>
@@ -232,6 +233,7 @@ export default function EventsPage() {
           me={me}
           student={!!student}
           feePaid={feePaid}
+          reviewing={reviewing}
           grade={grade}
           onChange={() => Promise.all([load(), refreshDashboard()]).then(() => {})}
         />
@@ -249,6 +251,7 @@ function EventDialog({
   me,
   student,
   feePaid,
+  reviewing,
   grade,
   onChange,
 }: {
@@ -260,6 +263,7 @@ function EventDialog({
   me: Me | null;
   student: boolean;
   feePaid: boolean;
+  reviewing: boolean;
   grade: number;
   onChange: () => Promise<void>;
 }) {
@@ -324,7 +328,7 @@ function EventDialog({
         </p>
         {exhibition && !feePaid ? (
           <Link href="/dashboard/pay" className={account.submitBtn} style={linkBtn}>
-            Pay ₹299 to finish
+            {reviewing ? "Payment under review" : "Pay ₹299 to finish"}
           </Link>
         ) : (
           e.teamMax > 1 && (

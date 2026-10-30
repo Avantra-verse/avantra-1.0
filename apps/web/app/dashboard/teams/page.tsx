@@ -11,7 +11,7 @@ import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import styles from "../events/events.module.css";
 import t from "../../staff/tools.module.css";
-import { useDashboard } from "../data";
+import { feeReviewing, useDashboard } from "../data";
 import { useTabs } from "../../admin/ui";
 
 type Event = { id: string; slug: string; name: string; category: string; teamMin: number; teamMax: number };
@@ -28,7 +28,8 @@ type OpenTeam = { id: string; name: string; projectTitle: string | null; members
 type Reg = { id: string; eventId: string; topic: string | null; teamMember: { isLeader: boolean; team: Team } | null };
 
 export default function TeamsPage() {
-  const { reload: refreshDashboard } = useDashboard(); // Home shows registration and team status
+  const { reload: refreshDashboard, student: dash } = useDashboard(); // Home shows registration and team status
+  const reviewing = feeReviewing(dash);
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const [items, setItems] = useState<{ event: Event; reg: Reg }[] | null>(null);
   const [feePaid, setFeePaid] = useState(false);
@@ -101,15 +102,17 @@ export default function TeamsPage() {
           <section className={t.panel} aria-labelledby="locked">
             <div className={t.panelHead}>
               <h2 id="locked">Teams open after payment</h2>
-              <span className={t.status}>Locked</span>
+              <span className={t.status} data-tone={reviewing ? "warn" : undefined}>{reviewing ? "Under review" : "Locked"}</span>
             </div>
             <p className={t.mute} style={{ margin: "0 0 16px" }}>
-              {items.length
+              {items.length && reviewing
+                ? "Your payment is under review. Teams open as soon as the school confirms it."
+                : items.length
                 ? "You're registered. Pay the ₹299 fee and you can start or join a team right away."
                 : "Register for the Science Exhibition and pay the ₹299 fee, then start or join a team."}
             </p>
             <Link href={items.length ? "/dashboard/pay" : "/dashboard/events?event=exhibition&step=theme"} className={t.btn}>
-              {items.length ? "Pay now" : "Register"}
+              {items.length ? (reviewing ? "View payment" : "Pay now") : "Register"}
             </Link>
           </section>
         ) : !items.length ? (

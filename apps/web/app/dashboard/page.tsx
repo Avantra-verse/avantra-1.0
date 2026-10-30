@@ -10,7 +10,7 @@ import mv from "./events/events.module.css";
 import { Tile } from "../admin/ui";
 import { getTimeRemaining } from "@/lib/countdown";
 import { siteConfig } from "@/content/site";
-import { useDashboard, type MyReg, type Student, type WallMe } from "./data";
+import { feeReviewing, useDashboard, type MyReg, type Student, type WallMe } from "./data";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -73,7 +73,8 @@ function Checklist({ s, exhibition, reviewing }: { s: Student; exhibition: MyReg
       action: team ? "Open team" : "Find a team",
     },
   ];
-  const next = steps.findIndex((x) => !x.done && !x.waiting);
+  // A payment under review stays the next step ("View"): teams can't open until the school confirms it.
+  const next = steps.findIndex((x) => !x.done);
   return (
     <ol className={t.checklist}>
       {steps.map((x, i) => (
@@ -121,7 +122,7 @@ function StudentDashboard({ me, s, w, regs }: { me: Me; s: Student; w: WallMe | 
 
   const days = s._count.checkIns;
   const live = !!w?.open; // the admin's "Open the Wall" is the event-day switch; until then the Wall and check-ins stay hidden
-  const reviewing = s.payments[0]?.method === "UPI" && s.payments[0].status === "CREATED";
+  const reviewing = feeReviewing(s);
   const exhibition = regs.find((r) => r.event.slug === "exhibition");
   const team = exhibition?.teamMember?.team;
   const left = now && getTimeRemaining(siteConfig.eventDateISO, now);
