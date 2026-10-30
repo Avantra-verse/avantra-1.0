@@ -49,9 +49,8 @@ function StudentDashboard({ me, s, w }: { me: Me; s: Student; w: WallMe | null }
   const [qr, setQr] = useState("");
   useEffect(() => {
     // Dark on cream so gate scanners read it easily, even off a dim phone screen.
-    // Locked until the fee is paid: draw a stand-in code so the real one never shows under the blur.
-    QRCode.toDataURL(s.feePaidAt ? s.qrToken : "AVANTRA-LOCKED", { width: 480, margin: 2, color: { dark: "#120e0c", light: "#f4ead9" } }).then(setQr);
-  }, [s.qrToken, s.feePaidAt]);
+    QRCode.toDataURL(s.qrToken, { width: 480, margin: 2, color: { dark: "#120e0c", light: "#f4ead9" } }).then(setQr);
+  }, [s.qrToken]);
 
   const days = s._count.checkIns;
   const live = !!w?.open; // the admin's "Open the Wall" is the event-day switch; until then the Wall and check-ins stay hidden
@@ -124,33 +123,15 @@ function StudentDashboard({ me, s, w }: { me: Me; s: Student; w: WallMe | null }
         {tab === "badge" && (
           <section className={t.panel} aria-labelledby="badge" style={{ textAlign: "center", maxWidth: 480, margin: "0 auto" }}>
             <h2 id="badge">Your entry badge</h2>
-            {s.feePaidAt ? (
-              <>
-                {qr && <img src={qr} alt={`Entry QR for ${s.avantraId}`} width={240} height={240} className={t.badgeQr} />}
-                <p className={styles.label} style={{ margin: "10px 0 4px", fontSize: "1.6rem", letterSpacing: "0.06em" }}>
-                  {s.avantraId}
-                </p>
-                <p className={t.mute}>Show this QR at the gate. If it won&apos;t scan, give your AVANTRA ID.</p>
-                {qr && (
-                  <a className={t.ghost} href={qr} download={`avantra-badge-${s.avantraId}.png`}>
-                    Save badge to phone
-                  </a>
-                )}
-              </>
-            ) : (
-              <>
-                <div className={t.locked}>
-                  {qr && <img src={qr} alt="" width={240} height={240} className={t.badgeQr} />}
-                  <span className={t.lock} aria-hidden="true">🔒</span>
-                </div>
-                <p style={{ margin: "14px 0 4px", fontWeight: 700 }}>Locked</p>
-                <p className={t.mute}>
-                  {reviewing
-                    ? "Your badge unlocks as soon as the school confirms your payment."
-                    : "Your entry badge unlocks once you pay the ₹299 Science Exhibition fee."}
-                </p>
-                <a className={t.btn} href="/dashboard/pay">{reviewing ? "View payment" : "Pay now"}</a>
-              </>
+            {qr && <img src={qr} alt={`Entry QR for ${s.avantraId}`} width={240} height={240} className={t.badgeQr} />}
+            <p className={styles.label} style={{ margin: "10px 0 4px", fontSize: "1.6rem", letterSpacing: "0.06em" }}>
+              {s.avantraId}
+            </p>
+            <p className={t.mute}>Show this QR at the gate. If it won&apos;t scan, give your AVANTRA ID.</p>
+            {qr && (
+              <a className={t.ghost} href={qr} download={`avantra-badge-${s.avantraId}.png`}>
+                Save badge to phone
+              </a>
             )}
           </section>
         )}

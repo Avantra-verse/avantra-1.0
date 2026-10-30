@@ -15,9 +15,15 @@ const TIERS = [
   {
     label: "Arithi",
     people: [
-      { role: "Advisory Board", name: "Adarsh Anshuman Raj", photo: "adarsh", position: "Co-founder, Arithi" },
-      { role: "Advisory Board", name: "Shradha Suman Sahoo", photo: "shradha", position: "Co-founder, Arithi" },
-      { role: "Advisory Board", name: "Debabrata Patra", photo: "debabrata", position: "Business Executive, Arithi" },
+      { role: "Chief Advisor", name: "Adarsh Anshuman Raj", photo: "adarsh", position: "Co-founder, Arithi" },
+      { role: "Advisor", name: "Shradha Suman Sahoo", photo: "shradha", position: "Co-founder, Arithi" },
+      { role: "Advisor", name: "Debabrata Patra", photo: "debabrata", position: "Business Executive, Arithi" },
+    ],
+  },
+  {
+    label: "Event team",
+    people: [
+      { role: "Event Head", name: "Rohnit Raj Panigrahi", photo: "rohnit", position: "Founder, Arithi" },
       { role: "Event Director", name: "Subhrajit Giri", photo: "subhrajit", position: "AVANTRA" },
     ],
   },
@@ -42,7 +48,7 @@ export default function OrganizersPage() {
               {tier.people.map((p) => (
                 <li
                   key={p.name}
-                  className="group relative flex w-[calc(50%-8px)] flex-col overflow-hidden rounded-2xl border-[3px] border-sky bg-panel shadow-[5px_5px_0_0_var(--color-ember)] transition-transform duration-300 hover:-translate-y-1 sm:block sm:aspect-[3/4] sm:w-48"
+                  className="group relative flex w-[calc(50%-8px)] flex-col overflow-hidden rounded-2xl border-[3px] border-sky bg-panel shadow-[5px_5px_0_0_var(--color-ember)] transition-transform duration-300 hover:-translate-y-1 sm:block sm:aspect-[3/4] sm:w-52"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img

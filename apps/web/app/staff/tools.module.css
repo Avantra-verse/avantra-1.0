@@ -204,29 +204,6 @@
   border-radius: 14px;
 }
 
-/* Unpaid: the badge is blurred behind a lock. */
-.locked {
-  position: relative;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
-  overflow: hidden;
-  border-radius: 14px;
-}
-
-.locked img {
-  filter: blur(9px);
-  opacity: 0.7;
-}
-
-.lock {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 3rem;
-}
-
 /* Dashboard pages: room for the phone tab bar at the bottom. */
 @media (max-width: 767px) {
   .page.appPage {

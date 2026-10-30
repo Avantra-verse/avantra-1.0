@@ -1,5 +1,5 @@
 # Nightly database backup to Cloudflare R2 (Supabase free has none). Also runs on demand (Actions tab → Run workflow).
-# Secrets: DIRECT_URL (the direct Postgres URL, port 5432), R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET.
+# Secrets: DIRECT_URL (Supabase "Session pooler" URL, port 5432; the direct db host is IPv6-only and GitHub runners are IPv4), R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET.
 # Restore: download the file, then `gunzip -c avantra-<date>.sql.gz | psql "<database url>"`.
 name: backup
 
