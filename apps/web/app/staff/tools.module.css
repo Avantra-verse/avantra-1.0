@@ -204,10 +204,271 @@
   border-radius: 14px;
 }
 
+/* Student dashboard pages: one column, the same width and header on every page. */
+.page.appPage {
+  max-width: 1080px;
+  padding: 36px 32px 56px;
+}
+
+/* Forms and single-task pages keep a readable line length inside the wide frame. */
+.slim {
+  max-width: 720px;
+}
+
+/* Home: four stats, then the main column and the badge on the right. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+/* Admin overview: six tiles in two rows of three. */
+.stats3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stats .tile {
+  background: var(--panel);
+  min-width: 0;
+}
+
+.stats .tileValue {
+  overflow-wrap: anywhere;
+}
+
+.stats .tileValue .mono {
+  font-size: 1.15rem;
+  white-space: normal;
+}
+
+.dashGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 0 22px;
+  align-items: start;
+}
+
+.badgeCard {
+  text-align: center;
+}
+
+.badgeCard .badgeQr {
+  width: 200px;
+  aspect-ratio: 1;
+  background: #f4ead9;
+}
+
+/* Exhibition checklist: number or tick, text, and a button on the next step only. */
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.checklist li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(243, 236, 228, 0.12);
+}
+
+.checklist li:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.checkMark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #4a6f88;
+  color: var(--mute);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.checklist li[data-state="done"] .checkMark {
+  border-color: #5fd38d;
+  background: rgba(95, 211, 141, 0.16);
+  color: #5fd38d;
+}
+
+.checklist li[data-state="waiting"] .checkMark {
+  border-color: #f2c14e;
+  color: #f2c14e;
+}
+
+.checklist li[data-state="next"] .checkMark {
+  border-color: var(--sky);
+  background: var(--red);
+  color: #fff;
+}
+
+.checkText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.checklist li[data-state="done"] .checkText strong {
+  color: var(--mute);
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.facts div {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.facts dt {
+  color: var(--mute);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+@media (max-width: 1023px) {
+  .dashGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stats,
+  .stats3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.pageHead {
+  margin: 0 0 22px;
+}
+
+.pageHead h1 {
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(1.9rem, 5vw, 2.4rem);
+  line-height: 1.1;
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+
+.pageHead p {
+  margin: 0;
+  color: var(--mute);
+  max-width: 60ch;
+}
+
+/* Home: greeting on the left, the countdown portal on the right. */
+.homeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 32px;
+}
+
+.homePortal {
+  width: 150px !important; /* overrides the Events page's 200px portal */
+  flex: none;
+}
+
+.tagline {
+  margin-top: 8px !important;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--sky) !important;
+}
+
+/* A panel's title with a status on the right (Paid, Under review…). */
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 10px;
+}
+
+.panelHead h2 {
+  margin: 0;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border: 2px solid #4a6f88;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--mute);
+  white-space: nowrap;
+}
+
+.status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status[data-tone="ok"] {
+  color: #5fd38d;
+  border-color: rgba(95, 211, 141, 0.55);
+}
+
+.status[data-tone="warn"] {
+  color: #f2c14e;
+  border-color: rgba(242, 193, 78, 0.55);
+}
+
 /* Dashboard pages: room for the phone tab bar at the bottom. */
 @media (max-width: 767px) {
   .page.appPage {
-    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    padding: 24px 16px calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .stats {
+    gap: 10px;
+  }
+
+  .checklist li {
+    flex-wrap: wrap;
+  }
+
+  .homePortal {
+    width: 96px !important;
+  }
+
+  .homePortal strong {
+    font-size: 1.6rem !important;
+  }
+
+  .homePortal > span:last-child {
+    font-size: 0.7rem;
+  }
+
+  /* The button drops under the text instead of squeezing it. */
+  .checkText {
+    flex-basis: calc(100% - 48px);
+  }
+
+  .checklist li .btn {
+    margin-left: 48px;
   }
 }
 
@@ -262,7 +523,8 @@
   vertical-align: top;
 }
 
-.num {
+.num,
+.table th.num {
   text-align: right;
 }
 

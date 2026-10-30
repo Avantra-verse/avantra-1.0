@@ -39,6 +39,10 @@ function fail(e: AuthError | PostgrestError): never {
   const status = "status" in e ? (e.status ?? 0) : /^PT\d{3}$/.test(code) ? Number(code.slice(2)) : ({ "42501": 403, "23505": 409, P0001: 400 } as Record<string, number>)[code] ?? 500;
   if (status === 429) throw new ApiError(429, "Too many attempts. Try again in a minute.");
   if (/fetch|network/i.test(e.message)) throw new ApiError(0, OFFLINE);
+  if ("code" in e && e.code === "weak_password") {
+    const m = "Use 8+ characters with a small letter, a capital letter and a number.";
+    throw new ApiError(400, m, { password: m });
+  }
   const hint = "hint" in e ? e.hint : "";
   // Functions put extras (like the scanned student's card) in DETAIL as JSON.
   let body: Record<string, unknown> | null = null;

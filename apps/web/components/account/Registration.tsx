@@ -127,7 +127,7 @@ export function Registration({ role }: { role: Extract<Role, "STUDENT"> }) {
             <Field name="name" label="Full name" autoComplete="name" value={form.name} onChange={set} error={errors.name} />
             <Field name="email" label="Email" type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={set} error={errors.email} />
             <div className={styles.twoColRow}>
-              <Field name="password" label="Password" type="password" autoComplete="new-password" placeholder="8+ characters" value={form.password} onChange={set} error={errors.password} />
+              <Field name="password" label="Password" type="password" autoComplete="new-password" placeholder="8+ chars, Aa + number" value={form.password} onChange={set} error={errors.password} />
               <Field name="confirmPassword" label="Confirm password" type="password" autoComplete="new-password" placeholder="Repeat password" value={form.confirmPassword} onChange={set} error={errors.confirmPassword} />
             </div>
             <div className={styles.checkboxGroup}>

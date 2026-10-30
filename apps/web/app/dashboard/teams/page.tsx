@@ -10,6 +10,8 @@ import { EXHIBITION_TOPICS, InviteCode } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import styles from "../events/events.module.css";
+import t from "../../staff/tools.module.css";
+import { useDashboard } from "../data";
 import { useTabs } from "../../admin/ui";
 
 type Event = { id: string; slug: string; name: string; category: string; teamMin: number; teamMax: number };
@@ -26,6 +28,7 @@ type OpenTeam = { id: string; name: string; projectTitle: string | null; members
 type Reg = { id: string; eventId: string; topic: string | null; teamMember: { isLeader: boolean; team: Team } | null };
 
 export default function TeamsPage() {
+  const { reload: refreshDashboard } = useDashboard(); // Home shows registration and team status
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const [items, setItems] = useState<{ event: Event; reg: Reg }[] | null>(null);
   const [feePaid, setFeePaid] = useState(false);
@@ -69,54 +72,80 @@ export default function TeamsPage() {
   return (
     <div className={account.registrationPage}>
       <div className={account.starfieldLayer} aria-hidden="true" />
-      <main className={account.wrapper}>
-        <div className={styles.page}>
-          <div className={account.card}>
-            <h1 className={account.heading}>Teams</h1>
-            {!apiReady ? (
-              <OpensSoon what="Teams" />
-            ) : failed ? (
-              <FormError message={failed} />
-            ) : me && (me.role !== "STUDENT" || !me.profileComplete) ? (
-              <p className={account.subtext}>
-                {me.role === "STUDENT" ? (
-                  <>
-                    <Link href="/profile" className={account.link}>Finish your profile</Link> first.
-                  </>
-                ) : (
-                  "Students form teams from their own account."
-                )}
+      <div className={`${t.page} ${t.appPage}`}>
+        <header className={t.pageHead}>
+          <h1>Teams</h1>
+          <p>The Science Exhibition is for teams of 3. Start a team and share its code, or join a friend&apos;s team.</p>
+        </header>
+        <div className={t.dashGrid}>
+        <div>
+        {!apiReady ? (
+          <OpensSoon what="Teams" />
+        ) : failed ? (
+          <FormError message={failed} />
+        ) : me && (me.role !== "STUDENT" || !me.profileComplete) ? (
+          <section className={t.panel}>
+            <p className={t.mute} style={{ margin: 0 }}>
+              {me.role === "STUDENT" ? (
+                <>
+                  <Link href="/profile" className={account.link}>Finish your profile</Link> first.
+                </>
+              ) : (
+                "Students form teams from their own account."
+              )}
+            </p>
+          </section>
+        ) : !items ? (
+          <p className={t.mute} role="status">Loading…</p>
+        ) : !feePaid ? (
+          <section className={t.panel} aria-labelledby="locked">
+            <div className={t.panelHead}>
+              <h2 id="locked">Teams open after payment</h2>
+              <span className={t.status}>Locked</span>
+            </div>
+            <p className={t.mute} style={{ margin: "0 0 16px" }}>
+              {items.length
+                ? "You're registered. Pay the ₹299 fee and you can start or join a team right away."
+                : "Register for the Science Exhibition and pay the ₹299 fee, then start or join a team."}
+            </p>
+            <Link href={items.length ? "/dashboard/pay" : "/dashboard/events?event=exhibition&step=theme"} className={t.btn}>
+              {items.length ? "Pay now" : "Register"}
+            </Link>
+          </section>
+        ) : !items.length ? (
+          <section className={t.panel}>
+            <p className={t.mute} style={{ margin: 0 }}>
+              You haven&apos;t registered for a team event yet. <Link href="/dashboard/events" className={account.link}>See events</Link>
+            </p>
+          </section>
+        ) : (
+          <>
+            {joinNote && (
+              <p className={styles.fee} role="status">
+                {joinNote}
               </p>
-            ) : !items ? (
-              <p className={account.subtext} role="status">Loading…</p>
-            ) : !feePaid ? (
-              <p className={account.subtext}>
-                Teams open once your ₹299 fee is paid.{" "}
-                <Link href={items.length ? "/dashboard/pay" : "/dashboard/events?event=exhibition&step=theme"} className={account.link}>
-                  {items.length ? "Pay now" : "Register for the Science Exhibition"}
-                </Link>
-              </p>
-            ) : !items.length ? (
-              <p className={account.subtext}>
-                You haven&apos;t registered for a team event yet. <Link href="/dashboard/events" className={account.link}>See events</Link>
-              </p>
-            ) : (
-              <>
-                {joinNote && (
-                  <p className={styles.fee} role="status">
-                    {joinNote}
-                  </p>
-                )}
-                <ul className={styles.list}>
-                  {items.map(({ event, reg }) => (
-                    <TeamCard key={reg.id} event={event} reg={reg} onChange={load} />
-                  ))}
-                </ul>
-              </>
             )}
-          </div>
+            <ul className={styles.list}>
+              {items.map(({ event, reg }) => (
+                <TeamCard key={reg.id} event={event} reg={reg} onChange={() => Promise.all([load(), refreshDashboard()]).then(() => {})} />
+              ))}
+            </ul>
+          </>
+        )}
         </div>
-      </main>
+        <aside>
+          <section className={t.panel} aria-labelledby="how">
+            <h2 id="how">How teams work</h2>
+            <ul className={t.mute} style={{ margin: 0, paddingLeft: "1.2em", listStyle: "disc", display: "grid", gap: 8 }}>
+              <li>Every team has exactly 3 students. Anyone who has paid can start one and becomes its leader.</li>
+              <li>Friends join with your 6-letter code, your invite link or the team&apos;s QR.</li>
+              <li>You can also ask up to 5 open teams to let you in. The leader accepts or declines, and once one accepts, your other requests are cancelled.</li>
+              <li>If the leader leaves, the longest-standing member takes over. A team can&apos;t change once the judges have scored it.</li>
+            </ul>
+          </section>
+        </aside>
+        </div>
+      </div>
     </div>
   );
 }
@@ -139,7 +168,7 @@ function TeamCard({ event: e, reg, onChange }: { event: Event; reg: Reg; onChang
   };
   const team = reg.teamMember?.team;
   return (
-    <li className={styles.event} data-registered>
+    <li className={t.panel}>
       <div className={styles.eventHead}>
         <h3 className={styles.eventName}>{e.name}</h3>
         <span className={styles.meta}>{e.teamMin === e.teamMax ? `Teams of ${e.teamMax}` : `Teams of ${e.teamMin}–${e.teamMax}`}</span>
@@ -180,55 +209,94 @@ function TeamView({ event: e, team, leader, busy, run }: { event: Event; team: T
       setShared(`Copy this link: ${link()}`);
     }
   }
+  const full = n >= e.teamMax;
   return (
     <>
-      <p style={{ margin: 0 }}>
-        Team <strong>{team.name}</strong>
-        {team.projectTitle && ` · ${team.projectTitle}`}
-        {team.topic && <span className={styles.meta}> ({team.topic})</span>}
-      </p>
-      <p className={styles.meta} style={{ margin: "4px 0 0" }}>
-        {n < e.teamMin ? `Needs at least ${e.teamMin} members (${n} so far).` : `${n} of ${e.teamMax} members.`}
-        {n < e.teamMax && " Share the invite code or the QR so friends can join."}
-      </p>
-      {n < e.teamMax && (
-        <p style={{ margin: "8px 0 0" }}>
-          Invite code: <span className={styles.code}>{team.inviteCode}</span>
-          {leader && (
-            <>
-              {" · "}
-              <button type="button" className={account.link} disabled={busy} onClick={() => run(() => api(`/teams/${team.id}/invite-code`, {}))}>
-                New code
+      <div className={styles.teamTop}>
+        <h4 className={styles.teamName}>{team.name}</h4>
+        <span className={t.status} data-tone={full ? "ok" : "warn"}>
+          {full ? "Team complete" : `Needs ${e.teamMax - n} more`}
+        </span>
+      </div>
+      <dl className={t.facts} style={{ margin: "12px 0 0" }}>
+        {team.projectTitle && (
+          <div>
+            <dt>Project</dt>
+            <dd>{team.projectTitle}</dd>
+          </div>
+        )}
+        {team.topic && (
+          <div>
+            <dt>Theme</dt>
+            <dd>{team.topic}</dd>
+          </div>
+        )}
+        <div>
+          <dt>You</dt>
+          <dd>{leader ? "Team leader" : "Member"}</dd>
+        </div>
+      </dl>
+
+      {full && (
+        <div className={`${t.result} ${t.ok}`} style={{ marginTop: 16 }}>
+          <strong>You&apos;re all set.</strong> Build your project together and bring it to AVANTRA on 19–20 December. The judging
+          criteria are shared on event day.
+        </div>
+      )}
+
+      <h5 className={styles.sub}>
+        Members · {n} of {e.teamMax}
+      </h5>
+      <ul className={styles.openList}>
+        {team.members.map((m) => (
+          <li key={m.registrationId} className={styles.openRow}>
+            <span className={styles.openAvatar} aria-hidden>
+              {m.registration.student.user.name.trim().charAt(0).toUpperCase()}
+            </span>
+            <span className={styles.openText}>
+              <strong>
+                {m.registration.student.user.name}
+                {m.isLeader && <span className={styles.leaderTag}>Leader</span>}
+              </strong>
+              <span className={styles.meta}>{m.registration.student.avantraId}</span>
+            </span>
+            {leader && !m.isLeader && (
+              <button
+                type="button"
+                className={account.link}
+                disabled={busy}
+                onClick={() => confirm(`Remove ${m.registration.student.user.name} from the team?`) && run(() => api(`/teams/${team.id}/members/${m.registrationId}`, undefined, "DELETE"))}
+              >
+                Remove
               </button>
-            </>
-          )}
-        </p>
-      )}
-      {n < e.teamMax && (
-        <p style={{ margin: "10px 0 0" }}>
-          <button type="button" className={styles.btn} onClick={share}>
-            Share invite link
-          </button>
-          {shared && <span className={styles.meta} role="status" style={{ display: "block", marginTop: 6, overflowWrap: "anywhere" }}>{shared}</span>}
-        </p>
-      )}
-      {n < e.teamMax && qr && (
-        <img src={qr} alt={`QR code to join team ${team.name}`} width={160} height={160} style={{ display: "block", marginTop: 10, borderRadius: 10 }} />
-      )}
-      {leader && n < e.teamMax && team.joinRequests.length > 0 && (
+            )}
+          </li>
+        ))}
+        {Array.from({ length: e.teamMax - n }, (_, i) => (
+          <li key={`empty-${i}`} className={`${styles.openRow} ${styles.emptySeat}`}>
+            <span className={styles.openAvatar} aria-hidden>
+              +
+            </span>
+            <span className={styles.meta}>Open spot. Invite a friend below.</span>
+          </li>
+        ))}
+      </ul>
+
+      {leader && !full && team.joinRequests.length > 0 && (
         <>
-          <p className={styles.meta} style={{ margin: "14px 0 0" }}>
-            Asking to join
-          </p>
-          <ul className={styles.members}>
+          <h5 className={styles.sub}>Asking to join · {team.joinRequests.length}</h5>
+          <ul className={styles.openList}>
             {team.joinRequests.map((r) => (
-              <li key={r.registrationId}>
-                <span>
-                  {r.registration.student.user.name}
-                  <span className={styles.meta}> · {r.registration.student.avantraId}</span>
+              <li key={r.registrationId} className={styles.openRow} data-requested>
+                <span className={styles.openAvatar} aria-hidden>
+                  {r.registration.student.user.name.trim().charAt(0).toUpperCase()}
+                </span>
+                <span className={styles.openText}>
+                  <strong>{r.registration.student.user.name}</strong>
+                  <span className={styles.meta}>{r.registration.student.avantraId}</span>
                 </span>
                 <span className={styles.actions} style={{ margin: 0 }}>
-                  <button type="button" className={account.link} disabled={busy} onClick={() => run(() => api(`/teams/${team.id}/requests/${r.registrationId}/accept`, {}))}>
+                  <button type="button" className={styles.btn} disabled={busy} onClick={() => run(() => api(`/teams/${team.id}/requests/${r.registrationId}/accept`, {}))}>
                     Accept
                   </button>
                   <button type="button" className={account.link} disabled={busy} onClick={() => run(() => api(`/teams/${team.id}/requests/${r.registrationId}`, undefined, "DELETE"))}>
@@ -240,29 +308,41 @@ function TeamView({ event: e, team, leader, busy, run }: { event: Event; team: T
           </ul>
         </>
       )}
-      <ul className={styles.members}>
-        {team.members.map((m) => (
-          <li key={m.registrationId}>
-            <span>
-              {m.registration.student.user.name}
-              {m.isLeader && <span className={styles.meta}> · Leader</span>}
-            </span>
-            {leader && !m.isLeader ? (
-              <button
-                type="button"
-                className={account.link}
-                disabled={busy}
-                onClick={() => confirm(`Remove ${m.registration.student.user.name} from the team?`) && run(() => api(`/teams/${team.id}/members/${m.registrationId}`, undefined, "DELETE"))}
-              >
-                Remove
-              </button>
-            ) : (
-              <span className={styles.meta}>{m.registration.student.avantraId}</span>
+
+      {!full && (
+        <div className={styles.invite}>
+          <div>
+            <h5 className={styles.sub} style={{ marginTop: 0 }}>
+              Invite friends
+            </h5>
+            <p className={styles.meta} style={{ margin: "0 0 10px" }}>
+              Friends who have paid can join with this code, the link or the QR.
+            </p>
+            <p style={{ margin: "0 0 12px" }}>
+              <span className={styles.code}>{team.inviteCode}</span>
+              {leader && (
+                <>
+                  {" · "}
+                  <button type="button" className={account.link} disabled={busy} onClick={() => run(() => api(`/teams/${team.id}/invite-code`, {}))}>
+                    New code
+                  </button>
+                </>
+              )}
+            </p>
+            <button type="button" className={styles.btn} onClick={share}>
+              Share invite link
+            </button>
+            {shared && (
+              <span className={styles.meta} role="status" style={{ display: "block", marginTop: 6, overflowWrap: "anywhere" }}>
+                {shared}
+              </span>
             )}
-          </li>
-        ))}
-      </ul>
-      <div className={styles.actions}>
+          </div>
+          {qr && <img src={qr} alt={`QR code to join team ${team.name}`} width={150} height={150} className={styles.inviteQr} />}
+        </div>
+      )}
+
+      <div className={styles.actions} style={{ marginTop: 18 }}>
         <button type="button" className={account.link} disabled={busy} onClick={() => confirm("Leave this team?") && run(() => api(`/teams/${team.id}/leave`, {}))}>
           Leave team
         </button>
@@ -329,10 +409,10 @@ function TeamForms({ event: e, regId, topic, busy, run }: { event: Event; regId:
       )}
       {tab === "join" && (
         <>
-          <form className={`${account.form} ${styles.teamForm}`} onSubmit={join} noValidate>
+          <form className={styles.codeRow} onSubmit={join} noValidate>
             <Field name={id("code")} label="Have an invite code?" placeholder="e.g. K7Q2XM" maxLength={6} autoCapitalize="characters" value={f.code} onChange={set("code")} error={errors.code} />
             <button type="submit" className={styles.btn} disabled={busy}>
-              Join with code
+              Join
             </button>
           </form>
           <OpenTeams event={e} regId={regId} busy={busy} run={run} />
@@ -353,26 +433,36 @@ function OpenTeams({ event: e, regId, busy, run }: { event: Event; regId: string
   const SHOWN = 8;
   const found = teams.filter((t) => `${t.name} ${t.leaderName} ${t.school}`.toLowerCase().includes(q.trim().toLowerCase()));
   return (
-    <>
-      <h4 className={styles.sub}>Teams with room</h4>
-      <p className={styles.meta} style={{ margin: 0 }}>
+    <section className={styles.openTeams} aria-labelledby={`${e.slug}-open`}>
+      <div className={styles.openHead}>
+        <h4 id={`${e.slug}-open`} className={styles.sub}>
+          Teams with room
+        </h4>
+        {teams.length > 0 && <span className={styles.meta}>{teams.length} open</span>}
+      </div>
+      <p className={styles.meta} style={{ margin: "0 0 10px" }}>
         {teams.length ? "Ask to join one. Its leader accepts or declines." : "No teams with room yet. Check back soon, or start your own."}
       </p>
       {teams.length > SHOWN && <Field name={`${e.slug}-find`} label="Find a team" placeholder="Team, leader or school" value={q} onChange={(ev) => setQ(ev.target.value)} />}
-      <ul className={styles.members}>
+      <ul className={styles.openList}>
         {found.slice(0, SHOWN).map((t) => (
-          <li key={t.id}>
-            <span>
-              {t.name}
-              <span className={styles.meta}>
-                {" "}
-                · {[t.leaderName, t.school].filter(Boolean).join(", ")} · {t.members} of {e.teamMax}
-              </span>
+          <li key={t.id} className={styles.openRow} data-requested={t.requested || undefined}>
+            <span className={styles.openAvatar} aria-hidden>
+              {t.name.trim().charAt(0).toUpperCase()}
+            </span>
+            <span className={styles.openText}>
+              <strong>{t.name}</strong>
+              <span className={styles.meta}>{[t.leaderName && `Led by ${t.leaderName}`, t.school].filter(Boolean).join(" · ")}</span>
+              {t.requested && <span className={styles.waiting}>Request sent. Waiting for the leader.</span>}
+            </span>
+            <span className={styles.seats} aria-label={`${t.members} of ${e.teamMax} members`}>
+              {Array.from({ length: e.teamMax }, (_, i) => (
+                <span key={i} data-on={i < t.members || undefined} />
+              ))}
             </span>
             <button
               type="button"
-              className={account.link}
-              style={{ whiteSpace: "nowrap", alignSelf: "flex-start" }}
+              className={t.requested ? styles.ghostBtn : styles.btn}
               disabled={busy}
               onClick={() => run(() => (t.requested ? api(`/teams/${t.id}/requests/${regId}`, undefined, "DELETE") : api(`/teams/${t.id}/requests`, {})).then(reload))}
             >
@@ -386,6 +476,6 @@ function OpenTeams({ event: e, regId, busy, run }: { event: Event; regId: string
           {found.length - SHOWN} more. Type a team, leader or school name to find them.
         </p>
       )}
-    </>
+    </section>
   );
 }

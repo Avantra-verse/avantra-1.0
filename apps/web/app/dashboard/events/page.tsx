@@ -11,6 +11,7 @@ import { EXHIBITION_TOPICS } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { FormError, OpensSoon, styles as account } from "@/components/account/Account";
 import styles from "./events.module.css";
+import { useDashboard } from "../data";
 import steps from "../../staff/tools.module.css";
 
 type Category = "EXHIBITION" | "TECHNOLOGY" | "EXPERIENCE" | "WORKSHOP";
@@ -47,6 +48,7 @@ function teamSize(e: Event) {
 }
 
 export default function EventsPage() {
+  const { reload: refreshDashboard } = useDashboard(); // Home shows registration and team status
   const [events, setEvents] = useState<Event[] | null>(null);
   const [me, setMe] = useState<Me | null>(null);
   const [regs, setRegs] = useState<Reg[]>([]);
@@ -87,10 +89,11 @@ export default function EventsPage() {
   return (
     <div className={account.registrationPage}>
       <div className={account.starfieldLayer} aria-hidden="true" />
-      <main className={account.wrapper}>
-        <div className={styles.page}>
-          <h1 className={account.heading}>Events</h1>
-          <p className={styles.lead}>Entry to the fest and its events is free. Only the Science Exhibition has a ₹299 fee, paid once.</p>
+      <div className={`${steps.page} ${steps.appPage}`}>
+          <header className={steps.pageHead}>
+            <h1>Events</h1>
+            <p>Entry to the fest and its events is free. Only the Science Exhibition has a ₹299 fee, paid once.</p>
+          </header>
           {!apiReady ? (
             <OpensSoon what="Event registration" />
           ) : failed ? (
@@ -115,42 +118,110 @@ export default function EventsPage() {
                   )}
                 </p>
               )}
-              <ul className={styles.grid}>
-                {events.map((e) => {
-                  const reg = regs.find((r) => r.eventId === e.id);
-                  const exhibition = e.category === "EXHIBITION";
-                  return (
-                    <li key={e.id}>
-                      <button type="button" className={styles.tile} data-registered={!!reg || undefined} onClick={() => show({ slug: e.slug, step: "details" })}>
-                        <span className={styles.kicker}>{CATEGORY_NAME[e.category]}</span>
-                        <span className={styles.tileName}>{e.name}</span>
-                        <span className={styles.teaser}>{exhibition ? EXHIBITION_ABOUT : e.description}</span>
-                        <span className={styles.pills}>
-                          <span className={styles.pill}>{teamSize(e)}</span>
-                          <span className={styles.pill}>{exhibition ? "₹299" : "Free"}</span>
-                          {reg ? (
-                            <span className={styles.pill} data-on>
-                              {exhibition && !feePaid ? "Registered · pay to finish" : "Registered ✓"}
-                            </span>
-                          ) : (
-                            !e.registrationOpen && <span className={styles.pill}>Registration closed</span>
-                          )}
-                        </span>
-                        <span className={styles.more}>View details →</span>
-                      </button>
+              {events.map((e) => {
+                const reg = regs.find((r) => r.eventId === e.id);
+                const exhibition = e.category === "EXHIBITION";
+                return (
+                  <article key={e.id} className={styles.feature} data-registered={!!reg || undefined} aria-labelledby={`${e.slug}-card`}>
+                    <div className={styles.featureText}>
+                      <div className={styles.pills}>
+                        <span className={styles.pill}>19–20 December</span>
+                        <span className={styles.pill}>{teamSize(e)}</span>
+                        <span className={styles.pill}>{exhibition ? "₹299 per student" : "Free"}</span>
+                        {reg ? (
+                          <span className={styles.pill} data-on>
+                            {exhibition && !feePaid ? "Registered · pay to finish" : "Registered ✓"}
+                          </span>
+                        ) : (
+                          !e.registrationOpen && <span className={styles.pill}>Registration closed</span>
+                        )}
+                      </div>
+                      <h2 id={`${e.slug}-card`} className={styles.featureName}>
+                        {e.name}
+                      </h2>
+                      <p className={styles.teaser}>{exhibition ? EXHIBITION_ABOUT : e.description}</p>
+                      {student && exhibition && level(grade) && (
+                        <p className={styles.meta} style={{ margin: 0 }}>
+                          You compete as a <strong style={{ color: "var(--ink)" }}>{level(grade)}</strong>.
+                        </p>
+                      )}
+                      <div className={styles.actions}>
+                        {!reg && student && e.registrationOpen ? (
+                          <button type="button" className={styles.btn} onClick={() => show({ slug: e.slug, step: "theme" })}>
+                            Step through: register
+                          </button>
+                        ) : reg && exhibition && !feePaid ? (
+                          <Link href="/dashboard/pay" className={styles.btn}>
+                            Pay ₹299
+                          </Link>
+                        ) : reg ? (
+                          <Link href="/dashboard/teams" className={styles.btn}>
+                            Your team
+                          </Link>
+                        ) : null}
+                        <button type="button" className={styles.ghostLink} onClick={() => show({ slug: e.slug, step: "details" })}>
+                          View details
+                        </button>
+                      </div>
+                    </div>
+                    <div className={styles.portalWrap} aria-hidden>
+                      <span className={styles.portal} />
+                      <span className={styles.portalLabel}>
+                        <strong>{exhibition ? EXHIBITION_TOPICS.length : "∞"}</strong>
+                        {exhibition ? "universes" : ""}
+                      </span>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {events.some((e) => e.category === "EXHIBITION") && (
+                <section className={styles.universes} aria-labelledby="universes">
+                  <h2 id="universes" className={styles.sectionTitle}>
+                    Pick your universe
+                  </h2>
+                  <p className={styles.meta} style={{ margin: "0 0 14px" }}>
+                    Every exhibition team builds in one of these {EXHIBITION_TOPICS.length} themes. You choose yours when you register.
+                  </p>
+                  <ul className={styles.universeGrid}>
+                    {EXHIBITION_TOPICS.map((topic) => {
+                      const mine = regs.some((r) => r.topic === topic || r.teamMember?.team.topic === topic);
+                      return (
+                        <li key={topic} data-mine={mine || undefined}>
+                          <span className={styles.universeDot} aria-hidden />
+                          {topic}
+                          {mine && <span className={styles.leaderTag}>Yours</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              )}
+
+              <section aria-labelledby="soon">
+                <h2 id="soon" className={styles.sectionTitle}>
+                  More doorways open soon
+                </h2>
+                <ul className={styles.soonGrid}>
+                  {[
+                    ["Technology", "Technology events"],
+                    ["Experiences", "Experiences"],
+                    ["Workshops", "Workshops"],
+                  ].map(([name, what]) => (
+                    <li key={name} className={styles.soon}>
+                      <span className={styles.portalSmall} aria-hidden />
+                      <span className={styles.tileName}>{name}</span>
+                      <span className={styles.teaser}>{what} will be revealed soon.</span>
+                      <span className={styles.pills}>
+                        <span className={styles.pill}>Revealed soon</span>
+                      </span>
                     </li>
-                  );
-                })}
-                <li className={styles.soon}>
-                  <span className={styles.kicker}>Coming soon</span>
-                  <span className={styles.tileName}>More events</span>
-                  <span className={styles.teaser}>Technology events, experiences and workshops will be revealed soon.</span>
-                </li>
-              </ul>
+                  ))}
+                </ul>
+              </section>
             </>
           )}
-        </div>
-      </main>
+      </div>
       {current && (
         <EventDialog
           event={current}
@@ -162,7 +233,7 @@ export default function EventsPage() {
           student={!!student}
           feePaid={feePaid}
           grade={grade}
-          onChange={load}
+          onChange={() => Promise.all([load(), refreshDashboard()]).then(() => {})}
         />
       )}
     </div>
@@ -300,12 +371,9 @@ function EventDialog({
     <dialog ref={ref} className={styles.dialog} onClose={onClose} aria-labelledby={`${e.slug}-title`} onClick={(ev) => ev.target === ref.current && ref.current.close()}>
       <div className={styles.dialogInner}>
         <header className={styles.dialogHead}>
-          <div>
-            <span className={styles.kicker}>{CATEGORY_NAME[e.category]}</span>
-            <h2 id={`${e.slug}-title`} className={styles.dialogTitle}>
-              {e.name}
-            </h2>
-          </div>
+          <h2 id={`${e.slug}-title`} className={styles.dialogTitle}>
+            {e.name}
+          </h2>
           <button type="button" className={styles.close} onClick={() => ref.current?.close()} aria-label="Close">
             ×
           </button>

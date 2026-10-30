@@ -10,7 +10,8 @@ import { AvantraId, MAX_POINTS } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, styles as account } from "@/components/account/Account";
 import t from "./tools.module.css";
-import { useAction, useLoad, useTabs } from "../admin/ui";
+import { useAction, useHashTab, useLoad } from "../admin/ui";
+import { AppNav, type DashLink } from "@/components/Nav";
 
 type Card = { name: string; avantraId: string; grade: number; school: string | null; feePaid: boolean };
 type Ref = { qrToken: string } | { avantraId: string };
@@ -35,45 +36,71 @@ export default function StaffPage() {
 
   const staff = me && ["VOLUNTEER", "JUDGE", "ADMIN"].includes(me.role);
   return (
-    <div className={account.registrationPage}>
-      <div className={account.starfieldLayer} aria-hidden="true" />
-      <div className={`${t.page} ${t.narrow}`}>
-        {!apiReady ? (
-          <div className={t.panel}>
-            <OpensSoon what="Staff tools" />
-          </div>
-        ) : !me ? (
-          failed ? <FormError message={failed} /> : <p className={t.mute} role="status">Loading…</p>
-        ) : !staff ? (
-          <div className={t.panel}>
-            <h1 className={account.heading}>Staff only</h1>
-            <p className={t.mute}>This page is for AVANTRA volunteers and judges.</p>
-            <button type="button" className={t.btn} onClick={logout}>Log out</button>
-          </div>
-        ) : (
-          <>
-            <div className={t.head}>
-              <h1 className={account.heading} style={{ fontSize: "2rem", margin: 0 }}>Event day</h1>
-              <span className={t.mute}>
-                {me.name} · {me.role.toLowerCase()} ·{" "}
-                <button type="button" className={account.link} onClick={logout}>Log out</button>
-              </span>
+    <>
+      {staff && <AppNav links={me.role === "JUDGE" ? JUDGE_LINKS : VOLUNTEER_LINKS} badge={me.role} loginHref="/staff/login" portal />}
+      {/* md+: no top bar (the sidebar replaces it), so take back <main>'s top padding and clear the sidebar. */}
+      <div className={`${account.registrationPage} ${staff ? "md:-mt-16 md:pl-60" : ""}`}>
+        <div className={account.starfieldLayer} aria-hidden="true" />
+        <div className={`${t.page} ${staff ? t.appPage : t.narrow}`}>
+          {!apiReady ? (
+            <div className={t.panel}>
+              <OpensSoon what="Staff tools" />
             </div>
-            {me.role === "JUDGE" ? <Judging /> : <Tools />}
-          </>
-        )}
+          ) : !me ? (
+            failed ? <FormError message={failed} /> : <p className={t.mute} role="status">Loading…</p>
+          ) : !staff ? (
+            <div className={t.panel}>
+              <h1 className={account.heading}>Staff only</h1>
+              <p className={t.mute}>This page is for AVANTRA volunteers and judges.</p>
+              <button type="button" className={t.btn} onClick={logout}>Log out</button>
+            </div>
+          ) : (
+            <div className={t.slim}>
+              {me.role === "JUDGE" ? (
+                <>
+                  <PageHead title="Judging" intro={`Signed in as ${me.name}. Score each team on your event, one at a time.`} />
+                  <Judging />
+                </>
+              ) : (
+                <Tools name={me.name} />
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
 const VOLUNTEER_TABS = { checkin: "Check-in", scans: "My scans", find: "Find student" } as const;
 
-function Tools() {
-  const { tab, bar } = useTabs(VOLUNTEER_TABS, "checkin");
+const VOLUNTEER_LINKS: DashLink[] = [
+  { href: "/staff#checkin", label: "Check-in", icon: "M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M8 12h8" },
+  { href: "/staff#scans", label: "My scans", icon: "M4 6h16M4 12h16M4 18h10" },
+  { href: "/staff#find", label: "Find student", icon: "M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-5-5" },
+];
+const JUDGE_LINKS: DashLink[] = [{ href: "/staff", label: "Judging", icon: "M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM7 6H4a3 3 0 003 4M17 6h3a3 3 0 01-3 4" }];
+
+const VOLUNTEER_INTRO: Record<keyof typeof VOLUNTEER_TABS, string> = {
+  checkin: "Scan a student's badge QR, or type their AVANTRA ID.",
+  scans: "Everyone you checked in over the last 12 hours.",
+  find: "Look a student up by name or AVANTRA ID.",
+};
+
+function PageHead({ title, intro }: { title: string; intro: string }) {
+  return (
+    <header className={t.pageHead}>
+      <h1>{title}</h1>
+      <p>{intro}</p>
+    </header>
+  );
+}
+
+function Tools({ name }: { name: string }) {
+  const tab = useHashTab(VOLUNTEER_TABS, "checkin");
   return (
     <>
-      {bar}
+      <PageHead title={VOLUNTEER_TABS[tab]} intro={`${VOLUNTEER_INTRO[tab]} Signed in as ${name}.`} />
       {tab === "checkin" && <CheckIn />}
       {tab === "scans" && <MyScans />}
       {tab === "find" && <FindStudent />}

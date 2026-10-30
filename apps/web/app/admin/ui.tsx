@@ -88,3 +88,19 @@ export function useTabs<K extends string>(tabs: Record<K, string>, first: NoInfe
   );
   return { tab, bar };
 }
+
+// Tab picked from the app nav (components/Nav.tsx links to #tab); survives a refresh and follows back/forward.
+export function useHashTab<K extends string>(tabs: Record<K, string>, first: NoInfer<K>) {
+  const [tab, setTab] = useState<K>(first);
+  useEffect(() => {
+    const on = () => {
+      const h = window.location.hash.slice(1);
+      setTab(h in tabs ? (h as K) : first);
+      window.scrollTo(0, 0);
+    };
+    on();
+    addEventListener("hashchange", on);
+    return () => removeEventListener("hashchange", on);
+  }, [tabs, first]);
+  return tab;
+}

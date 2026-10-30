@@ -93,7 +93,7 @@ export default function ForgotPasswordPage() {
           <form className={styles.form} onSubmit={reset} noValidate>
             <Field name="code" label="6-digit code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={form.code} onChange={set} error={errors.code} autoFocus />
             <div className={styles.twoColRow}>
-              <Field name="password" label="New password" type="password" autoComplete="new-password" placeholder="8+ characters" value={form.password} onChange={set} error={errors.password} />
+              <Field name="password" label="New password" type="password" autoComplete="new-password" placeholder="8+ chars, Aa + number" value={form.password} onChange={set} error={errors.password} />
               <Field name="confirmPassword" label="Confirm" type="password" autoComplete="new-password" value={form.confirmPassword} onChange={set} error={errors.confirmPassword} />
             </div>
             <FormError message={errors.form} />

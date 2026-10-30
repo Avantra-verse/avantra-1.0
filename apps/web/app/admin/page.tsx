@@ -4,12 +4,13 @@
 // event results and the Engagement Wall. Laptop-first, still usable on a phone at the desk.
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AppNav, ADMIN_LINKS } from "@/components/Nav";
 import QRCode from "qrcode";
 import { CreateStaffRequest, WalkInRequest } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
-import { fileUrl, rupees, Tile, useAction, useLoad } from "./ui";
+import { fileUrl, rupees, Tile, useAction, useHashTab, useLoad } from "./ui";
 import { Events } from "./events";
 import { UpiPayments } from "./payments";
 import { Wall } from "./wall";
@@ -17,67 +18,61 @@ import { Wall } from "./wall";
 const TABS = { overview: "Overview", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall" } as const;
 type Tab = keyof typeof TABS;
 
+// One line under each tab's title.
+const INTRO: Record<Tab, string> = {
+  overview: "Sign-ups, fees and the gate at a glance, plus the CSV downloads.",
+  referrals: "How many students each ambassador code brought in.",
+  payments: "UPI payments for the school to check, and their answers coming back.",
+  desk: "Cash fees and walk-in registrations at the registration desk.",
+  staff: "Volunteer and judge accounts, and which event each judge scores.",
+  events: "Open or close events and see the judges' results.",
+  wall: "The Engagement Wall: switch it on for event day, add and print challenges.",
+};
+
 export default function AdminPage() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
   const [failed, setFailed] = useState("");
-  const [tab, setTab] = useState<Tab>("overview");
+  const tab = useHashTab(TABS, "overview");
 
   useEffect(() => {
     if (!apiReady) return;
     getMe()
       .then((m) => (m?.role === "ADMIN" ? setMe(m) : router.replace("/admin/login")))
       .catch((e: ApiError) => setFailed(e.message));
-    const saved = window.location.hash.slice(1); // #wall etc. survives a refresh
-    if (saved in TABS) setTab(saved as Tab);
   }, [router]);
 
-  function pick(k: Tab) {
-    setTab(k);
-    window.history.replaceState(null, "", `#${k}`);
-  }
-
-  async function logout() {
-    await api("/auth/logout", {}).catch(() => {});
-    router.replace("/admin/login");
-  }
-
   return (
-    <div className={account.registrationPage}>
-      <div className={account.starfieldLayer} aria-hidden="true" />
-      <div className={t.page}>
-        {!apiReady ? (
-          <div className={t.panel}>
-            <OpensSoon what="Admin" />
-          </div>
-        ) : !me ? (
-          failed ? <FormError message={failed} /> : <p className={t.mute} role="status">Loading…</p>
-        ) : (
-          <>
-            <div className={t.head}>
-              <h1 className={account.heading} style={{ fontSize: "2rem", margin: 0 }}>Admin</h1>
-              <span className={t.mute}>
-                {me.name} · <button type="button" className={account.link} onClick={logout}>Log out</button>
-              </span>
+    <>
+      <AppNav links={ADMIN_LINKS} badge="ADMIN" loginHref="/admin/login" portal />
+      {/* md+: no top bar (the sidebar replaces it), so take back <main>'s top padding and clear the sidebar. */}
+      <div className={`${account.registrationPage} md:-mt-16 md:pl-60`}>
+        <div className={account.starfieldLayer} aria-hidden="true" />
+        <div className={`${t.page} ${t.appPage}`}>
+          {!apiReady ? (
+            <div className={t.panel}>
+              <OpensSoon what="Admin" />
             </div>
-            <div className={t.tabs} role="tablist">
-              {(Object.keys(TABS) as Tab[]).map((k) => (
-                <button key={k} type="button" role="tab" aria-selected={tab === k} className={t.tab} onClick={() => pick(k)}>
-                  {TABS[k]}
-                </button>
-              ))}
-            </div>
-            {tab === "overview" && <Overview />}
-            {tab === "referrals" && <Referrals />}
-            {tab === "payments" && <UpiPayments />}
-            {tab === "desk" && <Desk />}
-            {tab === "staff" && <Staff />}
-            {tab === "events" && <Events />}
-            {tab === "wall" && <Wall />}
-          </>
-        )}
+          ) : !me ? (
+            failed ? <FormError message={failed} /> : <p className={t.mute} role="status">Loading…</p>
+          ) : (
+            <>
+              <header className={t.pageHead}>
+                <h1>{TABS[tab]}</h1>
+                <p>{INTRO[tab]}</p>
+              </header>
+              {tab === "overview" && <Overview name={me.name} />}
+              {tab === "referrals" && <Referrals />}
+              {tab === "payments" && <UpiPayments />}
+              {tab === "desk" && <Desk />}
+              {tab === "staff" && <Staff />}
+              {tab === "events" && <Events />}
+              {tab === "wall" && <Wall />}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -91,25 +86,23 @@ type Stats = {
   events: { id: string; name: string; capacity: number | null; registrations: number; teams: number; deskScans: number }[];
 };
 
-function Overview() {
+function Overview({ name }: { name: string }) {
   const { data: s, error, reload } = useLoad<Stats>("/admin/stats");
   if (!s) return error ? <FormError message={error} /> : <p className={t.mute}>Loading…</p>;
   return (
     <>
-      <section className={t.panel} aria-labelledby="numbers">
-        <div className={t.head}>
-          <h2 id="numbers">Today</h2>
-          <button type="button" className={t.ghost} onClick={reload}>Refresh</button>
-        </div>
-        <div className={t.tiles}>
-          <Tile value={s.students.total} label="students" />
-          <Tile value={s.students.paid} label="fee paid" />
-          <Tile value={s.gate.checkedInToday} label="through the gate today" />
-          <Tile value={s.referralCodes} label="referral codes used" />
-          <Tile value={rupees(s.fees.onlinePaise)} label={`online (${s.fees.onlineCount})`} />
-          <Tile value={rupees(s.fees.cashPaise)} label={`cash at desk (${s.fees.cashCount})`} />
-        </div>
-      </section>
+      <div className={t.panelHead}>
+        <span className={t.mute}>Signed in as {name}</span>
+        <button type="button" className={t.ghost} onClick={reload}>Refresh</button>
+      </div>
+      <div className={`${t.stats} ${t.stats3}`}>
+        <Tile value={s.students.total} label="students" />
+        <Tile value={s.students.paid} label="fee paid" />
+        <Tile value={s.gate.checkedInToday} label="through the gate today" />
+        <Tile value={s.referralCodes} label="referral codes used" />
+        <Tile value={rupees(s.fees.onlinePaise)} label={`online (${s.fees.onlineCount})`} />
+        <Tile value={rupees(s.fees.cashPaise)} label={`cash at desk (${s.fees.cashCount})`} />
+      </div>
       <section className={t.panel} aria-labelledby="by-event">
         <h2 id="by-event">Events</h2>
         <div className={t.scroll}>
@@ -161,8 +154,8 @@ function Referrals() {
   const { data, error, reload } = useLoad<ReferralRow[]>("/admin/referrals");
   return (
     <section className={t.panel} aria-labelledby="referrals">
-      <div className={t.head}>
-        <h2 id="referrals">Referral codes</h2>
+      <div className={t.panelHead}>
+        <h2 id="referrals">Codes</h2>
         <button type="button" className={t.ghost} onClick={reload}>Refresh</button>
       </div>
       <p className={t.mute}>Most sign-ups first. Students enter a code on their profile step; any code they typed shows here, so check for typos.</p>
@@ -199,10 +192,10 @@ function Referrals() {
 
 function Desk() {
   return (
-    <>
-      <MarkPaid />
+    <div className={t.dashGrid}>
       <WalkIn />
-    </>
+      <MarkPaid />
+    </div>
   );
 }
 

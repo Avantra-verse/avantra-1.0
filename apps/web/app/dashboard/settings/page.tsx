@@ -65,18 +65,17 @@ export default function SettingsPage() {
   return (
     <div className={styles.registrationPage}>
       <div className={styles.starfieldLayer} aria-hidden="true" />
-      <div className={`${t.page} ${t.narrow} ${t.appPage}`}>
-        <section className={t.panel} aria-labelledby="settings">
-          <h2 id="settings">Settings</h2>
+      <div className={`${t.page} ${t.appPage}`}>
+        <header className={t.pageHead}>
+          <h1>Settings</h1>
+          <p>Keep your class, school and phone up to date. Certificates use the name you give here.</p>
+        </header>
+        <div className={t.dashGrid}>
+        <section className={t.panel} aria-label="Your profile">
           {!me || !s ? (
             failed ? <FormError message={failed} /> : <p className={t.mute} role="status">Loading…</p>
           ) : (
             <form className={styles.form} onSubmit={save} noValidate>
-              <p className={t.mute} style={{ margin: 0 }}>
-                {me.email} · <span className={t.mono}>{s.avantraId}</span>
-                <br />
-                Your email and AVANTRA ID can&apos;t be changed.
-              </p>
               <Field name="name" label="Full name" autoComplete="name" value={f.name} onChange={set} error={errors.name} />
               <div className={styles.twoColRow}>
                 <SelectField name="grade" label="Class" value={f.grade} onChange={set} error={errors.grade}>
@@ -106,6 +105,28 @@ export default function SettingsPage() {
             </form>
           )}
         </section>
+        {me && s && (
+          <aside>
+            <section className={t.panel} aria-labelledby="account">
+              <h2 id="account">Account</h2>
+              <dl className={t.facts}>
+                <div>
+                  <dt>Email</dt>
+                  <dd style={{ wordBreak: "break-all" }}>{me.email}</dd>
+                </div>
+                <div>
+                  <dt>ID</dt>
+                  <dd className={t.mono}>{s.avantraId}</dd>
+                </div>
+              </dl>
+              <p className={t.mute} style={{ margin: "14px 0" }}>Your email and AVANTRA ID can&apos;t be changed.</p>
+              <a className={t.ghost} href="/forgot-password">
+                Change password
+              </a>
+            </section>
+          </aside>
+        )}
+        </div>
       </div>
     </div>
   );

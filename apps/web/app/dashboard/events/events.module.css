@@ -1,19 +1,4 @@
-/* Events page. Colours and type come from the registration page (.registrationPage sets the tokens). */
-.page {
-  max-width: 860px;
-  width: 100%;
-  margin: 0 auto;
-  padding-top: 40px; /* with the wrapper's 40px, clears the fixed top bar */
-  align-self: flex-start; /* the shared wrapper centres vertically; a list reads from the top */
-}
-
-/* Room for the dashboard's phone tab bar. */
-@media (max-width: 767px) {
-  .page {
-    padding-bottom: calc(96px + env(safe-area-inset-bottom));
-  }
-}
-
+/* Events and Teams pages. Colours and type come from the registration page (.registrationPage sets the tokens). */
 .fee {
   display: flex;
   flex-wrap: wrap;
@@ -26,30 +11,12 @@
   border-radius: 16px;
 }
 
-.category {
-  font-family: "Yatra One", Georgia, serif;
-  font-size: 1.35rem;
-  color: var(--sky);
-  margin: 28px 0 10px;
-}
-
 .list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
   gap: 14px;
-}
-
-.event {
-  padding: 18px;
-  border: 2px solid #4a6f88;
-  border-radius: 16px;
-  background: var(--bg);
-}
-
-.event[data-registered="true"] {
-  border-color: var(--sky);
 }
 
 .eventHead {
@@ -69,10 +36,6 @@
 .meta {
   color: var(--mute);
   font-size: 0.95rem;
-}
-
-.description {
-  margin: 8px 0 0;
 }
 
 .actions {
@@ -150,23 +113,208 @@
   margin-top: 16px;
 }
 
-/* ---- Event cards: each opens the details popup ---- */
-.lead {
-  color: var(--mute);
-  margin: 0 0 22px;
-  max-width: 60ch;
+/* A team: name + status, details, member rows, invite block. */
+.teamTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
 }
 
-.grid {
+.teamName {
+  margin: 0;
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: 1.6rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.leaderTag {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border: 1px solid var(--sky);
+  border-radius: 999px;
+  color: var(--sky);
+  font-size: 0.75rem;
+  font-weight: 700;
+  vertical-align: 2px;
+}
+
+.emptySeat {
+  border-style: dashed;
+  background: transparent;
+}
+
+.emptySeat .openAvatar {
+  background: transparent;
+  border-color: #4a6f88;
+  color: var(--mute);
+}
+
+.invite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 2px solid rgba(154, 212, 251, 0.35);
+  border-radius: 14px;
+  background: rgba(154, 212, 251, 0.06);
+}
+
+.inviteQr {
+  display: block;
+  border-radius: 10px;
+}
+
+/* Join tab: code + button on one line, then the teams with room. */
+.codeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 460px;
+  margin-top: 16px;
+}
+
+.codeRow > div {
+  flex: 1 1 200px;
+}
+
+.codeRow .btn {
+  min-height: 50px;
+  margin-top: 30px; /* level with the input, under its label */
+}
+
+.openTeams {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(243, 236, 228, 0.16);
+}
+
+.openHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.openHead .sub {
+  margin: 0;
+}
+
+.openList {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
+  gap: 10px;
 }
 
-.tile,
+.openRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 2px solid rgba(154, 212, 251, 0.18);
+  border-radius: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.openRow:hover {
+  border-color: rgba(154, 212, 251, 0.45);
+}
+
+.openRow[data-requested] {
+  border-color: rgba(242, 193, 78, 0.6);
+}
+
+.openAvatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--red);
+  border: 2px solid var(--sky);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.openText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.openText > * {
+  overflow-wrap: anywhere;
+}
+
+.seats {
+  flex: none;
+  display: flex;
+  gap: 4px;
+}
+
+.seats span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #4a6f88;
+}
+
+.seats span[data-on] {
+  background: var(--sky);
+  border-color: var(--sky);
+}
+
+.ghostBtn {
+  composes: btn;
+  background: transparent;
+  border-color: #f2c14e;
+  color: #f2c14e;
+}
+
+.waiting {
+  color: #f2c14e;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.ghostBtn:hover {
+  background: rgba(242, 193, 78, 0.12);
+  box-shadow: none;
+}
+
+@media (max-width: 560px) {
+  .openRow {
+    flex-wrap: wrap;
+  }
+
+  .openText {
+    flex-basis: calc(100% - 56px);
+  }
+
+  .seats {
+    margin-left: 56px;
+  }
+
+  .openRow > button {
+    margin-left: auto;
+  }
+}
+
+/* ---- Event cards: each opens the details popup ---- */
 .soon {
   display: flex;
   flex-direction: column;
@@ -176,45 +324,14 @@
   padding: 22px;
   text-align: left;
   color: var(--ink);
-  background: var(--panel);
-  border: 3px solid var(--sky);
-  border-radius: 22px;
-  box-shadow: 0 0 0 5px var(--red), 0 18px 44px rgba(0, 0, 0, 0.45);
-  font: inherit;
-}
-
-.tile {
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.tile:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 0 5px var(--red-hi), 0 0 26px rgba(154, 212, 251, 0.35), 0 22px 50px rgba(0, 0, 0, 0.5);
-}
-
-.tile:focus-visible {
-  outline: 2px solid var(--sky);
-  outline-offset: 9px;
-}
-
-.soon {
-  border-style: dashed;
-  border-color: #4a6f88;
-  box-shadow: none;
-  background: transparent;
-}
-
-.kicker {
-  font-family: "Yatra One", Georgia, serif;
-  font-size: 0.9rem;
-  letter-spacing: 0.04em;
-  color: var(--sky);
+  background: rgba(27, 22, 19, 0.6);
+  border: 2px dashed #4a6f88;
+  border-radius: 18px;
 }
 
 .tileName {
   font-family: "Yatra One", Georgia, serif;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   line-height: 1.15;
 }
 
@@ -242,13 +359,6 @@
 
 .pill[data-on] {
   border-color: var(--sky);
-  color: var(--sky);
-}
-
-.more {
-  margin-top: auto;
-  padding-top: 6px;
-  font-family: "Yatra One", Georgia, serif;
   color: var(--sky);
 }
 
@@ -289,9 +399,6 @@
 @media (prefers-reduced-motion: reduce) {
   .dialog[open] {
     animation: none;
-  }
-  .tile {
-    transition: none;
   }
 }
 
@@ -474,5 +581,217 @@
   }
   .dialog .steps {
     margin: 14px 18px 0;
+  }
+}
+
+
+/* ---- Multiverse touches: a slowly turning portal ring (decoration only) ---- */
+.feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  align-items: center;
+  gap: 24px;
+  padding: 26px 28px;
+  margin-bottom: 30px;
+  background:
+    radial-gradient(90% 120% at 100% 50%, rgba(154, 212, 251, 0.1), transparent 60%),
+    var(--panel);
+  border: 2px solid var(--sky);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 0 var(--red);
+}
+
+.featureText {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.featureName {
+  margin: 0;
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.featureText .teaser {
+  margin: 0;
+  max-width: 60ch;
+}
+
+.featureText .actions {
+  margin-top: 4px;
+}
+
+.ghostLink {
+  padding: 8px 4px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.ghostLink:hover {
+  color: var(--sky);
+}
+
+.ghostLink:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 3px;
+}
+
+.portalWrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 200px;
+  aspect-ratio: 1;
+  justify-self: center;
+}
+
+.portal,
+.portalSmall {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #120e0c 0 56%, transparent 57%),
+    conic-gradient(from 0deg, var(--red), var(--sky), var(--red-hi), #5aa9e6, var(--red));
+  box-shadow:
+    0 0 36px rgba(154, 212, 251, 0.28),
+    0 0 70px rgba(196, 21, 28, 0.3);
+  animation: portalTurn 24s linear infinite;
+}
+
+.portal {
+  position: absolute;
+  inset: 0;
+}
+
+/* A soft glow inside the ring, like light coming through a doorway. */
+.portal::after {
+  content: "";
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(154, 212, 251, 0.22), transparent 70%);
+}
+
+.portalLabel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--mute);
+  font-size: 0.9rem;
+}
+
+.portalLabel strong {
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.portalSmall {
+  width: 44px;
+  height: 44px;
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+@keyframes portalTurn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal,
+  .portalSmall {
+    animation: none;
+  }
+}
+
+.sectionTitle {
+  margin: 0 0 6px;
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  color: var(--sky);
+}
+
+.universes {
+  margin-bottom: 30px;
+}
+
+.universeGrid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.universeGrid li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 2px solid rgba(154, 212, 251, 0.18);
+  border-radius: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.universeGrid li[data-mine] {
+  border-color: var(--sky);
+  background: rgba(154, 212, 251, 0.08);
+}
+
+.universeDot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--sky);
+  box-shadow: 0 0 10px rgba(154, 212, 251, 0.5);
+}
+
+.universeGrid li[data-mine] .universeDot {
+  background: var(--sky);
+}
+
+.soonGrid {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .feature {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 20px;
+  }
+
+  .portalWrap {
+    order: -1;
+    width: 130px;
+  }
+
+  .portalLabel strong {
+    font-size: 1.9rem;
   }
 }

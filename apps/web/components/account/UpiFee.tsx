@@ -73,11 +73,11 @@ export function UpiFee({ paid, last, onSent }: { paid: boolean; last?: LastPayme
                 <p style={{ margin: "0 0 4px" }}>
                   Pay <strong>₹299</strong> to {upi.payee}
                 </p>
-                <p className={t.mono} style={{ margin: "0 0 10px", whiteSpace: "normal", wordBreak: "break-all" }}>{upi.id}</p>
+                <p className={t.mono} style={{ margin: "0 0 10px", whiteSpace: "normal", overflowWrap: "anywhere" }}>{upi.id}</p>
                 <button type="button" className={t.ghost} onClick={copy}>
                   {copied ? "Copied" : "Copy UPI ID"}
                 </button>
-                <ol className={t.mute} style={{ margin: "14px 0 0", paddingLeft: 20 }}>
+                <ol className={t.mute} style={{ margin: "14px 0 0", paddingLeft: "1.2em", listStyle: "decimal" }}>
                   <li>Scan the QR with any UPI app, or pay to the UPI ID.</li>
                   <li>Pay exactly ₹299.</li>
                   <li>Then tap Next and enter the UTR from your app.</li>

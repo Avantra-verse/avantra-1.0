@@ -9,7 +9,14 @@ export const PublicRole = z.enum(['STUDENT']);
 export type PublicRole = z.infer<typeof PublicRole>;
 
 const email = z.string().trim().toLowerCase().pipe(z.email('Enter a valid email'));
-const password = z.string().min(8, 'At least 8 characters').max(128);
+// Matches the Supabase Auth rule (lower + upper + digit), so the form explains it before Auth refuses.
+const password = z
+  .string()
+  .min(8, 'At least 8 characters')
+  .max(128)
+  .regex(/[a-z]/, 'Add a small letter (a-z)')
+  .regex(/[A-Z]/, 'Add a capital letter (A-Z)')
+  .regex(/[0-9]/, 'Add a number (0-9)');
 const name = z.string().trim().min(2).max(100);
 const code = z.string().regex(/^\d{6}$/, 'Enter the 6-digit code');
 const phone = z.string().regex(/^[6-9]\d{9}$/, 'Enter a 10-digit Indian mobile number');
