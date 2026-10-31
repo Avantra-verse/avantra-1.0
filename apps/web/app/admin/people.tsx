@@ -21,17 +21,28 @@ type Person = {
 };
 
 const ROLES: Record<Role, string> = { STUDENT: "Student", VOLUNTEER: "Volunteer", JUDGE: "Judge", ADMIN: "Admin" };
+// Each Status filter is a test on a row.
+const STATUS: Record<string, [string, (p: PersonRow) => boolean]> = {
+  paid: ["Fee paid", (p) => p.role === "STUDENT" && p.feePaid],
+  unpaid: ["Fee not paid", (p) => p.role === "STUDENT" && !!p.avantraId && !p.feePaid],
+  noProfile: ["Profile not finished", (p) => p.role === "STUDENT" && !p.avantraId],
+  off: ["Switched off", (p) => !!p.disabledAt],
+  super: ["Super admin", (p) => p.superAdmin],
+};
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—");
 
 export function People() {
   const list = useLoad<PersonRow[]>("/admin/people");
   const [q, setQ] = useState("");
   const [role, setRole] = useState("");
+  const [status, setStatus] = useState("");
+  const [school, setSchool] = useState("");
   const [open, setOpen] = useState<string | null>(null);
 
   const needle = q.trim().toLowerCase();
+  const schools = [...new Set((list.data ?? []).map((p) => p.schoolName).filter((v): v is string => !!v))].sort();
   const rows = (list.data ?? []).filter(
-    (p) => (!role || p.role === role) && (!needle || [p.name, p.email, p.phone, p.avantraId, p.schoolName].some((v) => v?.toLowerCase().includes(needle))),
+    (p) => (!role || p.role === role) && (!status || STATUS[status][1](p)) && (!school || p.schoolName === school) && (!needle || [p.name, p.email, p.phone, p.avantraId, p.schoolName].some((v) => v?.toLowerCase().includes(needle))),
   );
 
   if (open) return <Profile id={open} onClose={(changed) => { setOpen(null); if (changed) list.reload(); }} />;
@@ -47,6 +58,18 @@ export function People() {
           <option value="">All</option>
           {Object.entries(ROLES).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
+          ))}
+        </SelectField>
+        <SelectField name="peopleStatus" label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">All</option>
+          {Object.entries(STATUS).map(([k, [v]]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </SelectField>
+        <SelectField name="peopleSchool" label="School" value={school} onChange={(e) => setSchool(e.target.value)}>
+          <option value="">All</option>
+          {schools.map((v) => (
+            <option key={v} value={v}>{v}</option>
           ))}
         </SelectField>
       </div>
