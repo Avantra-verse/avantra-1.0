@@ -5,7 +5,7 @@
 // unchecked ones (and new tries after a failure) are in the next download.
 import React, { useState } from "react";
 import { api } from "@/lib/api";
-import { FormError } from "@/components/account/Account";
+import { FormError, styles as account } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
 import { fileUrl, useAction, useLoad } from "./ui";
 
@@ -26,22 +26,36 @@ export function UpiPayments() {
   const { data, error, reload } = useLoad<Waiting[]>("/admin/payments/upi");
   const act = useAction();
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  // Only rows still waiting count, so a refresh that drops a decided row can't leave it ticked.
+  const chosen = data?.filter((p) => picked.has(p.id)) ?? [];
+  const tick = (id: string) => setPicked((s) => { const n = new Set(s); if (!n.delete(id)) n.add(id); return n; });
 
-  async function decide(p: Waiting, status: "PAID" | "FAILED") {
+  async function decide(list: Waiting[], status: "PAID" | "FAILED") {
+    if (!list.length) return;
+    const who = list.length === 1 ? `${list[0].name}'s payment (UTR ${list[0].utr})` : `these ${list.length} payments`;
     const ask = status === "PAID"
-      ? `Mark ${p.name}'s payment (UTR ${p.utr}) as paid? Only do this after finding it in the bank statement. They get a "fee confirmed" email.`
-      : `Mark UTR ${p.utr} from ${p.name} as not paid? They get a "try again" email.`;
+      ? `Mark ${who} as paid? Only do this after finding ${list.length === 1 ? "it" : "each one"} in the bank statement. They get a "fee confirmed" email.`
+      : `Mark ${who} as not paid? They get a "try again" email.`;
     if (!confirm(ask)) return;
     setResult(null);
     const r = await act.run(
-      () => api<{ result: string }[]>("/admin/payments/upi/decide", { avantraId: p.avantraId, utr: p.utr, status }),
-      ([d]) =>
-        d?.result === "paid" ? `${p.name}: fee confirmed.`
-        : d?.result === "failed" ? `${p.name}: marked not paid.`
-        : d?.result === "double" ? `${p.name} had already paid the fee. Refund one of the two payments.`
-        : `${p.name}: this payment was already decided.`,
+      () => api<{ avantraId: string; result: string }[]>("/admin/payments/upi/decide", { decisions: list.map((p) => ({ avantraId: p.avantraId, utr: p.utr, status })) }),
+      (rows) => {
+        const n = (k: string) => rows.filter((d) => d.result === k).length;
+        const double = rows.filter((d) => d.result === "double").map((d) => list.find((p) => p.avantraId === d.avantraId)?.name ?? d.avantraId);
+        return [
+          n("paid") && `${n("paid")} confirmed paid.`,
+          n("failed") && `${n("failed")} marked not paid.`,
+          double.length && `Already paid before, refund one of the two payments: ${double.join(", ")}.`,
+          (n("already") || n("missing")) && `${n("already") + n("missing")} were already decided.`,
+        ].filter(Boolean).join(" ");
+      },
     );
-    if (r) reload();
+    if (r) {
+      setPicked(new Set());
+      reload();
+    }
   }
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -99,16 +113,25 @@ export function UpiPayments() {
 
       <section className={t.panel} aria-labelledby="upi-waiting">
         <h2 id="upi-waiting">Waiting</h2>
-        <p className={t.mute}>Found a payment in the bank statement yourself? Mark it here instead of waiting for the Excel file.</p>
+        <p className={t.mute}>Found payments in the bank statement yourself? Tick them and mark them here instead of waiting for the Excel file.</p>
         <FormError message={error} />
         {act.note && <p role="status">{act.note}</p>}
         {!data ? null : data.length === 0 ? (
           <p className={t.mute}>No payments waiting to be checked.</p>
         ) : (
+          <>
+          <div className={t.inline} style={{ marginBottom: 12 }}>
+            <button type="button" className={t.btn} disabled={act.busy || !chosen.length} onClick={() => decide(chosen, "PAID")}>Mark {chosen.length || ""} paid</button>
+            <button type="button" className={t.ghost} disabled={act.busy || !chosen.length} onClick={() => decide(chosen, "FAILED")}>Mark {chosen.length || ""} not paid</button>
+            {chosen.length > 0 && <button type="button" className={account.link} onClick={() => setPicked(new Set())}>Clear</button>}
+          </div>
           <div className={t.scroll}>
             <table className={`${t.table} ${t.stack}`}>
               <thead>
                 <tr>
+                  <th>
+                    <input type="checkbox" aria-label="Tick all" checked={chosen.length === data.length} onChange={(e) => setPicked(new Set(e.target.checked ? data.map((p) => p.id) : []))} />
+                  </th>
                   <th>Student</th>
                   <th>UTR</th>
                   <th>Sent</th>
@@ -119,6 +142,9 @@ export function UpiPayments() {
                 {data.map((p) => (
                   <tr key={p.id}>
                     <td>
+                      <input type="checkbox" aria-label={`Tick ${p.name}`} checked={picked.has(p.id)} onChange={() => tick(p.id)} />
+                    </td>
+                    <td>
                       {p.name}
                       <div className={`${t.mute} ${t.mono}`}>{p.avantraId}</div>
                     </td>
@@ -126,8 +152,8 @@ export function UpiPayments() {
                     <td data-label="Sent">{when(p.createdAt)}</td>
                     <td data-label="Checked by hand">
                       <div className={t.inline}>
-                        <button type="button" className={t.btn} disabled={act.busy} onClick={() => decide(p, "PAID")}>Paid</button>
-                        <button type="button" className={t.ghost} disabled={act.busy} onClick={() => decide(p, "FAILED")}>Not paid</button>
+                        <button type="button" className={t.btn} disabled={act.busy} onClick={() => decide([p], "PAID")}>Paid</button>
+                        <button type="button" className={t.ghost} disabled={act.busy} onClick={() => decide([p], "FAILED")}>Not paid</button>
                       </div>
                     </td>
                   </tr>
@@ -135,6 +161,7 @@ export function UpiPayments() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </section>
     </>
