@@ -2,7 +2,7 @@
 
 // Every event, open to anyone. Each card opens a details popup with a Register button; the exhibition then
 // asks for a theme and sends the student on to pay the ₹299 fee. Teams are formed on /dashboard/teams once
-// the fee is paid, so cards here only say how big a team must be.
+// the fee is paid, so cards here only say how big a team can be.
 // /dashboard/events?event=SLUG&step=theme opens a popup straight away (the dashboard's Register button).
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -37,7 +37,7 @@ const CATEGORY_NAME: Record<Category, string> = {
   WORKSHOP: "Workshop",
 };
 const EXHIBITION_ABOUT =
-  "Build a project alone or in a team of up to 3 on one theme and present it to the judges. Classes 6–8 compete as Juniors, classes 9–12 as Seniors.";
+  "Build a project on your own or in a team of 2 or 3 on one theme and present it to the judges. Classes 6–8 compete as Juniors, classes 9–12 as Seniors.";
 
 // Exhibition category by class; register_event refuses classes below 6 too.
 const level = (grade: number) => (grade >= 9 ? "Senior (classes 9–12)" : grade >= 6 ? "Junior (classes 6–8)" : null);

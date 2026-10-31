@@ -68,7 +68,7 @@ function Checklist({ s, exhibition, reviewing }: { s: Student; exhibition: MyReg
     },
     {
       title: `Team of ${min === max ? max : `${min} to ${max}`}`,
-      sub: team ? `${team.name} · ${team.members.length} of ${max}${team.members.length < min ? ", share your code to fill it" : ", all set"}` : "Start a team or join a friend's.",
+      sub: team ? `${team.name} · ${team.members.length} of ${max}${team.members.length < min ? ", share your code to fill it" : team.members.length < max ? ", all set (friends can still join)" : ", all set"}` : "Start a team (on your own is fine) or join a friend's.",
       done: !!team && team.members.length >= min,
       href: "/dashboard/teams",
       action: team ? "Open team" : "Find a team",
@@ -187,7 +187,7 @@ function StudentDashboard({ me, s, w, regs }: { me: Me; s: Student; w: WallMe | 
                 </span>
               </div>
               <p className={t.mute} style={{ margin: "0 0 14px" }}>
-                Build a project alone or in a team of up to 3 and present it to the judges. Entry to the fest is free; the exhibition is ₹299 per student.
+                Build a project on your own or in a team of 2 or 3 and present it to the judges. Entry to the fest is free; the exhibition is ₹299 per student.
               </p>
               <Checklist s={s} exhibition={exhibition} reviewing={reviewing} />
             </section>

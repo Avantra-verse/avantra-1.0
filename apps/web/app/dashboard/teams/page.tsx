@@ -89,7 +89,7 @@ export default function TeamsPage() {
       <div className={`${t.page} ${t.appPage}`}>
         <header className={t.pageHead}>
           <h1>Teams</h1>
-          <p>The Science Exhibition is for teams of 1 to 3. Start a team and share its code, or join a friend&apos;s team.</p>
+          <p>The Science Exhibition is for teams of 1, 2 or 3. Start a team and share its code, or join a friend&apos;s team. Entering on your own? Start a team anyway: a team of 1 is fine.</p>
         </header>
         <div className={t.dashGrid}>
         <div>
@@ -153,7 +153,7 @@ export default function TeamsPage() {
           <section className={t.panel} aria-labelledby="how">
             <h2 id="how">How teams work</h2>
             <ul className={t.mute} style={{ margin: 0, paddingLeft: "1.2em", listStyle: "disc", display: "grid", gap: 8 }}>
-              <li>A team has 1 to 3 students; you can also enter on your own as a team of 1. Anyone who has paid can start one and becomes its leader.</li>
+              <li>A team has 1, 2 or 3 students. Entering alone? Start a team with just you in it; only teams are judged. Anyone who has paid can start one and becomes its leader.</li>
               <li>Friends join with your 6-letter code, your invite link or the team&apos;s QR.</li>
               <li>You can also ask up to 5 open teams to let you in. The leader accepts or declines, and once one accepts, your other requests are cancelled.</li>
               <li>If the leader leaves, the longest-standing member takes over. A team can&apos;t change once the judges have scored it.</li>
