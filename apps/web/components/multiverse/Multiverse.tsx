@@ -97,7 +97,7 @@ export default function Multiverse() {
           <img src="/gurudev-sri-sri-ravi-shankar.webp" alt="Gurudev Sri Sri Ravi Shankar" width={640} height={640} loading="lazy" />
           <p>
             Under the blessing of{" "}
-            <b>Gurudev Sri Sri Ravi Shankar</b>
+            <b>Gurudev Sri Sri Ravi Shankar ji</b>
           </p>
         </section>
 
