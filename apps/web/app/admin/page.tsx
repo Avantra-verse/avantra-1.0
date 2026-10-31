@@ -14,8 +14,9 @@ import { fileUrl, rupees, Tile, useAction, useHashTab, useLoad } from "./ui";
 import { Events } from "./events";
 import { UpiPayments } from "./payments";
 import { Wall } from "./wall";
+import { People } from "./people";
 
-const TABS = { overview: "Overview", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall", admins: "Admins" } as const;
+const TABS = { overview: "Overview", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall", people: "People", admins: "Admins" } as const;
 type Tab = keyof typeof TABS;
 
 // One line under each tab's title.
@@ -27,6 +28,7 @@ const INTRO: Record<Tab, string> = {
   staff: "Volunteer and judge accounts, and which event each judge scores.",
   events: "Open or close events and see the judges' results.",
   wall: "The Engagement Wall: switch it on for event day, add and print challenges.",
+  people: "Find any account, see everything about it, fix its details or delete it. Only the super admin sees this.",
   admins: "Add admins, switch them off or remove them. Only the super admin sees this.",
 };
 
@@ -45,7 +47,7 @@ export default function AdminPage() {
 
   return (
     <>
-      <AppNav links={me?.superAdmin ? ADMIN_LINKS : ADMIN_LINKS.filter((l) => l.href !== "/admin#admins")} badge={me?.superAdmin ? "SUPER ADMIN" : "ADMIN"} loginHref="/admin/login" portal />
+      <AppNav links={me?.superAdmin ? ADMIN_LINKS : ADMIN_LINKS.filter((l) => l.href !== "/admin#admins" && l.href !== "/admin#people")} badge={me?.superAdmin ? "SUPER ADMIN" : "ADMIN"} loginHref="/admin/login" portal />
       {/* md+: no top bar (the sidebar replaces it), so take back <main>'s top padding and clear the sidebar. */}
       <div className={`${account.registrationPage} md:-mt-16 md:pl-60`}>
         <div className={account.starfieldLayer} aria-hidden="true" />
@@ -69,6 +71,7 @@ export default function AdminPage() {
               {tab === "staff" && <Staff />}
               {tab === "events" && <Events />}
               {tab === "wall" && <Wall />}
+              {tab === "people" && (me.superAdmin ? <People /> : <FormError message="Only the super admin can see everyone." />)}
               {tab === "admins" && (me.superAdmin ? <Admins meId={me.id} /> : <FormError message="Only the super admin can manage admins." />)}
             </>
           )}

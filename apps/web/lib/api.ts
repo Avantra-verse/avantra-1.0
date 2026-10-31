@@ -177,8 +177,9 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "GET /admin/referrals": () => rpc("admin_referrals"),
   "GET /admin/payments/upi": () => rpc("admin_upi_waiting"),
   // One row of the school's sheet, decided by hand: same checks and emails as the upload.
-  "POST /admin/payments/upi/decide": ({ avantraId, utr, status }) =>
-    rpc("admin_upi_decide", { p_decisions: [{ row: 1, avantraId, utr, status }] }),
+  // [{ avantraId, utr, status }]: one or many ticked rows.
+  "POST /admin/payments/upi/decide": ({ decisions }) =>
+    rpc("admin_upi_decide", { p_decisions: (decisions as unknown as object[]).map((d, i) => ({ row: i + 1, ...d })) }),
   "POST /admin/students/:id/mark-paid": ({ id, note }) => rpc("admin_mark_paid", { p_avantra_id: id, p_note: note }),
   "PATCH /admin/events/:id": ({ id, registrationOpen }) => rpc("admin_set_registration_open", { p_event_id: id, p_open: registrationOpen }),
   "GET /admin/events/:id/leaderboard": ({ id }) => rpc("admin_event_leaderboard", { p_event_id: id }),
@@ -192,6 +193,10 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "GET /admin/admins": () => rpc("admin_admins"),
   "POST /admin/admins/:id/disable": ({ id }) => rpc("admin_set_admin_disabled", { p_user_id: id, p_disabled: true }),
   "POST /admin/admins/:id/enable": ({ id }) => rpc("admin_set_admin_disabled", { p_user_id: id, p_disabled: false }),
+  "GET /admin/people": () => rpc("admin_people"),
+  "GET /admin/people/:id": ({ id }) => rpc("admin_person", { p_user_id: id }),
+  "PATCH /admin/people/:id": ({ id, ...p }) => rpc("admin_update_person", { p_user_id: id, p }),
+  "DELETE /admin/people/:id": ({ id }) => rpc("admin_delete_person", { p_user_id: id }),
   "GET /admin/wall": () => rpc("admin_wall"),
   "PUT /admin/wall/state": ({ open, frozen }) => rpc("admin_wall_state", { p_open: open, p_frozen: frozen }),
   "PATCH /admin/wall/challenges/:id": ({ id, active, answers }) =>
