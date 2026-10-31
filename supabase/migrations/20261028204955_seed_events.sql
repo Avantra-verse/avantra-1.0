@@ -1,7 +1,7 @@
 -- The brochure's events (was apps/api/scripts/seed-events.ts). Updates by slug, safe to re-run.
--- Teams of 3: required for the exhibition, optional (1 to 3) for the other team events. Only the exhibition needs the ₹199 fee.
+-- Teams of 1 to 3 for the team events. Only the exhibition needs the ₹199 fee.
 INSERT INTO "Event" ("slug", "name", "category", "teamMin", "teamMax") VALUES
-  ('exhibition', 'Science & Innovation Exhibition', 'EXHIBITION', 3, 3),
+  ('exhibition', 'Science & Innovation Exhibition', 'EXHIBITION', 1, 3),
   ('drone', 'Drone Technology', 'TECHNOLOGY', 1, 3),
   ('robotics', 'Robotics', 'TECHNOLOGY', 1, 3),
   ('satellite', 'Satellite & Space Technology', 'TECHNOLOGY', 1, 3),
