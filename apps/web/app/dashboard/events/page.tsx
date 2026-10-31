@@ -37,7 +37,7 @@ const CATEGORY_NAME: Record<Category, string> = {
   WORKSHOP: "Workshop",
 };
 const EXHIBITION_ABOUT =
-  "Build a project in a team of 3 on one theme and present it to the judges. Classes 6–8 compete as Juniors, classes 9–12 as Seniors.";
+  "Build a project alone or in a team of up to 3 on one theme and present it to the judges. Classes 6–8 compete as Juniors, classes 9–12 as Seniors.";
 
 // Exhibition category by class; register_event refuses classes below 6 too.
 const level = (grade: number) => (grade >= 9 ? "Senior (classes 9–12)" : grade >= 6 ? "Junior (classes 6–8)" : null);
