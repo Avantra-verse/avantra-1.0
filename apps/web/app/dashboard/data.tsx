@@ -24,7 +24,7 @@ export type Student = {
 export type MyReg = {
   id: string;
   topic: string | null;
-  event: { slug: string; name: string; teamMax: number };
+  event: { slug: string; name: string; teamMin: number; teamMax: number };
   teamMember: { isLeader: boolean; team: { id: string; name: string; members: unknown[] } } | null;
 };
 // UTR sent, the school hasn't decided yet: every page shows "under review" instead of asking to pay again.

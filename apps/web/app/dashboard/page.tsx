@@ -49,6 +49,7 @@ export default function DashboardPage() {
 function Checklist({ s, exhibition, reviewing }: { s: Student; exhibition: MyReg | undefined; reviewing: boolean }) {
   const team = exhibition?.teamMember?.team;
   const max = exhibition?.event.teamMax ?? 3;
+  const min = exhibition?.event.teamMin ?? 1;
   const steps = [
     {
       title: "Register and pick a theme",
@@ -66,9 +67,9 @@ function Checklist({ s, exhibition, reviewing }: { s: Student; exhibition: MyReg
       action: reviewing ? "View" : "Pay now",
     },
     {
-      title: `Team of ${max}`,
-      sub: team ? `${team.name} · ${team.members.length} of ${max}${team.members.length < max ? ", share your code to fill it" : ", all set"}` : "Start a team or join a friend's.",
-      done: !!team && team.members.length >= max,
+      title: `Team of ${min === max ? max : `${min} to ${max}`}`,
+      sub: team ? `${team.name} · ${team.members.length} of ${max}${team.members.length < min ? ", share your code to fill it" : ", all set"}` : "Start a team or join a friend's.",
+      done: !!team && team.members.length >= min,
       href: "/dashboard/teams",
       action: team ? "Open team" : "Find a team",
     },
@@ -182,7 +183,7 @@ function StudentDashboard({ me, s, w, regs }: { me: Me; s: Student; w: WallMe | 
               <div className={t.panelHead}>
                 <h2 id="exhibition">Science Exhibition</h2>
                 <span className={t.status} data-tone={s.feePaidAt ? "ok" : reviewing ? "warn" : undefined}>
-                  {team && team.members.length >= exhibition!.event.teamMax ? "Ready" : s.feePaidAt ? "Fee paid" : reviewing ? "Under review" : exhibition ? "Registered" : "Not registered"}
+                  {team && team.members.length >= exhibition!.event.teamMin ? "Ready" : s.feePaidAt ? "Fee paid" : reviewing ? "Under review" : exhibition ? "Registered" : "Not registered"}
                 </span>
               </div>
               <p className={t.mute} style={{ margin: "0 0 14px" }}>
