@@ -1,7 +1,8 @@
 "use client";
 
-// People (super admin only; every call is checked again in the database): find any account, see all of it,
-// fix its details or delete it. Deleting needs the account's email typed in, so a stray click can't do it.
+// People: every admin can find any account and see all of it; only the super admin can fix its details, switch
+// the fee between paid and not paid, or delete it (checked again in the database). Deleting needs the account's
+// email typed in, so a stray click can't do it.
 import React, { useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { Field, FormError, SelectField } from "@/components/account/Account";
@@ -31,7 +32,7 @@ const STATUS: Record<string, [string, (p: PersonRow) => boolean]> = {
 };
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—");
 
-export function People() {
+export function People({ canEdit }: { canEdit: boolean }) {
   const list = useLoad<PersonRow[]>("/admin/people");
   const [q, setQ] = useState("");
   const [role, setRole] = useState("");
@@ -45,7 +46,7 @@ export function People() {
     (p) => (!role || p.role === role) && (!status || STATUS[status][1](p)) && (!school || p.schoolName === school) && (!needle || [p.name, p.email, p.phone, p.avantraId, p.schoolName].some((v) => v?.toLowerCase().includes(needle))),
   );
 
-  if (open) return <Profile id={open} onClose={(changed) => { setOpen(null); if (changed) list.reload(); }} />;
+  if (open) return <Profile id={open} canEdit={canEdit} onClose={(changed) => { setOpen(null); if (changed) list.reload(); }} />;
   return (
     <section className={t.panel} aria-labelledby="people">
       <div className={t.panelHead}>
@@ -114,7 +115,7 @@ export function People() {
   );
 }
 
-function Profile({ id, onClose }: { id: string; onClose: (changed: boolean) => void }) {
+function Profile({ id, canEdit, onClose }: { id: string; canEdit: boolean; onClose: (changed: boolean) => void }) {
   const { data: p, error, reload } = useLoad<Person>(`/admin/people/${id}`);
   const act = useAction();
   const [form, setForm] = useState<Record<string, string> | null>(null);
@@ -129,7 +130,7 @@ function Profile({ id, onClose }: { id: string; onClose: (changed: boolean) => v
   const edit = () =>
     setForm({
       name: u.name, phone: u.phone ?? "",
-      ...(s && { schoolName: s.schoolName, grade: String(s.grade), section: s.section ?? "", referralCode: s.referralCode ?? "", guardianEmail: s.guardianEmail ?? "", guardianPhone: s.guardianPhone ?? "" }),
+      ...(s && { feePaid: s.feePaidAt ? "yes" : "no", schoolName: s.schoolName, grade: String(s.grade), section: s.section ?? "", referralCode: s.referralCode ?? "", guardianEmail: s.guardianEmail ?? "", guardianPhone: s.guardianPhone ?? "" }),
     });
   const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -138,7 +139,10 @@ function Profile({ id, onClose }: { id: string; onClose: (changed: boolean) => v
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form || !confirm(`Save these changes to ${u.name}'s account?`)) return;
+    const feeNote = s && form?.feePaid !== (s.feePaidAt ? "yes" : "no")
+      ? form?.feePaid === "yes" ? "\n\nThe fee will be marked PAID and they get the fee email." : "\n\nThe fee will be marked NOT PAID: their paid payment is marked refunded and their badge locks again."
+      : "";
+    if (!form || !confirm(`Save these changes to ${u.name}'s account?${feeNote}`)) return;
     const r = await act.run(async () => {
       try {
         return await api(`/admin/people/${id}`, form, "PATCH").then(() => true);
@@ -167,7 +171,7 @@ function Profile({ id, onClose }: { id: string; onClose: (changed: boolean) => v
       <section className={t.panel} aria-labelledby="person">
         <div className={t.panelHead}>
           <h2 id="person">{u.name}</h2>
-          {!form && <button type="button" className={t.ghost} onClick={edit}>Edit details</button>}
+          {canEdit && !form && <button type="button" className={t.ghost} onClick={edit}>Edit details</button>}
         </div>
         {act.note && <p role="status">{act.note}</p>}
         {form ? (
@@ -177,6 +181,10 @@ function Profile({ id, onClose }: { id: string; onClose: (changed: boolean) => v
               <Field name="phone" label={s ? "Phone" : "Phone (optional)"} type="tel" value={form.phone} onChange={set} error={errors.phone} />
               {s && (
                 <>
+                  <SelectField name="feePaid" label="Fee" value={form.feePaid} onChange={set} error={errors.feePaid}>
+                    <option value="yes">Paid</option>
+                    <option value="no">Not paid</option>
+                  </SelectField>
                   <Field name="schoolName" label="School" value={form.schoolName} onChange={set} error={errors.schoolName} />
                   <SelectField name="grade" label="Class" value={form.grade} onChange={set} error={errors.grade}>
                     {Array.from({ length: 12 }, (_, i) => i + 1).map((g) => (
@@ -263,7 +271,7 @@ function Profile({ id, onClose }: { id: string; onClose: (changed: boolean) => v
         </section>
       )}
 
-      {!u.superAdmin && (
+      {canEdit && !u.superAdmin && (
         <section className={`${t.panel} ${t.result} ${t.bad}`} aria-labelledby="danger">
           <h2 id="danger">Delete this account</h2>
           <p>

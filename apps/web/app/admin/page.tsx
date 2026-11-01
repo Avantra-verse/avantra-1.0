@@ -28,7 +28,7 @@ const INTRO: Record<Tab, string> = {
   staff: "Volunteer and judge accounts, and which event each judge scores.",
   events: "Open or close events and see the judges' results.",
   wall: "The Engagement Wall: switch it on for event day, add and print challenges.",
-  people: "Find any account, see everything about it, fix its details or delete it. Only the super admin sees this.",
+  people: "Find any account and see everything about it. Only the super admin can fix details, change the fee or delete.",
   admins: "Add admins, switch them off or remove them. Only the super admin sees this.",
 };
 
@@ -47,7 +47,7 @@ export default function AdminPage() {
 
   return (
     <>
-      <AppNav links={me?.superAdmin ? ADMIN_LINKS : ADMIN_LINKS.filter((l) => l.href !== "/admin#admins" && l.href !== "/admin#people")} badge={me?.superAdmin ? "SUPER ADMIN" : "ADMIN"} loginHref="/admin/login" portal />
+      <AppNav links={me?.superAdmin ? ADMIN_LINKS : ADMIN_LINKS.filter((l) => l.href !== "/admin#admins")} badge={me?.superAdmin ? "SUPER ADMIN" : "ADMIN"} loginHref="/admin/login" portal />
       {/* md+: no top bar (the sidebar replaces it), so take back <main>'s top padding and clear the sidebar. */}
       <div className={`${account.registrationPage} md:-mt-16 md:pl-60`}>
         <div className={account.starfieldLayer} aria-hidden="true" />
@@ -71,7 +71,7 @@ export default function AdminPage() {
               {tab === "staff" && <Staff />}
               {tab === "events" && <Events />}
               {tab === "wall" && <Wall />}
-              {tab === "people" && (me.superAdmin ? <People /> : <FormError message="Only the super admin can see everyone." />)}
+              {tab === "people" && <People canEdit={!!me.superAdmin} />}
               {tab === "admins" && (me.superAdmin ? <Admins meId={me.id} /> : <FormError message="Only the super admin can manage admins." />)}
             </>
           )}
@@ -84,7 +84,12 @@ export default function AdminPage() {
 // ---- overview ----
 
 type Stats = {
-  students: { total: number; paid: number; unpaid: number };
+  students: { total: number; paid: number; unpaid: number; juniors: number; seniors: number; below6: number };
+  signups: { today: number; week: number; profileUnfinished: number };
+  upiWaiting: number;
+  exhibition: { registered: number; paidNoTeam: number; teamSizes: Record<"1" | "2" | "3", number>; themes: { topic: string; students: number }[] };
+  topSchools: { school: string; students: number; paid: number }[];
+  staff: { volunteers: number; judges: number; admins: number };
   referralCodes: number;
   fees: { onlinePaise: number; onlineCount: number; cashPaise: number; cashCount: number };
   gate: { checkedInToday: number };
@@ -107,7 +112,68 @@ function Overview({ name }: { name: string }) {
         <Tile value={s.referralCodes} label="referral codes used" />
         <Tile value={rupees(s.fees.onlinePaise)} label={`online (${s.fees.onlineCount})`} />
         <Tile value={rupees(s.fees.cashPaise)} label={`cash at desk (${s.fees.cashCount})`} />
+        <Tile value={s.upiWaiting} label="UPI payments waiting for the school" />
+        <Tile value={s.signups.today} label="signed up today" />
+        <Tile value={s.signups.week} label="signed up in the last 7 days" />
+        <Tile value={s.signups.profileUnfinished} label="signed up, profile not finished" />
+        <Tile value={s.students.juniors} label="juniors (classes 6–8)" />
+        <Tile value={s.students.seniors} label="seniors (classes 9–12)" />
+        <Tile value={`${s.staff.volunteers} · ${s.staff.judges} · ${s.staff.admins}`} label="volunteers · judges · admins" />
       </div>
+      <section className={t.panel} aria-labelledby="exhibition-stats">
+        <h2 id="exhibition-stats">Science Exhibition</h2>
+        <div className={`${t.stats} ${t.stats3}`}>
+          <Tile value={s.exhibition.registered} label="registered" />
+          <Tile value={s.exhibition.paidNoTeam} label="paid, no team yet" />
+          <Tile value={`${s.exhibition.teamSizes["1"]} · ${s.exhibition.teamSizes["2"]} · ${s.exhibition.teamSizes["3"]}`} label="teams of 1 · 2 · 3" />
+        </div>
+        {s.exhibition.themes.length > 0 && (
+          <div className={t.scroll}>
+            <table className={`${t.table} ${t.stack}`}>
+              <thead>
+                <tr>
+                  <th>Theme</th>
+                  <th className={t.num}>Students</th>
+                </tr>
+              </thead>
+              <tbody>
+                {s.exhibition.themes.map((x) => (
+                  <tr key={x.topic}>
+                    <td>{x.topic}</td>
+                    <td className={t.num} data-label="Students">{x.students}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+      {s.topSchools.length > 0 && (
+        <section className={t.panel} aria-labelledby="top-schools">
+          <h2 id="top-schools">Top schools</h2>
+          <p className={t.mute}>Schools are typed by students, so the same school spelled differently shows up twice.</p>
+          <div className={t.scroll}>
+            <table className={`${t.table} ${t.stack}`}>
+              <thead>
+                <tr>
+                  <th>School</th>
+                  <th className={t.num}>Students</th>
+                  <th className={t.num}>Paid</th>
+                </tr>
+              </thead>
+              <tbody>
+                {s.topSchools.map((x) => (
+                  <tr key={x.school}>
+                    <td>{x.school}</td>
+                    <td className={t.num} data-label="Students">{x.students}</td>
+                    <td className={t.num} data-label="Paid">{x.paid}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
       <section className={t.panel} aria-labelledby="by-event">
         <h2 id="by-event">Events</h2>
         <div className={t.scroll}>
