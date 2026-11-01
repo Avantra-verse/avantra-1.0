@@ -16,7 +16,8 @@ import { siteConfig } from "@/content/site";
 import { Events } from "./events";
 import { UpiPayments } from "./payments";
 import { Wall } from "./wall";
-import { Profile, Students } from "./people";
+import { Avatar, Profile, Students, toneOf } from "./people";
+import px from "./people.module.css";
 
 const TABS = { overview: "Overview", students: "Students", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall", admins: "Admins" } as const;
 type Tab = keyof typeof TABS;
@@ -451,6 +452,8 @@ function WalkIn() {
 
 // ---- staff ----
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
 type StaffRow = {
   id: string;
   name: string;
@@ -538,31 +541,37 @@ function Staff({ canEdit }: { canEdit: boolean }) {
       </section>
 
       <section className={t.panel} aria-labelledby="staff-list">
-        <h2 id="staff-list">Volunteers and judges</h2>
+        <div className={t.panelHead}>
+          <h2 id="staff-list">Volunteers and judges{list.data ? ` (${list.data.length})` : ""}</h2>
+          {list.data && list.data.length > 0 && (
+            <span className={t.mute}>
+              {plural(list.data.filter((s) => s.role === "VOLUNTEER").length, "volunteer")} · {plural(list.data.filter((s) => s.role === "JUDGE").length, "judge")}
+            </span>
+          )}
+        </div>
         <FormError message={list.error} />
-        {!list.data ? null : list.data.length === 0 ? (
-          <p className={t.mute}>No one yet.</p>
+        {!list.data ? (
+          !list.error && <p className={t.mute} role="status">Loading…</p>
+        ) : list.data.length === 0 ? (
+          <div className={px.empty}>
+            <strong>No staff yet</strong>
+            Add volunteers and judges above. Each gets a login for /staff.
+          </div>
         ) : (
-          <div className={t.scroll}>
-            <table className={`${t.table} ${t.stack}`}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Role</th>
-                  <th>Event</th>
-                  <th className={t.hideSmall}>Access until</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {list.data.map((s) => (
-                  <tr key={s.id}>
-                    <td>
-                      {s.name}
-                      <div className={t.mute}>{s.email}</div>
-                    </td>
-                    <td>{s.role === "JUDGE" ? "Judge" : "Volunteer"}</td>
-                    <td>
+          <ul className={`${px.roster} ${px.wide}`}>
+            {list.data.map((s) => (
+              <li key={s.id}>
+                <div className={`${px.row} ${s.disabledAt ? px.off : ""}`}>
+                  <Avatar name={s.name} tone={toneOf(s.role, !!s.disabledAt)} />
+                  <span className={px.who}>
+                    <span className={px.name}>{s.name}</span>
+                    <span className={px.sub}>{s.email}</span>
+                  </span>
+                  <span className={px.who}>
+                    <span className={t.inline} style={{ gap: 8 }}>
+                      <span className={t.status} data-tone={s.disabledAt ? undefined : s.role === "JUDGE" ? "warn" : "ok"}>
+                        {s.disabledAt ? "Switched off" : s.role === "JUDGE" ? "Judge" : "Volunteer"}
+                      </span>
                       {s.role === "JUDGE" ? (
                         <select className={t.select} value={s.assignedEvent?.id ?? ""} disabled={act.busy} onChange={(e) => assign(s, e.target.value)} aria-label={`Event for ${s.name}`}>
                           {!s.assignedEvent && <option value="">Not assigned</option>}
@@ -571,21 +580,21 @@ function Staff({ canEdit }: { canEdit: boolean }) {
                           ))}
                         </select>
                       ) : (
-                        <span className={t.mute}>All</span>
+                        <span className={t.mute}>All events</span>
                       )}
-                    </td>
-                    <td className={`${t.mute} ${t.hideSmall}`}>{s.expiresAt && new Date(s.expiresAt).toLocaleDateString("en-IN")}</td>
-                    <td className={t.num}>
-                      <button type="button" className={t.ghost} disabled={act.busy} onClick={() => (s.disabledAt || confirm(`Disable ${s.name}? They are logged out at once.`)) && toggle(s)}>
-                        {s.disabledAt ? "Enable" : "Disable"}
-                      </button>{" "}
-                      <button type="button" className={t.ghost} onClick={() => setOpen(s.id)}>Open</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </span>
+                    {s.expiresAt && <span className={px.sub}>Access until {new Date(s.expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>}
+                  </span>
+                  <span className={px.end}>
+                    <button type="button" className={t.ghost} disabled={act.busy} onClick={() => (s.disabledAt || confirm(`Disable ${s.name}? They are logged out at once.`)) && toggle(s)}>
+                      {s.disabledAt ? "Enable" : "Disable"}
+                    </button>
+                    <button type="button" className={t.ghost} onClick={() => setOpen(s.id)}>Open</button>
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </>
@@ -662,45 +671,43 @@ function Admins({ meId }: { meId: string }) {
       </section>
 
       <section className={t.panel} aria-labelledby="admin-list">
-        <h2 id="admin-list">Admins</h2>
+        <h2 id="admin-list">Admins{list.data ? ` (${list.data.length})` : ""}</h2>
         <FormError message={list.error} />
-        {list.data && (
-          <div className={t.scroll}>
-            <table className={`${t.table} ${t.stack}`}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Status</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {list.data.map((a) => (
-                  <tr key={a.id}>
-                    <td>
-                      {a.name}
-                      {a.id === meId && " (you)"}
-                      <div className={t.mute}>{a.email}</div>
-                    </td>
-                    <td>{a.superAdmin ? "Super admin" : a.disabledAt ? "Switched off" : "Admin"}</td>
-                    <td className={t.num}>
-                      {!a.superAdmin && (
-                        <>
-                          <button type="button" className={t.ghost} disabled={act.busy} onClick={() => (a.disabledAt || confirm(`Switch off ${a.name}? They are logged out at once.`)) && toggle(a)}>
-                            {a.disabledAt ? "Switch on" : "Switch off"}
-                          </button>{" "}
-                          <button type="button" className={account.link} disabled={act.busy} onClick={() => remove(a)}>
-                            Remove
-                          </button>{" "}
-                        </>
-                      )}
-                      <button type="button" className={t.ghost} onClick={() => setOpen(a.id)}>Open</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {!list.data ? (
+          !list.error && <p className={t.mute} role="status">Loading…</p>
+        ) : (
+          <ul className={`${px.roster} ${px.wide}`}>
+            {list.data.map((a) => (
+              <li key={a.id}>
+                <div className={`${px.row} ${a.disabledAt ? px.off : ""}`}>
+                  <Avatar name={a.name} tone={a.disabledAt ? "mute" : "red"} />
+                  <span className={px.who}>
+                    <span className={px.name}>{a.name}{a.id === meId && <span className={t.mute}> (you)</span>}</span>
+                    <span className={px.sub}>{a.email}</span>
+                  </span>
+                  <span className={px.who}>
+                    <span>
+                      <span className={t.status} data-tone={a.superAdmin ? "warn" : a.disabledAt ? undefined : "ok"}>
+                        {a.superAdmin ? "Super admin" : a.disabledAt ? "Switched off" : "Admin"}
+                      </span>
+                    </span>
+                    <span className={px.sub}>Added {new Date(a.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  </span>
+                  <span className={px.end}>
+                    {!a.superAdmin && (
+                      <>
+                        <button type="button" className={account.link} disabled={act.busy} onClick={() => remove(a)}>Remove</button>
+                        <button type="button" className={t.ghost} disabled={act.busy} onClick={() => (a.disabledAt || confirm(`Switch off ${a.name}? They are logged out at once.`)) && toggle(a)}>
+                          {a.disabledAt ? "Switch on" : "Switch off"}
+                        </button>
+                      </>
+                    )}
+                    <button type="button" className={t.ghost} onClick={() => setOpen(a.id)}>Open</button>
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </>

@@ -7,10 +7,11 @@ import React, { useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { Field, FormError, SelectField } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
+import x from "./people.module.css";
 import { rupees, useAction, useLoad } from "./ui";
 
 type Role = "STUDENT" | "VOLUNTEER" | "JUDGE" | "ADMIN";
-type PersonRow = { id: string; name: string; email: string; phone: string | null; role: Role; superAdmin: boolean; disabledAt: string | null; avantraId: string | null; schoolName: string | null; feePaid: boolean };
+type PersonRow = { id: string; name: string; email: string; phone: string | null; role: Role; superAdmin: boolean; disabledAt: string | null; createdAt: string; avantraId: string | null; schoolName: string | null; feePaid: boolean };
 type Person = {
   user: { id: string; name: string; email: string; phone: string | null; role: Role; superAdmin: boolean; disabledAt: string | null; expiresAt: string | null; createdAt: string; assignedEvent: string | null };
   student: { avantraId: string; schoolName: string; grade: number; section: string | null; referralCode: string | null; guardianEmail: string | null; guardianPhone: string | null; guardianConsentAt: string; feePaidAt: string | null } | null;
@@ -21,6 +22,7 @@ type Person = {
   scoresGiven: number;
 };
 
+const PAY_STATUS: Record<string, string> = { CREATED: "Waiting", PAID: "Paid", FAILED: "Not paid", REFUNDED: "Refunded" };
 const ROLES: Record<Role, string> = { STUDENT: "Student", VOLUNTEER: "Volunteer", JUDGE: "Judge", ADMIN: "Admin" };
 // Each Status filter is a test on a row.
 const STATUS: Record<string, [string, (p: PersonRow) => boolean]> = {
@@ -29,7 +31,14 @@ const STATUS: Record<string, [string, (p: PersonRow) => boolean]> = {
   noProfile: ["Profile not finished", (p) => p.role === "STUDENT" && !p.avantraId],
   off: ["Switched off", (p) => !!p.disabledAt],
 };
-const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—");
+export const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—");
+// "12 min ago", "5 h ago", then a short date.
+export function joined(iso: string) {
+  const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (min < 60) return min < 1 ? "just now" : `${min} min ago`;
+  if (min < 24 * 60) return `${Math.floor(min / 60)} h ago`;
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
 
 export function Students({ canEdit }: { canEdit: boolean }) {
   const list = useLoad<PersonRow[]>("/admin/people");
@@ -41,65 +50,92 @@ export function Students({ canEdit }: { canEdit: boolean }) {
   const needle = q.trim().toLowerCase();
   const students = (list.data ?? []).filter((p) => p.role === "STUDENT");
   const schools = [...new Set(students.map((p) => p.schoolName).filter((v): v is string => !!v))].sort();
-  const rows = students.filter(
-    (p) => (!status || STATUS[status][1](p)) && (!school || p.schoolName === school) && (!needle || [p.name, p.email, p.phone, p.avantraId, p.schoolName].some((v) => v?.toLowerCase().includes(needle))),
-  );
+  // Counts on the chips follow the school and search filters, so they always match what a tap shows.
+  const matching = students.filter((p) => (!school || p.schoolName === school) && (!needle || [p.name, p.email, p.phone, p.avantraId, p.schoolName].some((v) => v?.toLowerCase().includes(needle))));
+  const rows = matching.filter((p) => !status || STATUS[status][1](p));
+  const chips: [string, string, number][] = [["", "All", matching.length], ...Object.entries(STATUS).map(([k, [label, test]]): [string, string, number] => [k, label, matching.filter(test).length])];
 
   if (open) return <Profile id={open} canEdit={canEdit} backLabel="students" onClose={(changed) => { setOpen(null); if (changed) list.reload(); }} />;
   return (
     <section className={t.panel} aria-labelledby="students">
       <div className={t.panelHead}>
-        <h2 id="students">Students{list.data ? ` (${rows.length})` : ""}</h2>
+        <h2 id="students">Students{list.data ? ` (${students.length})` : ""}</h2>
         <button type="button" className={t.ghost} onClick={list.reload}>Refresh</button>
       </div>
-      <div className={t.inline}>
+      <div className={x.filters}>
         <Field name="peopleSearch" label="Search name, email, phone, AVANTRA ID or school" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} />
-        <SelectField name="peopleStatus" label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">All</option>
-          {Object.entries(STATUS).map(([k, [v]]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </SelectField>
         <SelectField name="peopleSchool" label="School" value={school} onChange={(e) => setSchool(e.target.value)}>
-          <option value="">All</option>
+          <option value="">All schools</option>
           {schools.map((v) => (
             <option key={v} value={v}>{v}</option>
           ))}
         </SelectField>
       </div>
+      <div className={x.chips} role="group" aria-label="Show">
+        {chips.map(([k, label, n]) => (
+          <button key={k || "all"} type="button" className={x.chip} aria-pressed={status === k} onClick={() => setStatus(k)}>
+            {label} <span className={x.count}>{n}</span>
+          </button>
+        ))}
+      </div>
       <FormError message={list.error} />
-      {list.data && (
-        <div className={t.scroll}>
-          <table className={`${t.table} ${t.stack}`}>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>ID / school</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.slice(0, 200).map((p) => (
-                <tr key={p.id}>
-                  <td>
-                    {p.name}
-                    <div className={t.mute}>{p.email}{p.disabledAt && " · switched off"}</div>
-                  </td>
-                  <td data-label="ID / school">
-                    {p.avantraId && <span className={t.mono}>{p.avantraId}</span>}
-                    <div className={t.mute}>{p.schoolName ?? "profile not finished"}{p.avantraId && (p.feePaid ? " · paid" : " · not paid")}</div>
-                  </td>
-                  <td className={t.num}>
-                    <button type="button" className={t.ghost} onClick={() => setOpen(p.id)}>Open</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {rows.length > 200 && <p className={t.mute}>Showing the newest 200. Search to find someone else.</p>}
+      {!list.data ? (
+        !list.error && <p className={t.mute} role="status">Loading students…</p>
+      ) : rows.length === 0 ? (
+        <div className={x.empty}>
+          <strong>{students.length ? "No one matches" : "No students yet"}</strong>
+          {students.length ? "Try another search, school or filter." : "Sign-ups show up here, newest first."}
         </div>
+      ) : (
+        <>
+          <ul className={x.roster}>
+            {rows.slice(0, 200).map((p) => (
+              <li key={p.id}>
+                <button type="button" className={`${x.row} ${p.disabledAt ? x.off : ""}`} onClick={() => setOpen(p.id)}>
+                  <Avatar name={p.name} tone={p.disabledAt ? "mute" : "sky"} />
+                  <span className={x.who}>
+                    <span className={x.name}>{p.name}</span>
+                    <span className={x.sub}>{p.email}</span>
+                  </span>
+                  <span className={x.who}>
+                    {p.avantraId ? <span className={`${t.mono} ${x.name}`}>{p.avantraId}</span> : <span className={x.name}>No ID yet</span>}
+                    <span className={x.sub}>{p.schoolName ?? "Profile not finished"}</span>
+                  </span>
+                  <span className={x.end}>
+                    <FeeTag p={p} />
+                    <span className={x.when} title={`Joined ${when(p.createdAt)}`}>{joined(p.createdAt)}</span>
+                    <Chevron />
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {rows.length > 200 && <p className={t.mute}>Showing the newest 200 of {rows.length}. Search to find someone else.</p>}
+        </>
       )}
     </section>
+  );
+}
+
+function FeeTag({ p }: { p: PersonRow }) {
+  if (p.disabledAt) return <span className={t.status}>Switched off</span>;
+  if (!p.avantraId) return <span className={t.status}>Unfinished</span>;
+  return p.feePaid ? <span className={t.status} data-tone="ok">Paid</span> : <span className={t.status} data-tone="warn">Not paid</span>;
+}
+
+// Initials in a ring; the colour says what kind of account it is.
+export function Avatar({ name, tone, big }: { name: string; tone: "sky" | "green" | "gold" | "red" | "mute"; big?: boolean }) {
+  const letters = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
+  return <span className={`${x.avatar} ${big ? x.big : ""}`} data-tone={tone} aria-hidden="true">{letters || "?"}</span>;
+}
+
+export const toneOf = (role: Role, off: boolean) => (off ? "mute" : role === "ADMIN" ? "red" : role === "JUDGE" ? "gold" : role === "VOLUNTEER" ? "green" : "sky");
+
+export function Chevron() {
+  return (
+    <svg className={x.chev} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
   );
 }
 
@@ -173,7 +209,18 @@ export function Profile({ id, canEdit, backLabel, onClose }: { id: string; canEd
       <div className={t.panelHead}>{back}</div>
       <section className={t.panel} aria-labelledby="person">
         <div className={t.panelHead}>
-          <h2 id="person">{u.name}</h2>
+          <div className={x.person}>
+            <Avatar name={u.name} tone={toneOf(u.role, !!u.disabledAt)} big />
+            <div>
+              <h2 id="person">{u.name}</h2>
+              <div className={x.tags}>
+                <span className={t.status} data-tone={u.superAdmin || u.role === "ADMIN" ? "warn" : undefined}>{u.superAdmin ? "Super admin" : ROLES[u.role]}</span>
+                {s && (s.feePaidAt ? <span className={t.status} data-tone="ok">Fee paid</span> : <span className={t.status} data-tone="warn">Fee not paid</span>)}
+                {u.disabledAt && <span className={t.status}>Switched off</span>}
+                {s && <span className={`${t.status} ${t.mono}`}>{s.avantraId}</span>}
+              </div>
+            </div>
+          </div>
           {canEdit && !form && <button type="button" className={t.ghost} onClick={edit}>Edit details</button>}
         </div>
         {act.note && <p role="status">{act.note}</p>}
@@ -211,7 +258,7 @@ export function Profile({ id, canEdit, backLabel, onClose }: { id: string; canEd
             </div>
           </form>
         ) : (
-          <dl className={t.facts}>
+          <dl className={x.facts}>
             <div><dt>Email</dt><dd>{u.email}</dd></div>
             <div><dt>Phone</dt><dd>{u.phone ?? "—"}</dd></div>
             <div><dt>Role</dt><dd>{u.superAdmin ? "Super admin" : ROLES[u.role]}{u.disabledAt && ` (switched off ${when(u.disabledAt)})`}</dd></div>
@@ -252,12 +299,14 @@ export function Profile({ id, canEdit, backLabel, onClose }: { id: string; canEd
         <section className={t.panel} aria-labelledby="person-events">
           <h2 id="person-events">Events and payments</h2>
           {p.registrations.length === 0 ? <p className={t.mute}>No events yet.</p> : (
-            <ul>
+            <ul className={x.events}>
               {p.registrations.map((r, i) => (
                 <li key={i}>
-                  {r.event}
-                  {r.team && <span className={t.mute}> · team {r.team}{r.isLeader && " (leader)"}</span>}
-                  {r.certificateCode && <span className={t.mute}> · certificate {r.certificateCode}</span>}
+                  <strong>{r.event}</strong>
+                  <span className={t.mute}>
+                    {r.team ? `Team ${r.team}${r.isLeader ? " (leader)" : ""}` : "No team"}
+                    {r.certificateCode && ` · certificate ${r.certificateCode}`}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -278,7 +327,7 @@ export function Profile({ id, canEdit, backLabel, onClose }: { id: string; canEd
                     <tr key={i}>
                       <td>{when(x.createdAt)}</td>
                       <td data-label="How">{x.method}{x.utr && <div className={`${t.mute} ${t.mono}`}>UTR {x.utr}</div>}{x.note && <div className={t.mute}>{x.note}</div>}</td>
-                      <td data-label="Status">{x.status}</td>
+                      <td data-label="Status"><span className={t.status} data-tone={x.status === "PAID" ? "ok" : x.status === "CREATED" ? "warn" : undefined}>{PAY_STATUS[x.status] ?? x.status}</span></td>
                       <td className={t.num} data-label="Amount">{rupees(x.amountPaise)}</td>
                     </tr>
                   ))}

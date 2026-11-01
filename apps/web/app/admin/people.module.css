@@ -1,0 +1,317 @@
+/* People lists (Students, Staff, Admins) and the profile page. Ember tokens come from .page. */
+.roster {
+  --end: 230px; /* fixed last column so the middle column lines up row to row */
+  list-style: none;
+  margin: 4px -8px 0;
+  padding: 0;
+}
+
+.roster > li + li {
+  border-top: 1px solid rgba(244, 234, 217, 0.1);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1.5fr) minmax(0, 1fr) var(--end);
+  align-items: center;
+  gap: 6px 16px;
+  width: 100%;
+  padding: 12px 8px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  transition: background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+button.row {
+  cursor: pointer;
+}
+
+.row:hover,
+button.row:focus-visible {
+  background: rgba(159, 212, 255, 0.06);
+}
+
+button.row:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: -2px;
+}
+
+.off {
+  opacity: 0.6;
+}
+
+.avatar {
+  --tone: var(--sky);
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid var(--tone);
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+  color: var(--tone);
+  font-family: "Yatra One", Georgia, serif;
+  font-size: 1rem;
+  line-height: 1;
+  flex: none;
+}
+
+.avatar[data-tone="green"] { --tone: #5fd38d; }
+.avatar[data-tone="gold"] { --tone: #f2c14e; }
+.avatar[data-tone="red"] { --tone: #ff5560; }
+.avatar[data-tone="mute"] { --tone: var(--mute); }
+
+.big {
+  width: 64px;
+  height: 64px;
+  font-size: 1.5rem;
+  border-width: 3px;
+}
+
+.who {
+  min-width: 0;
+}
+
+.name {
+  display: block;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.sub {
+  display: block;
+  color: var(--mute);
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+
+.wide {
+  --end: 300px;
+}
+
+.when {
+  min-width: 64px;
+  text-align: right;
+  color: var(--mute);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chev {
+  width: 18px;
+  height: 18px;
+  color: var(--mute);
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), color 160ms;
+}
+
+button.row:hover .chev,
+button.row:focus-visible .chev {
+  color: var(--sky);
+  transform: translateX(3px);
+}
+
+/* Filter chips with counts: one tap instead of a dropdown. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 2px 0 14px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 14px;
+  border: 2px solid #4a6f88;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: rgba(159, 212, 255, 0.08);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--red);
+  border-color: var(--sky);
+  color: #fff;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 2px;
+}
+
+.count {
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(244, 234, 217, 0.1);
+  font-size: 0.85rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip[aria-pressed="true"] .count {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0 12px;
+}
+
+.empty {
+  margin: 8px 0 4px;
+  padding: 28px 16px;
+  border: 2px dashed rgba(244, 234, 217, 0.16);
+  border-radius: 16px;
+  text-align: center;
+  color: var(--mute);
+}
+
+.empty strong {
+  display: block;
+  margin-bottom: 4px;
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: 1.2rem;
+  color: var(--ink);
+}
+
+/* Profile header and facts. */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.person h2 {
+  margin: 0 0 6px !important;
+  overflow-wrap: anywhere;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.facts > div {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid rgba(244, 234, 217, 0.1);
+  min-width: 0;
+}
+
+.facts dt {
+  color: var(--mute);
+  font-size: 0.85rem;
+}
+
+.facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.facts dd button {
+  margin-top: 8px;
+}
+
+.events {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.events li {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1px solid rgba(244, 234, 217, 0.1);
+}
+
+.events strong {
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 42px minmax(0, 1fr);
+    padding: 12px 4px;
+  }
+
+  .row > :nth-child(n + 3) {
+    grid-column: 2;
+  }
+
+  .end {
+    justify-content: flex-start;
+  }
+
+  .chev {
+    display: none;
+  }
+
+  .filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One swipeable row of chips instead of a wrapped pile. */
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 2px -16px 14px;
+    padding: 2px 16px;
+  }
+
+  .chip {
+    flex: none;
+  }
+
+  .roster {
+    margin: 4px 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .chev {
+    transition: none;
+  }
+}

@@ -55,7 +55,7 @@ export function Events() {
                       <button type="button" className={t.ghost} disabled={act.busy} onClick={() => toggle(e)}>
                         {e.registrationOpen ? "Close registration" : "Open registration"}
                       </button>
-                      <button type="button" className={t.btn} onClick={() => setEventId(e.id)} aria-pressed={eventId === e.id}>
+                      <button type="button" className={eventId === e.id ? t.btn : t.ghost} onClick={() => setEventId(e.id)} aria-pressed={eventId === e.id}>
                         Results
                       </button>
                     </div>
