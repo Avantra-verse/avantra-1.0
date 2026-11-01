@@ -196,6 +196,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "GET /admin/people": () => rpc("admin_people"),
   "GET /admin/people/:id": ({ id }) => rpc("admin_person", { p_user_id: id }),
   "PATCH /admin/people/:id": ({ id, ...p }) => rpc("admin_update_person", { p_user_id: id, p }),
+  "POST /admin/people/:id/fee": ({ id, paid }) => rpc("admin_set_fee", { p_user_id: id, p_paid: paid }),
   "DELETE /admin/people/:id": ({ id }) => rpc("admin_delete_person", { p_user_id: id }),
   "GET /admin/wall": () => rpc("admin_wall"),
   "PUT /admin/wall/state": ({ open, frozen }) => rpc("admin_wall_state", { p_open: open, p_frozen: frozen }),

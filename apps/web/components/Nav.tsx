@@ -78,13 +78,13 @@ export const APP_PAGES = ["/admin", "/staff"];
 // Admin is one page with #hash tabs (app/admin/page.tsx listens for hashchange); plain <a> so the hash event fires.
 export const ADMIN_LINKS: DashLink[] = [
   { href: "/admin#overview", label: "Overview", icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
+  { href: "/admin#students", label: "Students", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21v-1a8 8 0 0116 0v1" },
   { href: "/admin#referrals", label: "Referrals", icon: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01" },
   { href: "/admin#payments", label: "UPI payments", icon: "M3 6h18v12H3zM3 10h18M7 15h4" },
   { href: "/admin#desk", label: "Desk", icon: "M9 4h6v3H9zM6 5H5v16h14V5h-1M9 13h6M9 17h4" },
   { href: "/admin#staff", label: "Staff", icon: "M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.1a4 4 0 010 7.8M22 21v-1a6 6 0 00-4-5.7" },
   { href: "/admin#events", label: "Results", icon: "M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM7 6H4a3 3 0 003 4M17 6h3a3 3 0 01-3 4" },
   { href: "/admin#wall", label: "Wall", icon: "M3 5h18v14H3zM3 12h18M9 5v7M15 12v7" },
-  { href: "/admin#people", label: "People", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21v-1a8 8 0 0116 0v1" }, // super admin only
   { href: "/admin#admins", label: "Admins", icon: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4" }, // super admin only
 ];
 

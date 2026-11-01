@@ -1,8 +1,8 @@
 "use client";
 
-// People: every admin can find any account and see all of it; only the super admin can fix its details, switch
-// the fee between paid and not paid, or delete it (checked again in the database). Deleting needs the account's
-// email typed in, so a stray click can't do it.
+// Students tab, plus the profile page that Students, Staff and Admins open: every admin can see all of an account;
+// only the super admin can fix its details, switch the fee between paid and not paid, or delete it (checked again
+// in the database). Deleting needs the account's email typed in, so a stray click can't do it.
 import React, { useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { Field, FormError, SelectField } from "@/components/account/Account";
@@ -28,39 +28,32 @@ const STATUS: Record<string, [string, (p: PersonRow) => boolean]> = {
   unpaid: ["Fee not paid", (p) => p.role === "STUDENT" && !!p.avantraId && !p.feePaid],
   noProfile: ["Profile not finished", (p) => p.role === "STUDENT" && !p.avantraId],
   off: ["Switched off", (p) => !!p.disabledAt],
-  super: ["Super admin", (p) => p.superAdmin],
 };
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—");
 
-export function People({ canEdit }: { canEdit: boolean }) {
+export function Students({ canEdit }: { canEdit: boolean }) {
   const list = useLoad<PersonRow[]>("/admin/people");
   const [q, setQ] = useState("");
-  const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
   const [school, setSchool] = useState("");
   const [open, setOpen] = useState<string | null>(null);
 
   const needle = q.trim().toLowerCase();
-  const schools = [...new Set((list.data ?? []).map((p) => p.schoolName).filter((v): v is string => !!v))].sort();
-  const rows = (list.data ?? []).filter(
-    (p) => (!role || p.role === role) && (!status || STATUS[status][1](p)) && (!school || p.schoolName === school) && (!needle || [p.name, p.email, p.phone, p.avantraId, p.schoolName].some((v) => v?.toLowerCase().includes(needle))),
+  const students = (list.data ?? []).filter((p) => p.role === "STUDENT");
+  const schools = [...new Set(students.map((p) => p.schoolName).filter((v): v is string => !!v))].sort();
+  const rows = students.filter(
+    (p) => (!status || STATUS[status][1](p)) && (!school || p.schoolName === school) && (!needle || [p.name, p.email, p.phone, p.avantraId, p.schoolName].some((v) => v?.toLowerCase().includes(needle))),
   );
 
-  if (open) return <Profile id={open} canEdit={canEdit} onClose={(changed) => { setOpen(null); if (changed) list.reload(); }} />;
+  if (open) return <Profile id={open} canEdit={canEdit} backLabel="students" onClose={(changed) => { setOpen(null); if (changed) list.reload(); }} />;
   return (
-    <section className={t.panel} aria-labelledby="people">
+    <section className={t.panel} aria-labelledby="students">
       <div className={t.panelHead}>
-        <h2 id="people">Everyone{list.data ? ` (${rows.length})` : ""}</h2>
+        <h2 id="students">Students{list.data ? ` (${rows.length})` : ""}</h2>
         <button type="button" className={t.ghost} onClick={list.reload}>Refresh</button>
       </div>
       <div className={t.inline}>
-        <Field name="peopleSearch" label="Search name, email, phone, ID or school" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} />
-        <SelectField name="peopleRole" label="Role" value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="">All</option>
-          {Object.entries(ROLES).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </SelectField>
+        <Field name="peopleSearch" label="Search name, email, phone, AVANTRA ID or school" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} />
         <SelectField name="peopleStatus" label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All</option>
           {Object.entries(STATUS).map(([k, [v]]) => (
@@ -81,7 +74,6 @@ export function People({ canEdit }: { canEdit: boolean }) {
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Role</th>
                 <th>ID / school</th>
                 <th />
               </tr>
@@ -91,15 +83,11 @@ export function People({ canEdit }: { canEdit: boolean }) {
                 <tr key={p.id}>
                   <td>
                     {p.name}
-                    <div className={t.mute}>{p.email}</div>
-                  </td>
-                  <td data-label="Role">
-                    {p.superAdmin ? "Super admin" : ROLES[p.role]}
-                    {p.disabledAt && <div className={t.mute}>switched off</div>}
+                    <div className={t.mute}>{p.email}{p.disabledAt && " · switched off"}</div>
                   </td>
                   <td data-label="ID / school">
                     {p.avantraId && <span className={t.mono}>{p.avantraId}</span>}
-                    {p.role === "STUDENT" && <div className={t.mute}>{p.schoolName ?? "profile not finished"}{p.avantraId && (p.feePaid ? " · paid" : " · not paid")}</div>}
+                    <div className={t.mute}>{p.schoolName ?? "profile not finished"}{p.avantraId && (p.feePaid ? " · paid" : " · not paid")}</div>
                   </td>
                   <td className={t.num}>
                     <button type="button" className={t.ghost} onClick={() => setOpen(p.id)}>Open</button>
@@ -115,7 +103,7 @@ export function People({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-function Profile({ id, canEdit, onClose }: { id: string; canEdit: boolean; onClose: (changed: boolean) => void }) {
+export function Profile({ id, canEdit, backLabel, onClose }: { id: string; canEdit: boolean; backLabel: string; onClose: (changed: boolean) => void }) {
   const { data: p, error, reload } = useLoad<Person>(`/admin/people/${id}`);
   const act = useAction();
   const [form, setForm] = useState<Record<string, string> | null>(null);
@@ -125,12 +113,15 @@ function Profile({ id, canEdit, onClose }: { id: string; canEdit: boolean; onClo
 
   if (!p) return error ? <FormError message={error} /> : <p className={t.mute}>Loading…</p>;
   const { user: u, student: s } = p;
-  const back = <button type="button" className={t.ghost} onClick={() => onClose(changed)}>← Back to everyone</button>;
+  // Fee switch: super admin only, and only for UPI payers who sent a UTR (never cash at the desk). Checked again in the DB.
+  const feeSwitch = canEdit && !!s && p.payments.some((x) => x.method === "UPI" && x.utr) && !p.payments.some((x) => x.method === "OFFLINE" && x.status === "PAID");
+  const back = <button type="button" className={t.ghost} onClick={() => onClose(changed)}>← Back to {backLabel}</button>;
 
   const edit = () =>
     setForm({
       name: u.name, phone: u.phone ?? "",
-      ...(s && { feePaid: s.feePaidAt ? "yes" : "no", schoolName: s.schoolName, grade: String(s.grade), section: s.section ?? "", referralCode: s.referralCode ?? "", guardianEmail: s.guardianEmail ?? "", guardianPhone: s.guardianPhone ?? "" }),
+      ...(feeSwitch && { feePaid: s!.feePaidAt ? "yes" : "no" }),
+      ...(s && { schoolName: s.schoolName, grade: String(s.grade), section: s.section ?? "", referralCode: s.referralCode ?? "", guardianEmail: s.guardianEmail ?? "", guardianPhone: s.guardianPhone ?? "" }),
     });
   const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -139,8 +130,8 @@ function Profile({ id, canEdit, onClose }: { id: string; canEdit: boolean; onClo
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const feeNote = s && form?.feePaid !== (s.feePaidAt ? "yes" : "no")
-      ? form?.feePaid === "yes" ? "\n\nThe fee will be marked PAID and they get the fee email." : "\n\nThe fee will be marked NOT PAID: their paid payment is marked refunded and their badge locks again."
+    const feeNote = feeSwitch && form?.feePaid !== (s!.feePaidAt ? "yes" : "no")
+      ? form?.feePaid === "yes" ? "\n\nThe fee will be marked PAID (their UPI payment is confirmed) and they get the fee email." : "\n\nThe fee will be marked NOT PAID: their UPI payment is marked failed, their badge locks again and they get the \"try again\" email."
       : "";
     if (!form || !confirm(`Save these changes to ${u.name}'s account?${feeNote}`)) return;
     const r = await act.run(async () => {
@@ -153,6 +144,18 @@ function Profile({ id, canEdit, onClose }: { id: string; canEdit: boolean; onClo
     }, () => "Saved.");
     if (r) {
       setForm(null);
+      setChanged(true);
+      reload();
+    }
+  }
+
+  async function setFee(paid: boolean) {
+    const msg = paid
+      ? `Mark ${u.name}'s fee as PAID? Their UPI payment is confirmed, their badge unlocks and they get the fee email.`
+      : `Mark ${u.name}'s fee as NOT PAID? Their UPI payment is marked failed, their badge locks again and they get the "try again" email.`;
+    if (!confirm(msg)) return;
+    const r = await act.run(() => api(`/admin/people/${id}/fee`, { paid }).then(() => true), () => (paid ? "Fee marked paid." : "Fee marked not paid."));
+    if (r) {
       setChanged(true);
       reload();
     }
@@ -181,10 +184,12 @@ function Profile({ id, canEdit, onClose }: { id: string; canEdit: boolean; onClo
               <Field name="phone" label={s ? "Phone" : "Phone (optional)"} type="tel" value={form.phone} onChange={set} error={errors.phone} />
               {s && (
                 <>
-                  <SelectField name="feePaid" label="Fee" value={form.feePaid} onChange={set} error={errors.feePaid}>
-                    <option value="yes">Paid</option>
-                    <option value="no">Not paid</option>
-                  </SelectField>
+                  {feeSwitch && (
+                    <SelectField name="feePaid" label="Fee (UPI with UTR)" value={form.feePaid} onChange={set} error={errors.feePaid}>
+                      <option value="yes">Paid</option>
+                      <option value="no">Not paid</option>
+                    </SelectField>
+                  )}
                   <Field name="schoolName" label="School" value={form.schoolName} onChange={set} error={errors.schoolName} />
                   <SelectField name="grade" label="Class" value={form.grade} onChange={set} error={errors.grade}>
                     {Array.from({ length: 12 }, (_, i) => i + 1).map((g) => (
@@ -220,7 +225,20 @@ function Profile({ id, canEdit, onClose }: { id: string; canEdit: boolean; onClo
                 <div><dt>Class</dt><dd>{s.grade}{s.section && ` ${s.section}`}</dd></div>
                 <div><dt>Ambassador code</dt><dd className={t.mono}>{s.referralCode ?? "—"}</dd></div>
                 <div><dt>Parent</dt><dd>{[s.guardianEmail, s.guardianPhone].filter(Boolean).join(" · ") || "—"}</dd></div>
-                <div><dt>Fee</dt><dd>{s.feePaidAt ? `Paid ${when(s.feePaidAt)}` : "Not paid"}</dd></div>
+                <div>
+                  <dt>Fee</dt>
+                  <dd>
+                    {s.feePaidAt ? `Paid ${when(s.feePaidAt)}` : "Not paid"}
+                    {feeSwitch && (
+                      <>
+                        {" "}
+                        <button type="button" className={t.ghost} disabled={act.busy} onClick={() => setFee(!s.feePaidAt)}>
+                          {s.feePaidAt ? "Mark as not paid" : "Mark as paid"}
+                        </button>
+                      </>
+                    )}
+                  </dd>
+                </div>
                 <div><dt>Days through the gate</dt><dd>{p.checkIns}</dd></div>
               </>
             )}
@@ -276,7 +294,7 @@ function Profile({ id, canEdit, onClose }: { id: string; canEdit: boolean; onClo
           <h2 id="danger">Delete this account</h2>
           <p>
             Deletes {u.name}&apos;s login{s && ", profile, event registrations, team places, payments, Wall points and certificates"} for good. It can&apos;t be undone.
-            {u.role !== "STUDENT" && " Staff who scanned badges or scored teams can't be deleted: switch them off in Staff or Admins instead."}
+            {u.role !== "STUDENT" && " Staff who scanned badges or scored teams can't be deleted: switch them off instead."}
           </p>
           <Field name="confirmDelete" label={`Type ${u.email} to confirm`} autoComplete="off" value={typed} onChange={(e) => setTyped(e.target.value)} />
           <FormError message={form ? "" : act.error} />

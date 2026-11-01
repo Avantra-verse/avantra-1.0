@@ -14,21 +14,21 @@ import { fileUrl, rupees, Tile, useAction, useHashTab, useLoad } from "./ui";
 import { Events } from "./events";
 import { UpiPayments } from "./payments";
 import { Wall } from "./wall";
-import { People } from "./people";
+import { Profile, Students } from "./people";
 
-const TABS = { overview: "Overview", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall", people: "People", admins: "Admins" } as const;
+const TABS = { overview: "Overview", students: "Students", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall", admins: "Admins" } as const;
 type Tab = keyof typeof TABS;
 
 // One line under each tab's title.
 const INTRO: Record<Tab, string> = {
   overview: "Sign-ups, fees and the gate at a glance, plus the CSV downloads.",
+  students: "Find any student and see everything about them. Only the super admin can fix details, change the fee or delete.",
   referrals: "How many students each ambassador code brought in.",
   payments: "UPI payments for the school to check, and their answers coming back.",
   desk: "Cash fees and walk-in registrations at the registration desk.",
-  staff: "Volunteer and judge accounts, and which event each judge scores.",
+  staff: "Volunteer and judge accounts, and which event each judge scores. Open one to see their whole account.",
   events: "Open or close events and see the judges' results.",
   wall: "The Engagement Wall: switch it on for event day, add and print challenges.",
-  people: "Find any account and see everything about it. Only the super admin can fix details, change the fee or delete.",
   admins: "Add admins, switch them off or remove them. Only the super admin sees this.",
 };
 
@@ -65,13 +65,13 @@ export default function AdminPage() {
                 <p>{INTRO[tab]}</p>
               </header>
               {tab === "overview" && <Overview name={me.name} />}
+              {tab === "students" && <Students canEdit={!!me.superAdmin} />}
               {tab === "referrals" && <Referrals />}
               {tab === "payments" && <UpiPayments />}
               {tab === "desk" && <Desk />}
-              {tab === "staff" && <Staff />}
+              {tab === "staff" && <Staff canEdit={!!me.superAdmin} />}
               {tab === "events" && <Events />}
               {tab === "wall" && <Wall />}
-              {tab === "people" && <People canEdit={!!me.superAdmin} />}
               {tab === "admins" && (me.superAdmin ? <Admins meId={me.id} /> : <FormError message="Only the super admin can manage admins." />)}
             </>
           )}
@@ -403,8 +403,9 @@ type StaffRow = {
   assignedEvent: { id: string; name: string } | null;
 };
 
-function Staff() {
+function Staff({ canEdit }: { canEdit: boolean }) {
   const list = useLoad<StaffRow[]>("/admin/staff");
+  const [open, setOpen] = useState<string | null>(null);
   const events = useLoad<{ id: string; name: string }[]>("/events");
   const act = useAction();
   const [form, setForm] = useState({ role: "VOLUNTEER", name: "", email: "", password: "", eventId: "" });
@@ -446,6 +447,7 @@ function Staff() {
   const assign = (s: StaffRow, eventId: string) =>
     act.run(() => api(`/admin/staff/${s.id}/assign`, { eventId }), () => `${s.name} now judges ${events.data?.find((e) => e.id === eventId)?.name}.`).then(list.reload);
 
+  if (open) return <Profile id={open} canEdit={canEdit} backLabel="staff" onClose={(changed) => { setOpen(null); if (changed) list.reload(); }} />;
   return (
     <>
       <section className={t.panel} aria-labelledby="new-staff">
@@ -518,7 +520,8 @@ function Staff() {
                     <td className={t.num}>
                       <button type="button" className={t.ghost} disabled={act.busy} onClick={() => (s.disabledAt || confirm(`Disable ${s.name}? They are logged out at once.`)) && toggle(s)}>
                         {s.disabledAt ? "Enable" : "Disable"}
-                      </button>
+                      </button>{" "}
+                      <button type="button" className={t.ghost} onClick={() => setOpen(s.id)}>Open</button>
                     </td>
                   </tr>
                 ))}
@@ -537,6 +540,7 @@ type AdminRow = { id: string; name: string; email: string; superAdmin: boolean; 
 
 function Admins({ meId }: { meId: string }) {
   const list = useLoad<AdminRow[]>("/admin/admins");
+  const [open, setOpen] = useState<string | null>(null);
   const act = useAction();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -578,6 +582,7 @@ function Admins({ meId }: { meId: string }) {
     confirm(`Remove ${a.name} as an admin? Their account is deleted and can't be brought back.`) &&
     act.run(() => api(`/admin/admins/${a.id}`, undefined, "DELETE"), () => `${a.name} removed.`).then(list.reload);
 
+  if (open) return <Profile id={open} canEdit backLabel="admins" onClose={(changed) => { setOpen(null); if (changed) list.reload(); }} />;
   return (
     <>
       <section className={t.panel} aria-labelledby="new-admin">
@@ -628,9 +633,10 @@ function Admins({ meId }: { meId: string }) {
                           </button>{" "}
                           <button type="button" className={account.link} disabled={act.busy} onClick={() => remove(a)}>
                             Remove
-                          </button>
+                          </button>{" "}
                         </>
                       )}
+                      <button type="button" className={t.ghost} onClick={() => setOpen(a.id)}>Open</button>
                     </td>
                   </tr>
                 ))}
