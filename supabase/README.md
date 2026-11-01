@@ -1,6 +1,6 @@
-# Supabase (branch `supabase`)
+# Supabase
 
-Replaces the NestJS API, Render and Redis. Project `avantra` (`pkafbdhwldimkdsqsiqy`, Mumbai).
+The whole backend: Postgres, Auth, the mail Edge Function. Project `avantra` (Mumbai region); its URL and keys live in the Vercel and Supabase dashboards, not here.
 
 - `migrations/`: schema, RLS, and every write as a `SECURITY DEFINER` function that checks the caller's role.
 - `functions/send-mail/`: sends the emails the database queues in `private.mail_outbox` (fee confirmed, UPI not found, walk-in, contact form).
@@ -8,7 +8,8 @@ Replaces the NestJS API, Render and Redis. Project `avantra` (`pkafbdhwldimkdsqs
 
 ## One-time setup per project
 
-1. Apply `migrations/` in order (MCP `apply_migration` or `supabase db push`).
+1. Apply `migrations/` in order (MCP `apply_migration` or `supabase db push`). After applying one with the MCP,
+   rename its file to the version `list_migrations` shows, so the files keep matching the live list.
 2. Deploy `functions/send-mail` with JWT verification off (`supabase functions deploy send-mail --no-verify-jwt`).
 3. Edge Function secrets: `SMTP_USER`, `SMTP_PASS` (Google Workspace app password), `MAIL_FROM` (e.g. `AVANTRA 2026 <contact@arithi.in>`).
    Until they're set, emails wait in the outbox and go out once they are.
@@ -23,3 +24,14 @@ select id, "to", subject, attempts, "sentAt", "lastError" from private.mail_outb
 ```
 
 Failed sends retry 2, 6, 18 and 54 minutes later, then stop with `lastError` set. To send one again: `update private.mail_outbox set attempts = 0, "nextTryAt" = now() where id = …;`
+
+## Handy checks
+
+```sql
+-- what the admin Overview shows (run as an admin: it checks the caller)
+select public.admin_stats();
+-- school names and how many students typed each
+select "schoolName", count(*) from "Student" group by 1 order by 2 desc;
+-- fee changes made by the super admin
+select "studentId", status, utr, note, "updatedAt" from "Payment" where note like '%super admin%' order by "updatedAt" desc;
+```

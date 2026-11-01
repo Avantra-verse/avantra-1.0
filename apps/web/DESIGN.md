@@ -59,6 +59,14 @@ Copy from `app/registration/registration.module.css`; it is the reference implem
 - **Links**: cream, underline; hover `--blue`.
 - **Top bar**: fixed, logo left, nav links Mukta 600; fades from `rgba(18,14,12,.78)` to transparent.
 
+- **Community cards** (`components/Community.tsx`): "Join the multiverse" heading, two big links (WhatsApp
+  channel in green, Instagram in pink) with an icon, kicker, title and "Follow" line. `compact` stacks them for
+  a sidebar. Links come from `content/site.ts`.
+- **Admin overview** (`app/admin/overview.module.css`): hero card (money collected in a red-to-blue gradient,
+  paid progress bar, days-to-event box), tiles grouped under small uppercase titles with an accent per meaning
+  (green = growth, gold = waiting on someone, red = money, pink = people and ambassadors), and simple bar rows
+  for team sizes, themes and schools.
+
 ## Surfaces and motion
 
 - Film-grain overlay (`.grain` in `public/index.html`): fixed, 9% opacity, overlay blend.

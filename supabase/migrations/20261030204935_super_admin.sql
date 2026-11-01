@@ -1,8 +1,8 @@
 -- Super admin: an admin who can also add, switch off and remove other admins. Regular admins can't touch
--- admin accounts (admin_set_disabled already skips ADMIN rows). The flag is only set here, by migration:
--- no API role can write "User" directly, and no function sets it.
+-- admin accounts (admin_set_disabled already skips ADMIN rows). No API role can write "User" directly and no
+-- function sets the flag: give it once, by hand, in the SQL editor (the email stays out of this public repo):
+--   UPDATE public."User" SET "superAdmin" = true WHERE "email" = '<super admin email>' AND "role" = 'ADMIN';
 ALTER TABLE public."User" ADD COLUMN "superAdmin" boolean NOT NULL DEFAULT false;
-UPDATE public."User" SET "superAdmin" = true WHERE "email" = '<super admin email>' AND "role" = 'ADMIN';
 
 CREATE FUNCTION private.my_super_admin() RETURNS uuid LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $$
 BEGIN

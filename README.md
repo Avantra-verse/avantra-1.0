@@ -12,7 +12,7 @@ Runs on two services only: **Vercel** (the Next.js site) and **Supabase** (Postg
 | [supabase/README.md](supabase/README.md) | one-time project setup: migrations, mail function, secrets, checking email |
 | [supabase/migrations/](supabase/migrations) | the data model, RLS, and every write as a database function (source of truth) |
 | [apps/web/DESIGN.md](apps/web/DESIGN.md) | the "Ember" design system (colours, type, components) |
-| [docs/architecture.md](docs/architecture.md) | the original plan and event-day checklist. Written for the old NestJS API: flows still hold, the stack doesn't |
+| [docs/architecture.md](docs/architecture.md) | the original plan and event-day checklist. Written for the old NestJS API: flows mostly hold, the stack doesn't |
 
 ## Repo layout
 
@@ -21,8 +21,9 @@ pnpm monorepo (`pnpm@12.8.1`).
 ```
 apps/web/             Next.js 16 (Tailwind v4, framer-motion), deployed on Vercel
   app/                routes (see below); app/admin/**/route.ts = admin downloads/uploads, staff and walk-in accounts
-  components/         site sections; account/ = login, registration, UPI fee; multiverse/ = home scroll animation
-  content/site.ts     event copy, dates, UPI details, gallery
+  components/         site sections; account/ = login, registration, UPI fee; multiverse/ = home scroll animation;
+                      Community.tsx = the WhatsApp channel + Instagram cards (home footer, student dashboard)
+  content/site.ts     event copy, dates, UPI details, Instagram + WhatsApp channel links, gallery
   lib/api.ts          every data call: Supabase Auth, reads under RLS, writes through database functions
   lib/server/         server-only helpers for the admin route handlers (uses SUPABASE_SECRET_KEY)
   scripts/            access.e2e.mjs (attacker checks), flows.e2e.mjs (every role end to end)
@@ -44,7 +45,7 @@ brand/                logos and brand assets
 | `/ambassador` | Google Form for school ambassadors; `/card/[code]` and `/ambassador-card/[code].png` = their share card |
 | `/wall`, `/wall/leaderboard` | Engagement Wall: type a chit code, answer, climb the boards |
 | `/staff`, `/staff/login` | phone scanner for volunteers (check-in) and judges (scoring); queues scans offline |
-| `/admin`, `/admin/login` | admin dashboard (unlinked; password only) |
+| `/admin`, `/admin/login` | admin dashboard (unlinked; password only). Tabs: Overview, Students, Referral codes, UPI payments, Desk, Staff, Results, Wall, Admins (super admin only) |
 | `/verify/[code]`, `/certificates/[code]/pdf` | public certificate check and PDF |
 | `_sponsors/` | hidden; rename to `sponsors/` to re-enable |
 
@@ -74,7 +75,18 @@ cd apps/web && pnpm dev                 # http://localhost:3000
 | STUDENT | themselves | `/login` | register for events, pay, join teams, play the Wall |
 | VOLUNTEER | admin | `/staff` | scan QR badges for check-in |
 | JUDGE | admin, for one event | `/staff` | scan a student and score their entry |
-| ADMIN | Supabase dashboard + `update "User" set role = 'ADMIN'` | `/admin` | everything |
+| ADMIN | the super admin, in Admin → Admins | `/admin` | everything below except the super admin column |
+| ADMIN + `superAdmin` | set once by hand in the Supabase SQL editor (see the `super_admin` migration) | `/admin` | also: add, switch off and remove admins; edit or delete any account; switch a UPI payer's fee between paid and not paid |
+
+What each admin can do with people:
+
+| | Admin | Super admin |
+|---|---|---|
+| Students tab: search, filter by fee status and school, open a full profile | yes | yes |
+| Staff tab: add volunteers and judges, assign judges, switch off, open a profile | yes | yes |
+| Edit any account's details, delete an account | no | yes |
+| Fee: Paid / Not paid (only students who paid by UPI and sent a UTR; never cash at the desk) | no | yes |
+| Admins tab | no | yes |
 
 Roles live in the `"User"` table, never in user-editable metadata. Students read only their own rows (RLS);
 every write is a database function that checks the caller's role first. Nobody can write tables directly.
@@ -86,7 +98,7 @@ every write is a database function that checks the caller's role first. Nobody c
 | `NEXT_PUBLIC_STUDENT_SIGNUP=open` | Vercel | shows the sign-up and login forms; otherwise "opens soon" |
 | Auth → "Allow new users to sign up" | Supabase dashboard | the server-side gate for student sign-up |
 
-Open sign-up by turning both on.
+Both are on: student sign-up is open (since 31 Oct 2026).
 
 ## Deployment
 
@@ -96,17 +108,22 @@ Open sign-up by turning both on.
 | Database, Auth, email | Supabase project `avantra` (Mumbai). Setup steps in [supabase/README.md](supabase/README.md) |
 
 New migrations: add a file to `supabase/migrations/` and apply it (`supabase db push` or the MCP `apply_migration`).
+The MCP stamps a migration with the time you apply it, so afterwards rename the file to the version shown by
+`list_migrations`. The file names must match the live list exactly, or `supabase db push` tries to run them again.
 
 ## Current state
 
-- This branch (`supabase`) replaces the old NestJS API, Render and Redis. `main` still runs the old stack
-  until Vercel is switched to this branch; then shut down the Render services.
+- `main` runs on Vercel + Supabase only. The old NestJS API, Render and Redis are shut down; that code is on
+  the `separate-backend-api` branch.
 - Ambassadors have no accounts: they apply on the Google Form and get a code; students enter it on their
-  profile (`Student.referralCode`).
+  profile (`Student.referralCode`). Their welcome mail is sent from Zoho Campaigns (not from this repo).
+- Science & Innovation Exhibition: classes 6–12, ₹299 per student, teams of 1, 2 or 3 (`Event.teamMin` 1,
+  `teamMax` 3). Someone entering alone still creates a team of 1, because only teams are judged.
 - The fee is paid by UPI: the student submits the UTR, admin exports an .xlsx, the school marks Paid / Not paid,
-  admin uploads it back.
-- Still to do:
-  GitHub secrets for `backup.yml`, delete the e2e test accounts, event-week dry run.
+  admin uploads it back. Cash at the desk is marked paid in Desk.
+- School names are typed by students. They were cleaned up once (migration `clean_school_names`); a school
+  picker with suggestions and an admin merge tool is planned once the invited-school list is ready.
+- Still to do: school picker, event-week dry run.
 
 ## Gotchas
 
