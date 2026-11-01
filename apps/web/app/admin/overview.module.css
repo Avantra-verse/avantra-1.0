@@ -1,0 +1,244 @@
+/* Admin overview: hero, grouped accent tiles and simple bar charts. Ember tokens come from .page. */
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: end;
+  padding: 26px 26px 22px;
+  margin-bottom: 26px;
+  border-radius: 24px;
+  border: 3px solid var(--sky);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(159, 212, 255, 0.16), transparent 45%),
+    radial-gradient(circle at 95% 100%, rgba(179, 18, 30, 0.35), transparent 55%),
+    var(--panel);
+  box-shadow: 0 0 0 6px var(--red), 0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.hello {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--mute);
+}
+
+.money {
+  margin: 4px 0 2px;
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2.4rem, 7vw, 3.6rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(90deg, #ff5560, #ffb4a8 45%, #9fd4ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.heroSub {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.bar {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(244, 234, 217, 0.1);
+  border: 1px solid rgba(244, 234, 217, 0.16);
+  overflow: hidden;
+}
+
+.barFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b3121e, #ff5560, #9fd4ff);
+  transition: width 0.6s ease;
+}
+
+.barLabel {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: var(--mute);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown {
+  text-align: center;
+  padding: 14px 18px;
+  border-radius: 18px;
+  border: 2px dashed rgba(159, 212, 255, 0.5);
+  background: rgba(18, 14, 12, 0.55);
+  min-width: 132px;
+}
+
+.countdown strong {
+  display: block;
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--sky);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown span {
+  color: var(--mute);
+  font-size: 0.9rem;
+}
+
+.refresh {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.groupTitle {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat {
+  --accent: var(--sky);
+  position: relative;
+  min-width: 0;
+  padding: 16px 16px 14px;
+  border-radius: 16px;
+  border: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  background:
+    radial-gradient(110% 80% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
+    var(--panel);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.stat::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: -2px;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: var(--accent);
+}
+
+.stat:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.stat[data-tone="red"] { --accent: #ff5560; }
+.stat[data-tone="green"] { --accent: #5fd38d; }
+.stat[data-tone="gold"] { --accent: #f2c14e; }
+.stat[data-tone="pink"] { --accent: #ff7ac6; }
+
+.statValue {
+  display: block;
+  font-family: "Yatra One", Georgia, serif;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.statLabel {
+  display: block;
+  margin-top: 2px;
+  color: var(--mute);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+/* Horizontal bar rows (themes, schools, team sizes). */
+.rows {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+}
+
+.rowName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowNum {
+  color: var(--sky);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.row .bar {
+  grid-column: 1 / -1;
+  height: 8px;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+}
+
+@media (max-width: 900px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 22px 18px 18px;
+  }
+  .countdown {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+  }
+  .countdown strong {
+    display: inline;
+    font-size: 1.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat,
+  .barFill {
+    transition: none;
+  }
+  .stat:hover {
+    transform: none;
+  }
+}

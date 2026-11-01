@@ -36,6 +36,14 @@ export default function Footer() {
           >
             Instagram @avantra.verse
           </a>
+          <a
+            href={siteConfig.whatsappChannel}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center font-semibold text-secondary underline-offset-4 transition-colors hover:text-sky hover:underline"
+          >
+            WhatsApp channel
+          </a>
         </div>
 
         <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-6 font-semibold text-secondary">

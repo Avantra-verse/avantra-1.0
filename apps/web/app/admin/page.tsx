@@ -10,7 +10,9 @@ import { CreateAdminRequest, CreateStaffRequest, WalkInRequest } from "@avantra/
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
-import { fileUrl, rupees, Tile, useAction, useHashTab, useLoad } from "./ui";
+import { fileUrl, rupees, useAction, useHashTab, useLoad } from "./ui";
+import o from "./overview.module.css";
+import { siteConfig } from "@/content/site";
 import { Events } from "./events";
 import { UpiPayments } from "./payments";
 import { Wall } from "./wall";
@@ -96,84 +98,140 @@ type Stats = {
   events: { id: string; name: string; capacity: number | null; registrations: number; teams: number; deskScans: number }[];
 };
 
+// Coloured tile for the overview.
+function Stat({ value, label, tone }: { value: React.ReactNode; label: string; tone?: "red" | "green" | "gold" | "pink" }) {
+  return (
+    <div className={o.stat} data-tone={tone}>
+      <span className={o.statValue}>{value}</span>
+      <span className={o.statLabel}>{label}</span>
+    </div>
+  );
+}
+
+// A bar out of `max`; 0 when there is nothing to compare against.
+function Bar({ value, max }: { value: number; max: number }) {
+  return (
+    <div className={o.bar} aria-hidden="true">
+      <div className={o.barFill} style={{ width: `${max ? Math.round((value / max) * 100) : 0}%` }} />
+    </div>
+  );
+}
+
 function Overview({ name }: { name: string }) {
   const { data: s, error, reload } = useLoad<Stats>("/admin/stats");
   if (!s) return error ? <FormError message={error} /> : <p className={t.mute}>Loading…</p>;
+  const collected = s.fees.onlinePaise + s.fees.cashPaise;
+  const paidPct = s.students.total ? Math.round((s.students.paid / s.students.total) * 100) : 0;
+  const days = Math.max(0, Math.ceil((new Date(siteConfig.eventDateISO).getTime() - Date.now()) / 86_400_000));
+  const sizes = s.exhibition.teamSizes;
+  const teams = sizes["1"] + sizes["2"] + sizes["3"];
+  const topTheme = Math.max(1, ...s.exhibition.themes.map((x) => x.students));
+  const topSchool = Math.max(1, ...s.topSchools.map((x) => x.students));
   return (
     <>
-      <div className={t.panelHead}>
-        <span className={t.mute}>Signed in as {name}</span>
-        <button type="button" className={t.ghost} onClick={reload}>Refresh</button>
+      <section className={o.hero} aria-labelledby="collected">
+        <button type="button" className={`${t.ghost} ${o.refresh}`} onClick={reload}>Refresh</button>
+        <div>
+          <p className={o.hello}>Namaste, {name.split(" ")[0]}</p>
+          <h2 id="collected" className={o.money}>{rupees(collected)}</h2>
+          <p className={o.heroSub}>
+            collected · {s.students.paid} of {s.students.total} students paid
+            {s.upiWaiting > 0 && ` · ${s.upiWaiting} UPI waiting for the school`}
+          </p>
+          <Bar value={s.students.paid} max={s.students.total} />
+          <div className={o.barLabel}>
+            <span>{paidPct}% paid</span>
+            <span>{s.students.unpaid} not paid yet</span>
+          </div>
+        </div>
+        <div className={o.countdown}>
+          <strong>{days}</strong>
+          <span>{days === 1 ? "day" : "days"} to AVANTRA</span>
+        </div>
+      </section>
+
+      <h3 className={o.groupTitle}>Sign-ups</h3>
+      <div className={o.tiles}>
+        <Stat value={s.students.total} label="students with a profile" />
+        <Stat value={s.signups.today} label="signed up today" tone="green" />
+        <Stat value={s.signups.week} label="signed up in the last 7 days" tone="green" />
+        <Stat value={s.signups.profileUnfinished} label="signed up, profile not finished" tone="gold" />
       </div>
-      <div className={`${t.stats} ${t.stats3}`}>
-        <Tile value={s.students.total} label="students" />
-        <Tile value={s.students.paid} label="fee paid" />
-        <Tile value={s.gate.checkedInToday} label="through the gate today" />
-        <Tile value={s.referralCodes} label="referral codes used" />
-        <Tile value={rupees(s.fees.onlinePaise)} label={`online (${s.fees.onlineCount})`} />
-        <Tile value={rupees(s.fees.cashPaise)} label={`cash at desk (${s.fees.cashCount})`} />
-        <Tile value={s.upiWaiting} label="UPI payments waiting for the school" />
-        <Tile value={s.signups.today} label="signed up today" />
-        <Tile value={s.signups.week} label="signed up in the last 7 days" />
-        <Tile value={s.signups.profileUnfinished} label="signed up, profile not finished" />
-        <Tile value={s.students.juniors} label="juniors (classes 6–8)" />
-        <Tile value={s.students.seniors} label="seniors (classes 9–12)" />
-        <Tile value={`${s.staff.volunteers} · ${s.staff.judges} · ${s.staff.admins}`} label="volunteers · judges · admins" />
+
+      <h3 className={o.groupTitle}>Money</h3>
+      <div className={o.tiles}>
+        <Stat value={rupees(s.fees.onlinePaise)} label={`online · ${s.fees.onlineCount} payments`} tone="red" />
+        <Stat value={rupees(s.fees.cashPaise)} label={`cash at desk · ${s.fees.cashCount} payments`} tone="red" />
+        <Stat value={s.upiWaiting} label="UPI payments waiting for the school" tone="gold" />
+        <Stat value={s.referralCodes} label="ambassador codes used" tone="pink" />
       </div>
+
+      <h3 className={o.groupTitle}>People</h3>
+      <div className={o.tiles}>
+        <Stat value={s.students.juniors} label="juniors (classes 6–8)" />
+        <Stat value={s.students.seniors} label="seniors (classes 9–12)" />
+        <Stat value={`${s.staff.volunteers} · ${s.staff.judges} · ${s.staff.admins}`} label="volunteers · judges · admins" tone="pink" />
+        <Stat value={s.gate.checkedInToday} label="through the gate today" tone="green" />
+      </div>
+
       <section className={t.panel} aria-labelledby="exhibition-stats">
         <h2 id="exhibition-stats">Science Exhibition</h2>
-        <div className={`${t.stats} ${t.stats3}`}>
-          <Tile value={s.exhibition.registered} label="registered" />
-          <Tile value={s.exhibition.paidNoTeam} label="paid, no team yet" />
-          <Tile value={`${s.exhibition.teamSizes["1"]} · ${s.exhibition.teamSizes["2"]} · ${s.exhibition.teamSizes["3"]}`} label="teams of 1 · 2 · 3" />
+        <div className={o.tiles}>
+          <Stat value={s.exhibition.registered} label="registered" />
+          <Stat value={s.exhibition.paidNoTeam} label="paid, no team yet" tone="gold" />
+          <Stat value={teams} label="teams formed" tone="green" />
+          <Stat value={`${sizes["1"]} · ${sizes["2"]} · ${sizes["3"]}`} label="teams of 1 · 2 · 3" tone="pink" />
         </div>
-        {s.exhibition.themes.length > 0 && (
-          <div className={t.scroll}>
-            <table className={`${t.table} ${t.stack}`}>
-              <thead>
-                <tr>
-                  <th>Theme</th>
-                  <th className={t.num}>Students</th>
-                </tr>
-              </thead>
-              <tbody>
-                {s.exhibition.themes.map((x) => (
-                  <tr key={x.topic}>
-                    <td>{x.topic}</td>
-                    <td className={t.num} data-label="Students">{x.students}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className={o.split}>
+          <div>
+            <h3 className={o.groupTitle}>Team sizes</h3>
+            <ul className={o.rows}>
+              {(["1", "2", "3"] as const).map((k) => (
+                <li key={k} className={o.row}>
+                  <span className={o.rowName}>{k === "1" ? "Solo" : `Team of ${k}`}</span>
+                  <span className={o.rowNum}>{sizes[k]}</span>
+                  <Bar value={sizes[k]} max={Math.max(1, teams)} />
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
+          <div>
+            <h3 className={o.groupTitle}>Themes</h3>
+            {s.exhibition.themes.length === 0 ? (
+              <p className={t.mute}>No themes picked yet.</p>
+            ) : (
+              <ul className={o.rows}>
+                {s.exhibition.themes.map((x) => (
+                  <li key={x.topic} className={o.row}>
+                    <span className={o.rowName} title={x.topic}>{x.topic}</span>
+                    <span className={o.rowNum}>{x.students}</span>
+                    <Bar value={x.students} max={topTheme} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </section>
+
       {s.topSchools.length > 0 && (
         <section className={t.panel} aria-labelledby="top-schools">
           <h2 id="top-schools">Top schools</h2>
-          <p className={t.mute}>Schools are typed by students, so the same school spelled differently shows up twice.</p>
-          <div className={t.scroll}>
-            <table className={`${t.table} ${t.stack}`}>
-              <thead>
-                <tr>
-                  <th>School</th>
-                  <th className={t.num}>Students</th>
-                  <th className={t.num}>Paid</th>
-                </tr>
-              </thead>
-              <tbody>
-                {s.topSchools.map((x) => (
-                  <tr key={x.school}>
-                    <td>{x.school}</td>
-                    <td className={t.num} data-label="Students">{x.students}</td>
-                    <td className={t.num} data-label="Paid">{x.paid}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <p className={t.mute} style={{ marginTop: 0 }}>Typed by students, so one school spelled two ways shows twice.</p>
+          <ul className={o.rows}>
+            {s.topSchools.map((x) => (
+              <li key={x.school} className={o.row}>
+                <span className={o.rowName} title={x.school}>{x.school}</span>
+                <span className={o.rowNum}>
+                  {x.students} <span className={t.mute}>· {x.paid} paid</span>
+                </span>
+                <Bar value={x.students} max={topSchool} />
+              </li>
+            ))}
+          </ul>
         </section>
       )}
+
       <section className={t.panel} aria-labelledby="by-event">
         <h2 id="by-event">Events</h2>
         <div className={t.scroll}>

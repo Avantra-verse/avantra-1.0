@@ -10,6 +10,7 @@ import mv from "./events/events.module.css";
 import { Tile } from "../admin/ui";
 import { getTimeRemaining } from "@/lib/countdown";
 import { siteConfig } from "@/content/site";
+import { Community } from "@/components/Community";
 import { feeReviewing, useDashboard, type MyReg, type Student, type WallMe } from "./data";
 
 export default function DashboardPage() {
@@ -228,6 +229,7 @@ function StudentDashboard({ me, s, w, regs }: { me: Me; s: Student; w: WallMe | 
                 </a>
               )}
             </section>
+            <Community compact />
           </aside>
         </div>
       </div>

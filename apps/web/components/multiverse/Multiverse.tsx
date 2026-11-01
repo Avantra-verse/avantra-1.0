@@ -8,6 +8,7 @@ import { startScene } from "./scene";
 import "./multiverse.css";
 import { MobileMenu, REGISTER_PILL } from "@/components/Nav";
 import { apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
+import { Community } from "@/components/Community";
 
 const LOGO = "/brand/avantra-logo.png";
 
@@ -236,6 +237,9 @@ export default function Multiverse() {
           </div>
           <img className="flog" id="flog" src={LOGO} alt="AVANTRA" />
         </div>
+        <div style={{ margin: "36px 0 8px" }}>
+          <Community />
+        </div>
         <div className="foot">
           <nav aria-label="Footer">
             <Link href="/about">About</Link>
@@ -246,6 +250,7 @@ export default function Multiverse() {
             {apiReady && <Link href={LOGIN_HREF}>Log in</Link>}
             <Link href={REGISTER_HREF}>Registration</Link>
             <a href={siteConfig.instagram} target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href={siteConfig.whatsappChannel} target="_blank" rel="noopener noreferrer">WhatsApp channel</a>
           </nav>
           <span>AVANTRA 2026 · Hosted by SSRVM IEMS · Event partner ARITHI</span>
         </div>
