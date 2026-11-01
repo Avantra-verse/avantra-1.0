@@ -10,6 +10,8 @@ import { EXHIBITION_TOPICS, InviteCode } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, pendingInvite, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import styles from "../events/events.module.css";
+import d from "../dashboard.module.css";
+import { Cosmos } from "../cosmos";
 import t from "../../staff/tools.module.css";
 import { feeReviewing, useDashboard } from "../data";
 import { useTabs } from "../../admin/ui";
@@ -87,7 +89,8 @@ export default function TeamsPage() {
     <div className={account.registrationPage}>
       <div className={account.starfieldLayer} aria-hidden="true" />
       <div className={`${t.page} ${t.appPage}`}>
-        <header className={t.pageHead}>
+        <header className={`${t.pageHead} ${d.band}`}>
+          <Cosmos compact />
           <h1>Teams</h1>
           <p>The Science Exhibition is for teams of 1, 2 or 3. Start a team and share its code, or join a friend&apos;s team. Entering on your own? Start a team anyway: a team of 1 is fine.</p>
         </header>

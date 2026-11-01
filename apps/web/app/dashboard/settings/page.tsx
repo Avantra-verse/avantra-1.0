@@ -6,6 +6,8 @@ import React, { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { Field, FormError, SelectField, styles } from "@/components/account/Account";
 import t from "../../staff/tools.module.css";
+import d from "../dashboard.module.css";
+import { Cosmos } from "../cosmos";
 import { useDashboard } from "../data";
 
 const GRADES = [6, 7, 8, 9, 10, 11, 12];
@@ -67,7 +69,8 @@ export default function SettingsPage() {
     <div className={styles.registrationPage}>
       <div className={styles.starfieldLayer} aria-hidden="true" />
       <div className={`${t.page} ${t.appPage}`}>
-        <header className={t.pageHead}>
+        <header className={`${t.pageHead} ${d.band}`}>
+          <Cosmos compact />
           <h1>Settings</h1>
           <p>Keep your class, school and phone up to date. Certificates use the name you give here.</p>
         </header>

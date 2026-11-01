@@ -11,6 +11,8 @@ import { EXHIBITION_TOPICS } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, pendingInvite, type Me } from "@/lib/api";
 import { FormError, OpensSoon, styles as account } from "@/components/account/Account";
 import styles from "./events.module.css";
+import d from "../dashboard.module.css";
+import { Cosmos } from "../cosmos";
 import { feeReviewing, useDashboard } from "../data";
 import steps from "../../staff/tools.module.css";
 
@@ -91,7 +93,8 @@ export default function EventsPage() {
     <div className={account.registrationPage}>
       <div className={account.starfieldLayer} aria-hidden="true" />
       <div className={`${steps.page} ${steps.appPage}`}>
-          <header className={steps.pageHead}>
+          <header className={`${steps.pageHead} ${d.band}`}>
+          <Cosmos compact />
             <h1>Events</h1>
             <p>Entry to the fest and its events is free. Only the Science Exhibition has a ₹299 fee, paid once.</p>
           </header>

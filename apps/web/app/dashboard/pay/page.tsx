@@ -3,6 +3,8 @@
 import { FormError, styles } from "@/components/account/Account";
 import { UpiFee } from "@/components/account/UpiFee";
 import t from "../../staff/tools.module.css";
+import d from "../dashboard.module.css";
+import { Cosmos } from "../cosmos";
 import { useDashboard } from "../data";
 
 const when = (iso: string) => new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
@@ -15,7 +17,8 @@ export default function PayPage() {
     <div className={styles.registrationPage}>
       <div className={styles.starfieldLayer} aria-hidden="true" />
       <div className={`${t.page} ${t.appPage}`}>
-        <header className={t.pageHead}>
+        <header className={`${t.pageHead} ${d.band}`}>
+          <Cosmos compact />
           <h1>Payment</h1>
           <p>The Science Exhibition fee is ₹299 per student, paid once by UPI to the school.</p>
         </header>

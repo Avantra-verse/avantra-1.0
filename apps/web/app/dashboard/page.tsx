@@ -7,6 +7,8 @@ import { api, apiReady, LOGIN_HREF, type Me } from "@/lib/api";
 import { AccountShell, FormError, OpensSoon, styles } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
 import mv from "./events/events.module.css";
+import d from "./dashboard.module.css";
+import { Cosmos } from "./cosmos";
 import { Tile } from "../admin/ui";
 import { getTimeRemaining } from "@/lib/countdown";
 import { siteConfig } from "@/content/site";
@@ -78,10 +80,10 @@ function Checklist({ s, exhibition, reviewing }: { s: Student; exhibition: MyReg
   // A payment under review stays the next step ("View"): teams can't open until the school confirms it.
   const next = steps.findIndex((x) => !x.done);
   return (
-    <ol className={t.checklist}>
+    <ol className={d.doors}>
       {steps.map((x, i) => (
         <li key={x.title} data-state={x.done ? "done" : x.waiting ? "waiting" : i === next ? "next" : undefined}>
-          <span className={t.checkMark} aria-hidden>
+          <span className={d.door} aria-hidden>
             {x.done ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12l5 5L20 7" />
@@ -90,7 +92,7 @@ function Checklist({ s, exhibition, reviewing }: { s: Student; exhibition: MyReg
               i + 1
             )}
           </span>
-          <span className={t.checkText}>
+          <span className={d.doorText}>
             <strong>
               {x.title}
               <span className="sr-only">{x.done ? " (done)" : x.waiting ? " (waiting)" : ""}</span>
@@ -133,34 +135,30 @@ function StudentDashboard({ me, s, w, regs }: { me: Me; s: Student; w: WallMe | 
     <div className={styles.registrationPage}>
       <div className={styles.starfieldLayer} aria-hidden="true" />
       <div className={`${t.page} ${t.appPage}`}>
-        <header className={`${t.pageHead} ${t.homeHead}`}>
+        <header className={d.hero}>
+          <span className={d.meteor} aria-hidden="true" />
           <div>
-            <h1>
-              {now ? greeting() : "Hello"}, {me.name.split(" ")[0]}!
+            <h1 className={d.hello}>
+              {now ? greeting() : "Hello"}, {me.name.split(" ")[0]}
             </h1>
-            <p>
+            <p className={d.heroSub}>
               Class {s.grade}
               {s.section ? `-${s.section}` : ""} · {s.schoolName}
             </p>
-            <p className={t.tagline}>Every universe has a doorway. Yours opens on 19 December.</p>
+            <p className={d.heroLine}>Every universe has a doorway. Yours opens on 19 December.</p>
           </div>
-          {left && !left.isPast && (
-            <div className={`${mv.portalWrap} ${t.homePortal}`} role="img" aria-label={`${left.days} days until AVANTRA 2026`}>
-              <span className={mv.portal} />
-              <span className={mv.portalLabel}>
-                <strong>{left.days}</strong>
-                days to go
-              </span>
-            </div>
-          )}
+          <Cosmos chosen={exhibition?.topic}>
+            {left && !left.isPast && (
+              <div className={`${mv.portalWrap} ${d.heroPortal}`} role="img" aria-label={`${left.days} days until AVANTRA 2026`}>
+                <span className={mv.portal} />
+                <span className={mv.portalLabel}>
+                  <strong>{left.days}</strong>
+                  days to go
+                </span>
+              </div>
+            )}
+          </Cosmos>
         </header>
-
-        <div className={t.stats}>
-          <Tile value={s.feePaidAt ? "Paid" : reviewing ? "Checking" : "₹299"} label={s.feePaidAt ? "Exhibition fee" : reviewing ? "Fee, under review" : "Exhibition fee due"} />
-          <Tile value={team ? `${team.members.length} / ${exhibition!.event.teamMax}` : "None"} label={team ? team.name : "Team"} />
-          <Tile value={s.grade >= 9 ? "Senior" : "Junior"} label={s.grade >= 9 ? "Exhibition category, classes 9–12" : "Exhibition category, classes 6–8"} />
-          <Tile value={<span className={t.mono}>{s.avantraId}</span>} label="Your AVANTRA ID" />
-        </div>
 
         <div className={t.dashGrid}>
           <div>
@@ -216,18 +214,42 @@ function StudentDashboard({ me, s, w, regs }: { me: Me; s: Student; w: WallMe | 
           </div>
 
           <aside>
-            <section className={`${t.panel} ${t.badgeCard}`} aria-labelledby="badge">
-              <h2 id="badge">Entry badge</h2>
-              {qr ? <img src={qr} alt={`Entry QR for ${s.avantraId}`} width={200} height={200} className={t.badgeQr} /> : <div className={t.badgeQr} aria-hidden />}
-              <p className={styles.label} style={{ margin: "10px 0 2px", fontSize: "1.35rem", letterSpacing: "0.06em" }}>
-                {s.avantraId}
-              </p>
-              <p className={t.mute} style={{ margin: "0 0 12px" }}>Show this at the gate. If it won&apos;t scan, give your AVANTRA ID.</p>
-              {qr && (
-                <a className={t.ghost} href={qr} download={`avantra-badge-${s.avantraId}.png`}>
-                  Save to phone
-                </a>
-              )}
+            <section className={d.pass} aria-labelledby="badge">
+              <div className={d.passInner}>
+                <div className={d.passTop}>
+                  <h2 id="badge">Multiverse pass</h2>
+                  <span className={d.passYear}>AVANTRA 2026</span>
+                </div>
+                <p className={d.passName}>{me.name}</p>
+                <div className={d.passBody}>
+                  <dl className={d.passFacts}>
+                    <div>
+                      <dt>AVANTRA ID</dt>
+                      <dd className={d.passId}>{s.avantraId}</dd>
+                    </div>
+                    <div>
+                      <dt>Class</dt>
+                      <dd>
+                        {s.grade}
+                        {s.section ? `-${s.section}` : ""} · {s.grade >= 9 ? "Senior" : "Junior"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Universe</dt>
+                      <dd>{exhibition?.topic ?? "Pick one when you register"}</dd>
+                    </div>
+                  </dl>
+                  {qr ? <img src={qr} alt={`Entry QR for ${s.avantraId}`} width={220} height={220} className={d.passQr} /> : <div className={d.passQr} aria-hidden />}
+                </div>
+                <div className={d.passFoot}>
+                  <p>Show this at the gate. If it won&apos;t scan, give your AVANTRA ID.</p>
+                  {qr && (
+                    <a className={t.ghost} href={qr} download={`avantra-badge-${s.avantraId}.png`}>
+                      Save to phone
+                    </a>
+                  )}
+                </div>
+              </div>
             </section>
             <Community compact />
           </aside>
