@@ -80,6 +80,7 @@ export const APP_PAGES = ["/admin", "/staff"];
 export const ADMIN_LINKS: DashLink[] = [
   { href: "/admin#overview", label: "Overview", icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
   { href: "/admin#students", label: "Students", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21v-1a8 8 0 0116 0v1" },
+  { href: "/admin#teams", label: "Teams", icon: "M7 11a3 3 0 100-6 3 3 0 000 6zM17 11a3 3 0 100-6 3 3 0 000 6zM2 20v-1a5 5 0 0110 0v1M12 20v-1a5 5 0 0110 0v1" },
   { href: "/admin#referrals", label: "Referrals", icon: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01" },
   { href: "/admin#messages", label: "Messages", icon: "M4 5h16v11H8l-4 4zM8 9h8M8 12h5" },
   { href: "/admin#payments", label: "UPI payments", icon: "M3 6h18v12H3zM3 10h18M7 15h4" },
