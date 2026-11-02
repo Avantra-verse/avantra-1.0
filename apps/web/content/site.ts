@@ -49,7 +49,9 @@ export const siteConfig: SiteConfig = {
     mapUrl: "https://maps.app.goo.gl/5UULyULJRH4CXrgS6",
   },
   prizes: [
-    { title: "Certificates", description: "Certificates of participation and achievement will be issued to all exhibitors and event winners." },
+    { title: "Junior Category (Classes 6–8)", description: "AVANTRA Junior Champion, Young Innovator, Science Breakthrough, Emerging Inventor, Impact & Sustainability." },
+    { title: "Senior Category (Classes 9–12)", description: "AVANTRA Senior Champion, Future Innovator, Scientific Breakthrough, Next-Gen Inventor, Real-World Impact." },
+    { title: "Certificates & Trophies", description: "Official championship trophies, medals, and certificates of achievement issued to all winning teams and participants." },
   ],
   sponsors: [],
   contact: [

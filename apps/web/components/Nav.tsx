@@ -9,6 +9,7 @@ import { api, apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
 
 // Log in only appears once accounts are live; until then it is one more "Opening soon".
 const LINKS = [
+  { href: "/events", label: "Events" },
   { href: "/about", label: "About" },
   { href: "/venue", label: "Venue" },
   { href: "/organizers", label: "Committee" },

@@ -48,6 +48,7 @@ export default function Multiverse() {
         </a>
         <span className="when">19–20 December 2026</span>
         <nav aria-label="Main">
+          <Link href="/events" data-hover>Events</Link>
           <Link href="/about" data-hover>About</Link>
           <Link href="/venue" data-hover>Venue</Link>
           <Link href="/organizers" data-hover>Committee</Link>
