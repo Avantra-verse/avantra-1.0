@@ -92,7 +92,7 @@ export default function TeamsPage() {
         <header className={`${t.pageHead} ${d.band}`}>
           <Cosmos compact />
           <h1>Teams</h1>
-          <p>The Science Exhibition is for teams of 1, 2 or 3. Start a team and share its code, or join a friend&apos;s team. Entering on your own? Start a team anyway: a team of 1 is fine.</p>
+          <p>The Science Exhibition is for teams of 1, 2 or 3, all from the same class. Start a team and share its code, or join a friend&apos;s team. Entering on your own? Start a team anyway: a team of 1 is fine.</p>
         </header>
         <div className={t.dashGrid}>
         <div>

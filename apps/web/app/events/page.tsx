@@ -373,7 +373,7 @@ export default function EventsPage() {
                     Judging &amp; Evaluation Criteria
                   </h3>
                   <p className="text-[#b9ab9a] text-sm mt-1 max-w-[44ch]">
-                    Enter solo or as a team of up to 3 students, presenting an active working model or proof of concept.
+                    Enter solo or as a team of up to 3 students from the same class, presenting an active working model or proof of concept.
                   </p>
                 </div>
 

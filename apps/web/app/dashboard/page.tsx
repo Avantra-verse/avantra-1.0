@@ -186,7 +186,7 @@ function StudentDashboard({ me, s, w, regs }: { me: Me; s: Student; w: WallMe | 
                 </span>
               </div>
               <p className={t.mute} style={{ margin: "0 0 14px" }}>
-                Build a project on your own or in a team of 2 or 3 and present it to the judges. Entry to the fest is free; the exhibition is ₹299 per student.
+                Build a project on your own or in a team of 2 or 3 from the same class and present it to the judges. Entry to the fest is free; the exhibition is ₹299 per student.
               </p>
               <Checklist s={s} exhibition={exhibition} reviewing={reviewing} />
             </section>
