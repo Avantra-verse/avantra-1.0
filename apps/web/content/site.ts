@@ -56,7 +56,6 @@ export const siteConfig: SiteConfig = {
   sponsors: [],
   contact: [
     { org: "ARITHI", email: "contact@arithi.in", phone: "" },
-    { org: "SSRVM IEMS", email: "info@ssrvmiems.example", phone: "" },
   ],
   instagram: "https://www.instagram.com/avantra.verse",
   whatsappChannel: "https://whatsapp.com/channel/0029Vb9RT1z5a248YFlBfP3N",
