@@ -1309,3 +1309,25 @@
   line-height: 1.3;
   color: #f4ead9;
 }
+
+@media (max-width: 640px) {
+  .themeGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  .themeCard {
+    padding: 0.75rem 0.6rem 0.75rem 0.9rem;
+  }
+  .themeCard .criteriaNum {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+  }
+  .themeTitle {
+    font-size: 0.9rem;
+    hyphens: auto;
+    overflow-wrap: break-word; /* last resort where hyphenation is missing */
+  }
+  .themeLabel {
+    display: none;
+  }
+}

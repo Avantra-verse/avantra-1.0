@@ -31,7 +31,8 @@ export default function Reveal({
     <motion.div
       initial={reduce ? false : hidden}
       whileInView={shown}
-      viewport={{ once: true, amount: 0.25 }}
+      // Trigger once the top is 10% into the screen; an `amount` share never fires on content taller than ~4 screens (phones).
+      viewport={{ once: true, amount: "some", margin: "0px 0px -10% 0px" }}
       transition={{
         duration: variant === "warp" ? 0.8 : 0.6,
         delay,

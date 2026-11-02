@@ -424,7 +424,7 @@ export default function EventsPage() {
                 <ul className={styles.themeGrid}>
                   {EXHIBITION_TOPICS.map((topic, i) => (
                     <li key={topic} className={`${styles.criteriaCard} ${styles.themeCard}`}>
-                      <div className={styles.criteriaNum}>Universe // {String(i + 1).padStart(2, "0")}</div>
+                      <div className={styles.criteriaNum}><span className={styles.themeLabel}>Universe // </span>{String(i + 1).padStart(2, "0")}</div>
                       <div className={styles.themeTitle}>{topic}</div>
                     </li>
                   ))}
