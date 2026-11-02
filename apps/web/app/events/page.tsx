@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import Reveal from "@/components/Reveal";
 import { REGISTER_HREF } from "@/lib/api";
+import { EXHIBITION_TOPICS } from "@avantra/shared";
 import styles from "./events.module.css";
 
 /* ═══════════════════════════════════════════════════════════
@@ -413,6 +414,21 @@ export default function EventsPage() {
                     <p className={styles.criteriaDesc}>{crit.desc}</p>
                   </div>
                 ))}
+              </div>
+
+              {/* Themes: the same list students pick from when they register */}
+              <div className={styles.themesBlock}>
+                <span className={styles.sectionEyebrow}>Pick Your Universe</span>
+                <h4 className={styles.prizepoolTitle}>{EXHIBITION_TOPICS.length} Exhibition Themes</h4>
+                <p className={styles.prizepoolSub}>Every team builds in one of these themes and chooses it when registering.</p>
+                <ul className={styles.themeGrid}>
+                  {EXHIBITION_TOPICS.map((topic, i) => (
+                    <li key={topic} className={`${styles.criteriaCard} ${styles.themeCard}`}>
+                      <div className={styles.criteriaNum}>Universe // {String(i + 1).padStart(2, "0")}</div>
+                      <div className={styles.themeTitle}>{topic}</div>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               {/* Prize Pool & Category Awards Section */}
