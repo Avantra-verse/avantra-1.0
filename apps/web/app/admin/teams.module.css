@@ -1,0 +1,128 @@
+/* Teams tab: one card per team. Ember tokens come from .page; chips and the empty state reuse people.module.css. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: 14px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 14px;
+  border: 2px solid rgba(244, 234, 217, 0.12);
+  border-radius: 16px;
+  background: rgba(244, 234, 217, 0.03);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  min-width: 0;
+}
+
+.title h3 {
+  margin: 0;
+  font-family: "Yatra One", Georgia, serif;
+  font-weight: 400;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.title p {
+  margin: 2px 0 0;
+  color: var(--mute);
+  font-size: 0.92rem;
+}
+
+.place {
+  flex: none;
+  padding: 3px 12px;
+  border: 2px solid #f2c14e;
+  border-radius: 999px;
+  background: rgba(242, 193, 78, 0.14);
+  color: #f2c14e;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.project {
+  margin: -4px 0 0;
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+.members {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(244, 234, 217, 0.1);
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(244, 234, 217, 0.1);
+}
+
+.who {
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.lead {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--sky);
+  color: #120e0c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.meta {
+  display: block;
+  color: var(--mute);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.foot {
+  margin: auto 0 0;
+  color: var(--mute);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 14px;
+  }
+  .member {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
