@@ -69,6 +69,7 @@ function HeroStarfield() {
     };
 
     resize();
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     for (let i = 0; i < 160; i++) {
       stars.push({
@@ -103,18 +104,20 @@ function HeroStarfield() {
         ctx.fill();
         ctx.restore();
       });
-      frameId = requestAnimationFrame(render);
+      if (!still) frameId = requestAnimationFrame(render);
     };
 
     frameId = requestAnimationFrame(render);
-    window.addEventListener("resize", resize);
+    // Resizing clears the canvas, so a still starfield is drawn again.
+    const onResize = () => { resize(); if (still) render(); };
+    window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(frameId);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className={styles.heroCanvas} />;
+  return <canvas ref={canvasRef} className={styles.heroCanvas} aria-hidden="true" />;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -185,7 +188,7 @@ export default function EventsPage() {
         {/* Layer 1: Cosmic Multiverse Portal Background */}
         <div className={styles.heroBackdrop} aria-hidden="true">
           <img
-            src="/events/hero-portal.jpg"
+            src="/events/hero-portal.webp"
             alt=""
             className={styles.heroPortalImg}
           />
@@ -255,7 +258,7 @@ export default function EventsPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
-            <span className={styles.highlightPill}>👥 Teams of 3 Students (Class 6–12)</span>
+            <span className={styles.highlightPill}>👥 Solo or Teams of up to 3 (Class 6–12)</span>
             <span className={`${styles.highlightPill} ${styles.highlightPillHot}`}>⚡ ₹299 / Person Registration Fee</span>
             <span className={styles.highlightPill}>🏆 Cash Prizes &amp; Trophies</span>
             <span className={styles.highlightPill}>🎟️ 100% Free Entry for Visitors</span>
@@ -347,7 +350,7 @@ export default function EventsPage() {
               {/* Competition AI-Generated Visual Banner */}
               <div className={styles.flagshipHeroMedia}>
                 <img
-                  src="/events/flagship-hero.jpg"
+                  src="/events/flagship-hero.webp"
                   alt="AVANTRA 2026 Flagship School Science Exhibition Poster Artwork"
                   className={styles.flagshipHeroImg}
                 />
@@ -370,7 +373,7 @@ export default function EventsPage() {
                     Judging &amp; Evaluation Criteria
                   </h3>
                   <p className="text-[#b9ab9a] text-sm mt-1 max-w-[44ch]">
-                    Each team consists of exactly 3 students presenting an active working model or proof of concept.
+                    Enter solo or as a team of up to 3 students, presenting an active working model or proof of concept.
                   </p>
                 </div>
 

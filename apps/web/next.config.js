@@ -3,8 +3,6 @@ const nextConfig = {
   images: { unoptimized: true },
   // The chits PDF reads its fonts from disk (lib/server/chits.ts).
   outputFileTracingIncludes: { "/admin/wall/chits.pdf": ["./assets/fonts/*.ttf"] },
-  // Events page is live.
-  redirects: () => [],
   // No other site may show our pages in a frame (clickjacking on /admin). We embed Google's form, not the reverse.
   headers: () => [
     {
