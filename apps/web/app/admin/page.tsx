@@ -16,10 +16,11 @@ import { siteConfig } from "@/content/site";
 import { Events } from "./events";
 import { UpiPayments } from "./payments";
 import { Wall } from "./wall";
+import { Messages } from "./messages";
 import { Avatar, Profile, Students, toneOf } from "./people";
 import px from "./people.module.css";
 
-const TABS = { overview: "Overview", students: "Students", referrals: "Referral codes", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall", admins: "Admins" } as const;
+const TABS = { overview: "Overview", students: "Students", referrals: "Referral codes", messages: "Messages", payments: "UPI payments", desk: "Desk", staff: "Staff", events: "Results", wall: "Wall", admins: "Admins" } as const;
 type Tab = keyof typeof TABS;
 
 // One line under each tab's title.
@@ -27,6 +28,7 @@ const INTRO: Record<Tab, string> = {
   overview: "Sign-ups, fees and the gate at a glance, plus the CSV downloads.",
   students: "Find any student and see everything about them. Only the super admin can fix details, change the fee or delete.",
   referrals: "How many students each ambassador code brought in.",
+  messages: "What visitors sent from the Contact page. Sort them into categories and mark them resolved once answered.",
   payments: "UPI payments for the school to check, and their answers coming back.",
   desk: "Cash fees and walk-in registrations at the registration desk.",
   staff: "Volunteer and judge accounts, and which event each judge scores. Open one to see their whole account.",
@@ -70,6 +72,7 @@ export default function AdminPage() {
               {tab === "overview" && <Overview name={me.name} />}
               {tab === "students" && <Students canEdit={!!me.superAdmin} />}
               {tab === "referrals" && <Referrals />}
+              {tab === "messages" && <Messages />}
               {tab === "payments" && <UpiPayments />}
               {tab === "desk" && <Desk />}
               {tab === "staff" && <Staff canEdit={!!me.superAdmin} />}

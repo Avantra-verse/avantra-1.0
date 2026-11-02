@@ -3,7 +3,7 @@
 The whole backend: Postgres, Auth, the mail Edge Function. Project `avantra` (Mumbai region); its URL and keys live in the Vercel and Supabase dashboards, not here.
 
 - `migrations/`: schema, RLS, and every write as a `SECURITY DEFINER` function that checks the caller's role.
-- `functions/send-mail/`: sends the emails the database queues in `private.mail_outbox` (fee confirmed, UPI not found, walk-in, contact form).
+- `functions/send-mail/`: sends the emails the database queues in `private.mail_outbox` (fee confirmed, UPI not found, walk-in).
 - `templates/`: Auth email templates (sign-up and reset codes), pasted into the dashboard.
 
 ## One-time setup per project
@@ -14,7 +14,7 @@ The whole backend: Postgres, Auth, the mail Edge Function. Project `avantra` (Mu
 3. Edge Function secrets: `SMTP_USER`, `SMTP_PASS` (Google Workspace app password), `MAIL_FROM` (e.g. `AVANTRA 2026 <contact@arithi.in>`).
    Until they're set, emails wait in the outbox and go out once they are.
 4. Vault secret `send_mail_url` = `https://<project-ref>.supabase.co/functions/v1/send-mail` (SQL: `select vault.create_secret('<url>', 'send_mail_url');`).
-5. Optional `Setting` row `contactTo` (comma-separated emails) for the contact form; without it, messages go to every active admin.
+5. Contact form messages are saved, not emailed: admins read them in the admin Messages tab.
 6. Vercel (server only, never `NEXT_PUBLIC_`): `SUPABASE_SECRET_KEY` (Settings → API keys → secret key). Needed to make staff and walk-in accounts.
 
 ## Checking email

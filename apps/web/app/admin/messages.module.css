@@ -1,0 +1,40 @@
+/* Messages tab cards; rows reuse people.module.css. */
+.item {
+  display: grid;
+  gap: 10px;
+  padding: 14px 8px;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 16px;
+}
+
+.body {
+  margin: 0;
+  padding-left: 58px; /* lines up with the name, past the avatar */
+  max-width: 75ch;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.item > :last-child {
+  padding-left: 58px;
+}
+
+@media (max-width: 640px) {
+  .top {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+  .top > :last-child {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+  .body,
+  .item > :last-child {
+    padding-left: 0;
+  }
+}

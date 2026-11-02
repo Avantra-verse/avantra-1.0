@@ -193,6 +193,8 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "GET /admin/admins": () => rpc("admin_admins"),
   "POST /admin/admins/:id/disable": ({ id }) => rpc("admin_set_admin_disabled", { p_user_id: id, p_disabled: true }),
   "POST /admin/admins/:id/enable": ({ id }) => rpc("admin_set_admin_disabled", { p_user_id: id, p_disabled: false }),
+  "GET /admin/messages": () => rpc("admin_messages"),
+  "PATCH /admin/messages/:id": ({ id, category, resolved }) => rpc("admin_message_update", { p_id: Number(id), p_category: category, p_resolved: resolved }),
   "GET /admin/people": () => rpc("admin_people"),
   "GET /admin/people/:id": ({ id }) => rpc("admin_person", { p_user_id: id }),
   "PATCH /admin/people/:id": ({ id, ...p }) => rpc("admin_update_person", { p_user_id: id, p }),
