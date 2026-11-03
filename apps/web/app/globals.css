@@ -19,6 +19,11 @@
   --font-display: "Yatra One", Georgia, serif;
 }
 
+:root,
+html {
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--color-void);
   color: var(--color-starlight);
@@ -32,13 +37,33 @@ body {
 
 /* Site-wide dropdown styling: dark popup, crisp white text */
 select {
-  color-scheme: dark;
+  color-scheme: dark !important;
+  background-color: #1b1613;
+  color: #f4ead9;
 }
 
 select option,
 select optgroup {
-  background-color: #000000 !important;
+  color-scheme: dark !important;
+  background-color: #161210 !important;
   color: #ffffff !important;
+}
+
+/* Chrome autofill dark theme override: prevent light-blue/white box */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #1e1714 inset !important;
+  -webkit-text-fill-color: #f4ead9 !important;
+  caret-color: #f4ead9 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 body:has(#room-experience) {

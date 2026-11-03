@@ -129,41 +129,75 @@ function SizeChartModal({ onClose }: { onClose: () => void }) {
 
 // ---- ProductCard ----
 
+function formatType(type: string): string {
+  switch (type) {
+    case "TSHIRT": return "T-Shirt";
+    case "ZIPPER": return "Zipper / Hoodie";
+    case "HOODIE": return "Hoodie";
+    case "CAP": return "Cap";
+    case "BADGE": return "Badge";
+    default: return type || "Merch";
+  }
+}
+
 function ProductCard({ item, onAdd }: { item: MerchItem; onAdd: (entry: CartEntry) => void }) {
-  const hasSizes = Array.isArray(item.sizes) && item.sizes.length > 0;
-  const [size, setSize] = useState(hasSizes ? (item.sizes[1] ?? item.sizes[0] ?? "") : "");
+  const [added, setAdded] = useState(false);
+  const defaultSize = item.sizes?.[0] || "Free Size";
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onAdd({ item, size: defaultSize, quantity: 1 });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+  };
 
   return (
     <div className={s.card}>
-      <div className={s.cardImgWrap}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={item.imageSrc} alt={item.name} className={s.cardImg} />
-      </div>
+      <Link href={`/merch/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+        <div className={s.cardImgWrap}>
+          <span className={s.cardBadge}>{formatType(item.type)}</span>
+          {item.variant && item.variant !== "STANDARD" && (
+            <span className={s.cardVariantBadge}>{item.variant}</span>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={item.imageSrc} alt={item.name} className={s.cardImg} />
+        </div>
+      </Link>
+
       <div className={s.cardBody}>
-        <div className={s.cardName}>{item.name}</div>
-        <div className={s.cardPrice}>{rupees(item.price)}</div>
-        {hasSizes && (
-          <div className={s.sizeRow}>
-            <span className={s.sizeLabel}>Size:</span>
-            <select
-              className={s.sizeSelect}
-              value={size}
-              onChange={(e) => setSize(e.target.value)}
-              aria-label={`Size for ${item.name}`}
-            >
-              {item.sizes.map((sz) => (
-                <option key={sz} value={sz}>{sz}</option>
-              ))}
-            </select>
+        <div className={s.cardHeader}>
+          <Link href={`/merch/${item.id}`} style={{ textDecoration: "none", color: "inherit", flex: 1 }}>
+            <div className={s.cardName}>{item.name}</div>
+          </Link>
+          <div className={s.cardPrice}>{rupees(item.price)}</div>
+        </div>
+
+        {item.sizes && item.sizes.length > 0 ? (
+          <div className={s.sizesHint}>
+            <span>Sizes:</span>
+            {item.sizes.map((sz) => (
+              <span key={sz} className={s.sizeChip}>{sz}</span>
+            ))}
+          </div>
+        ) : (
+          <div className={s.sizesHint}>
+            <span className={s.sizeChip}>One Size / Free Size</span>
           </div>
         )}
-        <button
-          type="button"
-          className={s.addBtn}
-          onClick={() => onAdd({ item, size: hasSizes ? size : "Free Size", quantity: 1 })}
-        >
-          Add to Cart
-        </button>
+
+        <div className={s.cardActions}>
+          <Link href={`/merch/${item.id}`} className={s.detailBtn}>
+            Customize →
+          </Link>
+          <button
+            type="button"
+            className={s.addBtn}
+            onClick={handleAdd}
+          >
+            {added ? "Added ✓" : "Add to Cart"}
+          </button>
+        </div>
       </div>
     </div>
   );

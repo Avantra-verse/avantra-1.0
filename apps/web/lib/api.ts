@@ -229,6 +229,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
 
   // Merch e-commerce & admin: supabase/migrations/*_merch.sql
   "GET /merch/items": async () => ok(await supabase().from("MerchItem").select("*").eq("available", true)),
+  "GET /merch/items/:id": async ({ id }) => ok(await supabase().from("MerchItem").select("*").eq("id", id).maybeSingle()),
   "GET /merch/active-qr": () => rpc("merch_active_qr"),
   "POST /merch/orders": ({ items, studentClass, schoolName, contactNo, nameToPrint, isCoordinator, paymentNote }) =>
     rpc("place_merch_order", {
