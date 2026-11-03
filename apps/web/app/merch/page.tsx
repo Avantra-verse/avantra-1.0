@@ -12,7 +12,7 @@ import s from "./merch.module.css";
 type MerchItem = {
   id: string;
   name: string;
-  type: "TSHIRT" | "ZIPPER";
+  type: string;
   variant: string;
   price: number; // paise
   imageSrc: string;
@@ -130,7 +130,8 @@ function SizeChartModal({ onClose }: { onClose: () => void }) {
 // ---- ProductCard ----
 
 function ProductCard({ item, onAdd }: { item: MerchItem; onAdd: (entry: CartEntry) => void }) {
-  const [size, setSize] = useState(item.sizes[1] ?? item.sizes[0]);
+  const hasSizes = Array.isArray(item.sizes) && item.sizes.length > 0;
+  const [size, setSize] = useState(hasSizes ? (item.sizes[1] ?? item.sizes[0] ?? "") : "");
 
   return (
     <div className={s.card}>
@@ -141,23 +142,25 @@ function ProductCard({ item, onAdd }: { item: MerchItem; onAdd: (entry: CartEntr
       <div className={s.cardBody}>
         <div className={s.cardName}>{item.name}</div>
         <div className={s.cardPrice}>{rupees(item.price)}</div>
-        <div className={s.sizeRow}>
-          <span className={s.sizeLabel}>Size:</span>
-          <select
-            className={s.sizeSelect}
-            value={size}
-            onChange={(e) => setSize(e.target.value)}
-            aria-label={`Size for ${item.name}`}
-          >
-            {item.sizes.map((sz) => (
-              <option key={sz} value={sz}>{sz}</option>
-            ))}
-          </select>
-        </div>
+        {hasSizes && (
+          <div className={s.sizeRow}>
+            <span className={s.sizeLabel}>Size:</span>
+            <select
+              className={s.sizeSelect}
+              value={size}
+              onChange={(e) => setSize(e.target.value)}
+              aria-label={`Size for ${item.name}`}
+            >
+              {item.sizes.map((sz) => (
+                <option key={sz} value={sz}>{sz}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <button
           type="button"
           className={s.addBtn}
-          onClick={() => onAdd({ item, size, quantity: 1 })}
+          onClick={() => onAdd({ item, size: hasSizes ? size : "Free Size", quantity: 1 })}
         >
           Add to Cart
         </button>
@@ -185,7 +188,7 @@ function CheckoutModal({
   const [form, setForm] = useState({
     studentClass: "",
     schoolName: "",
-    contactNo: "",
+    contactNo: me.phone ?? "",
     nameToPrint: "",
     isCoordinator: false,
     paymentNote: "",
@@ -206,6 +209,10 @@ function CheckoutModal({
     if (!form.studentClass.trim()) return setError("Please choose your class.");
     if (!form.schoolName.trim()) return setError("Please enter your school name.");
     if (!form.contactNo.trim()) return setError("Please enter your contact number.");
+    const cleanPhone = form.contactNo.replace(/\D/g, "");
+    if (!/^(91)?[6-9]\d{9}$/.test(cleanPhone)) {
+      return setError("Please enter a valid 10-digit Indian mobile number (e.g. 9876543210).");
+    }
     if (!form.nameToPrint.trim()) return setError("Please enter the name to be printed on merch.");
     if (form.nameToPrint.trim().length > 10) return setError("Name to print should be 10 characters or less.");
     setStep("payment");
@@ -263,6 +270,15 @@ function CheckoutModal({
         {step === "form" && (
           <>
             <h2 className={s.checkoutTitle}>Your Details</h2>
+            {!me.profileComplete && (
+              <div className={s.error} style={{ marginBottom: "1rem" }}>
+                Your student profile is incomplete. Please{" "}
+                <Link href="/dashboard" style={{ color: "#9fd4ff", textDecoration: "underline" }}>
+                  complete your profile on the dashboard
+                </Link>{" "}
+                before placing your order.
+              </div>
+            )}
             <form onSubmit={handleFormNext} noValidate>
               <div className={s.formField}>
                 {/* The order is under the account; change the name in Settings. */}
@@ -364,7 +380,7 @@ function CheckoutModal({
                 <p className={s.qrUpiId}>{qr.upiId}</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/merch-upi-qrs/${qr.storagePath}`}
+                  src={`${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "")}/storage/v1/object/public/merch-upi-qrs/${qr.storagePath}`}
                   alt="UPI QR Code"
                   className={s.qrImg}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
@@ -470,8 +486,8 @@ export default function MerchPage() {
   const cartTotal = cart.reduce((sum, e) => sum + e.item.price * e.quantity, 0);
 
   const tshirts = items.filter((i) => i.type === "TSHIRT");
-  const zippers = items.filter((i) => i.type === "ZIPPER");
-  const others = items.filter((i) => i.type !== "TSHIRT" && i.type !== "ZIPPER");
+  const zippers = items.filter((i) => i.type === "ZIPPER" || i.type === "HOODIE");
+  const others = items.filter((i) => i.type !== "TSHIRT" && i.type !== "ZIPPER" && i.type !== "HOODIE");
 
   return (
     <div className={s.page}>

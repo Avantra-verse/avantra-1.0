@@ -212,6 +212,15 @@ export function MerchAdmin() {
     orders.reload();
   }
 
+  // Update order status (SHIPPED / DELIVERED / CANCELLED)
+  async function updateOrderStatus(order: AdminMerchOrder, status: string) {
+    await act.run(
+      () => api(`/admin/merch/orders/${order.id}/status`, { status }, "PATCH"),
+      () => `Order ${order.trackingId} updated to ${status}.`
+    );
+    orders.reload();
+  }
+
   // Set active QR
   async function setActiveQr(qrId: string, label: string) {
     await act.run(
@@ -829,7 +838,7 @@ export function MerchAdmin() {
                         </span>
                       </td>
                       <td data-label="Actions">
-                        {o.status === "PENDING" ? (
+                        {o.status === "PENDING" && (
                           <button
                             type="button"
                             className={t.btn}
@@ -839,10 +848,33 @@ export function MerchAdmin() {
                           >
                             Payment Verified
                           </button>
-                        ) : (
-                          <span className={t.mute} style={{ fontSize: "0.8rem" }}>
-                            Verified on {o.verifiedAt ? new Date(o.verifiedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
-                          </span>
+                        )}
+                        {o.status === "PAID" && (
+                          <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                            <button
+                              type="button"
+                              className={t.ghost}
+                              disabled={act.busy}
+                              onClick={() => updateOrderStatus(o, "SHIPPED")}
+                              style={{ fontSize: "0.78rem", padding: "0.3rem 0.6rem" }}
+                            >
+                              Mark Shipped
+                            </button>
+                          </div>
+                        )}
+                        {o.status === "SHIPPED" && (
+                          <button
+                            type="button"
+                            className={t.ghost}
+                            disabled={act.busy}
+                            onClick={() => updateOrderStatus(o, "DELIVERED")}
+                            style={{ fontSize: "0.78rem", padding: "0.3rem 0.6rem" }}
+                          >
+                            Mark Delivered
+                          </button>
+                        )}
+                        {o.status === "DELIVERED" && (
+                          <span className={t.mute} style={{ fontSize: "0.8rem" }}>Completed</span>
                         )}
                       </td>
                     </tr>

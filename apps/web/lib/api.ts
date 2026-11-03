@@ -244,6 +244,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "GET /merch/orders/:trackingId": ({ trackingId }) => rpc("merch_order_by_tracking", { p_tracking_id: trackingId }),
   "GET /admin/merch/orders": () => rpc("admin_merch_orders"),
   "POST /admin/merch/orders/:id/verify": ({ id }) => rpc("admin_merch_verify_payment", { p_order_id: id }),
+  "PATCH /admin/merch/orders/:id/status": ({ id, status }) => rpc("admin_merch_update_order_status", { p_order_id: id, p_status: status }),
   "GET /admin/merch/items": () => rpc("admin_merch_items"),
   "POST /admin/merch/items": ({ name, type, variant, price, imageSrc, sizes, available }) =>
     rpc("admin_merch_create_item", {
