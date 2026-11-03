@@ -5,18 +5,23 @@ import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { api, apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
+import { api, apiReady, getMe, LOGIN_HREF, REGISTER_HREF, type Me } from "@/lib/api";
 
-// Log in only appears once accounts are live; until then it is one more "Opening soon".
-const LINKS = [
+export function getInitials(name?: string | null): string {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "U";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+const MAIN_LINKS = [
   { href: "/events", label: "Events" },
   { href: "/merch", label: "Merch" },
   { href: "/about", label: "About" },
   { href: "/ambassador", label: "Ambassadors" },
   { href: "/contact", label: "Contact" },
-  { href: LOGIN_HREF, label: "Log in" },
-  { href: REGISTER_HREF, label: "Registration" },
-].filter((l) => apiReady || l.href !== LOGIN_HREF);
+];
 
 // Registration is the one call to action in every header.
 export const REGISTER_PILL =
@@ -24,6 +29,12 @@ export const REGISTER_PILL =
 
 export default function Nav() {
   const pathname = usePathname();
+  const [me, setMe] = useState<Me | null>(null);
+
+  useEffect(() => {
+    if (!apiReady) return;
+    getMe().then(setMe).catch(() => setMe(null));
+  }, [pathname]);
 
   if (pathname === "/" || pathname === "/contact") return null;
   if (pathname.startsWith("/dashboard")) return <AppNav links={DASH_LINKS} badge="STUDENT" loginHref={LOGIN_HREF} />;
@@ -37,25 +48,65 @@ export default function Nav() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          {LINKS.map((link) => (
+          {MAIN_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               aria-current={pathname === link.href ? "page" : undefined}
               className={
-                link.href === REGISTER_HREF
-                  ? REGISTER_PILL
-                  : pathname === link.href
-                    ? "text-starlight"
-                    : "text-secondary transition-colors hover:text-starlight"
+                pathname === link.href
+                  ? "text-starlight"
+                  : "text-secondary transition-colors hover:text-starlight"
               }
             >
               {link.label}
             </Link>
           ))}
+
+          {me ? (
+            <Link
+              href="/dashboard"
+              title={`Logged in as ${me.name} — Go to Dashboard`}
+              aria-label={`Dashboard (${me.name})`}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-sky bg-ember text-xs font-bold tracking-wider text-white shadow-[0_0_12px_rgba(159,212,255,0.4)] transition-transform hover:scale-105 active:scale-95"
+            >
+              {getInitials(me.name)}
+            </Link>
+          ) : (
+            <>
+              {apiReady && (
+                <Link
+                  href={LOGIN_HREF}
+                  aria-current={pathname === LOGIN_HREF ? "page" : undefined}
+                  className={
+                    pathname === LOGIN_HREF
+                      ? "text-starlight"
+                      : "text-secondary transition-colors hover:text-starlight"
+                  }
+                >
+                  Log in
+                </Link>
+              )}
+              <Link href={REGISTER_HREF} className={REGISTER_PILL}>
+                Registration
+              </Link>
+            </>
+          )}
         </nav>
 
-        <MobileMenu className="md:hidden" />
+        <div className="flex items-center gap-3 md:hidden">
+          {me && (
+            <Link
+              href="/dashboard"
+              title={`Logged in as ${me.name} — Go to Dashboard`}
+              aria-label={`Dashboard (${me.name})`}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-sky bg-ember text-xs font-bold tracking-wider text-white shadow-[0_0_10px_rgba(159,212,255,0.4)]"
+            >
+              {getInitials(me.name)}
+            </Link>
+          )}
+          <MobileMenu me={me} />
+        </div>
       </div>
     </header>
   );
@@ -275,10 +326,29 @@ export function AppNav({ links, badge, loginHref, portal }: { links: DashLink[];
 
 // Hamburger + full-screen link list. Shared by every header (this one, the
 // home page's and the about/contact room) so phones get one consistent menu.
-export function MobileMenu({ className = "" }: { className?: string }) {
+export function MobileMenu({ className = "", me: initialMe }: { className?: string; me?: Me | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
+  const [me, setMe] = useState<Me | null>(initialMe ?? null);
+
+  useEffect(() => {
+    if (initialMe !== undefined) {
+      setMe(initialMe);
+    } else if (apiReady) {
+      getMe().then(setMe).catch(() => setMe(null));
+    }
+  }, [initialMe, pathname]);
+
+  const links = [
+    ...MAIN_LINKS,
+    ...(me
+      ? [{ href: "/dashboard", label: `Dashboard (${me.name})` }]
+      : [
+          ...(apiReady ? [{ href: LOGIN_HREF, label: "Log in" }] : []),
+          { href: REGISTER_HREF, label: "Registration" },
+        ]),
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -325,7 +395,7 @@ export function MobileMenu({ className = "" }: { className?: string }) {
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             </button>
-            {LINKS.map((link, i) => (
+            {links.map((link, i) => (
               <motion.div
                 key={link.href}
                 initial={reduce ? false : { opacity: 0, y: 12 }}

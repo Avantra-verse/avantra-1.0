@@ -173,29 +173,64 @@ function ProductCard({ item, onAdd }: { item: MerchItem; onAdd: (entry: CartEntr
 
 type CheckoutStep = "form" | "payment" | "success";
 
+const GRADE_OPTIONS = [
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
+  "Class 11",
+  "Class 12",
+  "Other",
+];
+
+function initialClass(grade?: number): string {
+  if (!grade) return "";
+  const match = `Class ${grade}`;
+  return GRADE_OPTIONS.includes(match) ? match : "Other";
+}
+
+function initialNameToPrint(name?: string): string {
+  if (!name) return "";
+  const first = name.trim().split(/\s+/)[0] || "";
+  return first.slice(0, 10).toUpperCase();
+}
+
 function CheckoutModal({
   cart,
   me,
+  student,
   qr,
   onClose,
 }: {
   cart: CartEntry[];
   me: Me;
+  student?: { schoolName?: string; grade?: number } | null;
   qr: ActiveQr | null;
   onClose: () => void;
 }) {
   const [step, setStep] = useState<CheckoutStep>("form");
   const [form, setForm] = useState({
-    studentClass: "",
-    schoolName: "",
+    studentClass: initialClass(student?.grade),
+    schoolName: student?.schoolName ?? "",
     contactNo: me.phone ?? "",
-    nameToPrint: "",
+    nameToPrint: initialNameToPrint(me.name),
     isCoordinator: false,
     paymentNote: "",
   });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<OrderResult | null>(null);
+
+  useEffect(() => {
+    setForm((f) => ({
+      ...f,
+      studentClass: f.studentClass || initialClass(student?.grade),
+      schoolName: f.schoolName || student?.schoolName || "",
+      contactNo: f.contactNo || me.phone || "",
+      nameToPrint: f.nameToPrint || initialNameToPrint(me.name),
+    }));
+  }, [student, me]);
 
   const totalPaise = cart.reduce((sum, e) => sum + e.item.price * e.quantity, 0);
 
@@ -245,17 +280,6 @@ function CheckoutModal({
       setBusy(false);
     }
   }
-
-  const GRADE_OPTIONS = [
-    "Class 6",
-    "Class 7",
-    "Class 8",
-    "Class 9",
-    "Class 10",
-    "Class 11",
-    "Class 12",
-    "Other",
-  ];
 
   return (
     <div className={s.modal} onClick={step === "success" ? onClose : undefined}>
@@ -452,6 +476,7 @@ function CheckoutModal({
 
 export default function MerchPage() {
   const [me, setMe] = useState<Me | null | "loading">("loading");
+  const [student, setStudent] = useState<{ schoolName?: string; grade?: number } | null>(null);
   const [items, setItems] = useState<MerchItem[]>([]);
   const [activeQr, setActiveQr] = useState<ActiveQr | null>(null);
   const [cart, setCart] = useState<CartEntry[]>([]);
@@ -461,7 +486,16 @@ export default function MerchPage() {
 
   useEffect(() => {
     if (!apiReady) { setMe(null); return; }
-    getMe().then(setMe).catch(() => setMe(null));
+    getMe()
+      .then((m) => {
+        setMe(m);
+        if (m) {
+          api<{ student: { schoolName?: string; grade?: number } | null }>("/profile")
+            .then((res) => setStudent(res.student))
+            .catch(() => null);
+        }
+      })
+      .catch(() => setMe(null));
     api<MerchItem[]>("/merch/items").then(setItems).catch((e) => setLoadError(e.message));
     api<ActiveQr | null>("/merch/active-qr").then(setActiveQr).catch(() => null);
   }, []);
@@ -656,6 +690,7 @@ export default function MerchPage() {
         <CheckoutModal
           cart={cart}
           me={me}
+          student={student}
           qr={activeQr}
           onClose={() => {
             setShowCheckout(false);

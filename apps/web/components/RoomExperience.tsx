@@ -5,9 +5,9 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { siteConfig } from "@/content/site";
 import { ContactRequest } from "@avantra/shared";
-import { api, ApiError, apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
+import { api, ApiError, apiReady, getMe, LOGIN_HREF, REGISTER_HREF, type Me } from "@/lib/api";
 import styles from "./RoomExperience.module.css";
-import { MobileMenu, REGISTER_PILL } from "@/components/Nav";
+import { getInitials, MobileMenu, REGISTER_PILL } from "@/components/Nav";
 
 interface RoomExperienceProps {
   initialScrolledToEnd?: boolean;
@@ -15,6 +15,12 @@ interface RoomExperienceProps {
 
 export default function RoomExperience({ initialScrolledToEnd = false }: RoomExperienceProps) {
   const [mounted, setMounted] = useState(false);
+  const [me, setMe] = useState<Me | null>(null);
+
+  useEffect(() => {
+    if (!apiReady) return;
+    getMe().then(setMe).catch(() => null);
+  }, []);
 
   const viewRef = useRef<HTMLDivElement>(null);
   const camRef = useRef<HTMLDivElement>(null);
@@ -161,12 +167,39 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
           <button ref={nCRef} id="nC" onClick={() => go(getMax())}>
             Contact
           </button>
-          {apiReady && <Link href={LOGIN_HREF}>Log in</Link>}
-          <Link href={REGISTER_HREF} className={REGISTER_PILL}>
-            Registration
-          </Link>
+          {me ? (
+            <Link
+              href="/dashboard"
+              title={`Logged in as ${me.name} — Go to Dashboard`}
+              aria-label={`Dashboard (${me.name})`}
+              style={{
+                display: "inline-flex",
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "var(--ember, #b3121e)",
+                border: "2px solid var(--sky, #9fd4ff)",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                boxShadow: "0 0 12px rgba(159,212,255,0.4)",
+                textDecoration: "none",
+              }}
+            >
+              {getInitials(me.name)}
+            </Link>
+          ) : (
+            <>
+              {apiReady && <Link href={LOGIN_HREF}>Log in</Link>}
+              <Link href={REGISTER_HREF} className={REGISTER_PILL}>
+                Registration
+              </Link>
+            </>
+          )}
         </nav>
-        <MobileMenu className="min-[801px]:hidden" />
+        <MobileMenu me={me} className="min-[801px]:hidden" />
       </header>
 
       <div id="bar" className={styles.bar} aria-label="Room faces">
