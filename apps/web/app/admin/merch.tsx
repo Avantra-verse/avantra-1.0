@@ -465,6 +465,7 @@ export function MerchAdmin() {
                       border: "1px solid rgba(255,255,255,0.15)",
                       borderRadius: 8,
                       color: "#f4ead9",
+                      colorScheme: "dark",
                     }}
                   >
                     <option value="TSHIRT">T-Shirt</option>

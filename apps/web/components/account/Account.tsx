@@ -86,6 +86,7 @@ export function SelectField({ name, label, error, children, ...select }: React.S
         id={name}
         name={name}
         {...select}
+        style={{ colorScheme: "dark", ...select.style }}
         className={`${styles.input} ${error ? styles.inputError : ""}`}
         aria-invalid={!!error}
         aria-describedby={error ? `${name}-error` : undefined}

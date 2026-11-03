@@ -149,6 +149,12 @@
   cursor: pointer;
   outline: none;
   transition: border-color 0.15s;
+  color-scheme: dark;
+}
+
+.sizeSelect option {
+  background-color: #000000;
+  color: #ffffff;
 }
 
 .sizeSelect:focus {
@@ -364,6 +370,15 @@
   transition: border-color 0.15s;
   width: 100%;
   box-sizing: border-box;
+}
+
+.formField select {
+  color-scheme: dark;
+}
+
+.formField select option {
+  background-color: #000000;
+  color: #ffffff;
 }
 
 .formField input:focus,

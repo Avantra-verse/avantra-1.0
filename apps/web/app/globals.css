@@ -30,6 +30,17 @@ body {
   position: relative;
 }
 
+/* Site-wide dropdown styling: dark popup, crisp white text */
+select {
+  color-scheme: dark;
+}
+
+select option,
+select optgroup {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
 body:has(#room-experience) {
   background-color: #171210 !important;
   overflow-x: hidden !important;
