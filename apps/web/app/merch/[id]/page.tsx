@@ -279,6 +279,8 @@ export default function ProductDetailPage() {
                 src={activeImg || item.imageSrc}
                 alt={item.name}
                 className={s.detailImg}
+                loading="eager"
+                decoding="async"
               />
             </div>
 
@@ -305,6 +307,8 @@ export default function ProductDetailPage() {
                         src={url}
                         alt={`${item.name} photo ${i + 1}`}
                         style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
                       />
                     </button>

@@ -111,6 +111,7 @@
   object-fit: contain;
   padding: 1rem;
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity, transform;
 }
 
 .card:hover .cardImg {
@@ -889,6 +890,31 @@
 
 .backLink:hover {
   color: #9fd4ff;
+}
+
+/* ---- slideshow dot indicators ---- */
+
+.slideDots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 3;
+}
+
+.slideDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.slideDotActive {
+  background: #fff;
+  transform: scale(1.4);
 }
 
 /* ---- product detail gallery ---- */
