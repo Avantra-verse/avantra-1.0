@@ -183,6 +183,7 @@ function CheckoutModal({
 }) {
   const [step, setStep] = useState<CheckoutStep>("form");
   const [form, setForm] = useState({
+    fullName: me.name || "",
     studentClass: "",
     schoolName: "",
     contactNo: "",
@@ -203,10 +204,11 @@ function CheckoutModal({
 
   async function handleFormNext(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.studentClass.trim()) return setError("Please enter your class.");
+    if (!form.fullName.trim()) return setError("Please enter your name.");
+    if (!form.studentClass.trim()) return setError("Please choose your class.");
     if (!form.schoolName.trim()) return setError("Please enter your school name.");
     if (!form.contactNo.trim()) return setError("Please enter your contact number.");
-    if (!form.nameToPrint.trim()) return setError("Please enter the name to print on merch.");
+    if (!form.nameToPrint.trim()) return setError("Please enter the name to be printed on merch.");
     if (form.nameToPrint.trim().length > 10) return setError("Name to print should be 10 characters or less.");
     setStep("payment");
   }
@@ -239,7 +241,18 @@ function CheckoutModal({
     }
   }
 
-  const GRADE_OPTIONS = Array.from({ length: 12 }, (_, i) => String(i + 1));
+  const GRADE_OPTIONS = [
+    "Class 6",
+    "Class 7",
+    "Class 8",
+    "Class 9",
+    "Class 10",
+    "Class 11",
+    "Class 12",
+    "College / Undergraduate",
+    "Teacher / Mentor",
+    "Other",
+  ];
 
   return (
     <div className={s.modal} onClick={step === "success" ? onClose : undefined}>
@@ -254,17 +267,24 @@ function CheckoutModal({
         {step === "form" && (
           <>
             <h2 className={s.checkoutTitle}>Your Details</h2>
-            <div className={s.formField}>
-              <label>Name (from account)</label>
-              <input type="text" value={me.name} disabled style={{ opacity: 0.6 }} />
-            </div>
             <form onSubmit={handleFormNext} noValidate>
+              <div className={s.formField}>
+                <label>Name *</label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={form.fullName}
+                  onChange={set}
+                  placeholder="Your full name"
+                  required
+                />
+              </div>
               <div className={s.formField}>
                 <label>Class *</label>
                 <select name="studentClass" value={form.studentClass} onChange={set} required>
-                  <option value="">Choose…</option>
+                  <option value="">Choose</option>
                   {GRADE_OPTIONS.map((g) => (
-                    <option key={g} value={g}>Class {g}</option>
+                    <option key={g} value={g}>{g}</option>
                   ))}
                 </select>
               </div>
@@ -291,7 +311,10 @@ function CheckoutModal({
                 />
               </div>
               <div className={s.formField}>
-                <label>Name to be Printed on Merch * <span className={s.mute}>(max 10 chars)</span></label>
+                <label>Name to be Printed on Merch *</label>
+                <p className={s.mute} style={{ fontSize: "0.78rem", margin: "2px 0 6px", lineHeight: 1.4 }}>
+                  Note: If the number of characters in your name exceeds 10, it is preferable to use a shorter nickname so that it appears neatly on the merchandise.
+                </p>
                 <input
                   type="text"
                   name="nameToPrint"

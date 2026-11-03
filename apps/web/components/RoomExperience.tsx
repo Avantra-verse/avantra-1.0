@@ -174,8 +174,8 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
           <button ref={nARef} id="nA" className={styles.on} onClick={() => go(0)}>
             About
           </button>
-          <Link href="/venue">Venue</Link>
-          <Link href="/organizers">Committee</Link>
+          <Link href="/about#venue">Venue</Link>
+          <Link href="/about#committee">Committee</Link>
           <Link href="/ambassador">Ambassadors</Link>
           <button ref={nCRef} id="nC" onClick={() => go(getMax())}>
             Contact
@@ -402,14 +402,21 @@ function ContactForm() {
   if (state === "sent")
     return (
       <div className={styles.formCard} role="status">
-        <p className={styles.formNote}>Thanks, your message is with the team. We&apos;ll reply to your email.</p>
-        <button type="button" className={styles.sendBtn} onClick={() => setState("idle")}>
-          Send another
-        </button>
+        <div style={{ textAlign: "center", padding: "12px 0" }}>
+          <div style={{ fontSize: "2rem", marginBottom: "8px" }}>✉️</div>
+          <span className={styles.formEyebrow}>Transmission Received</span>
+          <h3 className={styles.formTitle} style={{ marginTop: "4px", marginBottom: "8px" }}>Message Sent</h3>
+          <p className={styles.formNote} style={{ marginBottom: "16px" }}>
+            Thanks, your message is with the team. We&apos;ll reply to your email shortly.
+          </p>
+          <button type="button" className={styles.sendBtn} onClick={() => setState("idle")}>
+            Send another message
+          </button>
+        </div>
       </div>
     );
 
-  const field = (name: "name" | "school" | "email", label: string, type = "text", autoComplete?: string) => (
+  const field = (name: "name" | "school" | "email", label: string, type = "text", autoComplete?: string, placeholder?: string) => (
     <div className={styles.field}>
       <label htmlFor={`contact-${name}`}>{label}</label>
       <input
@@ -417,6 +424,7 @@ function ContactForm() {
         name={name}
         type={type}
         autoComplete={autoComplete}
+        placeholder={placeholder}
         value={form[name]}
         onChange={set}
         aria-invalid={!!errors[name]}
@@ -428,15 +436,20 @@ function ContactForm() {
 
   return (
     <form className={styles.formCard} onSubmit={send} noValidate>
-      {field("name", "Your name", "text", "name")}
-      {field("school", "School (optional)", "text", "organization")}
-      {field("email", "Email", "email", "email")}
+      <div>
+        <span className={styles.formEyebrow}>Direct Transmission</span>
+        <h3 className={styles.formTitle}>Write to the Team</h3>
+      </div>
+      {field("name", "Your Name", "text", "name", "Enter your full name")}
+      {field("school", "School (Optional)", "text", "organization", "Your school or college name")}
+      {field("email", "Email Address", "email", "email", "name@example.com")}
       <div className={styles.field}>
         <label htmlFor="contact-message">Message</label>
         <textarea
           id="contact-message"
           name="message"
           rows={3}
+          placeholder="Ask us anything about registrations, exhibitions, or events..."
           value={form.message}
           onChange={set}
           aria-invalid={!!errors.message}
@@ -449,7 +462,7 @@ function ContactForm() {
       {errors.form && <p className={styles.fieldError} role="alert">{errors.form}</p>}
       {!apiReady && <p className={styles.formNote}>Messages open soon.</p>}
       <button type="submit" className={styles.sendBtn} disabled={state === "sending" || !apiReady}>
-        {state === "sending" ? "Sending…" : "Send message"}
+        {state === "sending" ? "Sending…" : "Send message →"}
       </button>
     </form>
   );

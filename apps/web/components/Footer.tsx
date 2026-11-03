@@ -7,9 +7,9 @@ import { APP_PAGES } from "./Nav";
 import { siteConfig } from "@/content/site";
 
 const LINKS = [
+  { href: "/events", label: "Events" },
+  { href: "/merch", label: "Merch" },
   { href: "/about", label: "About" },
-  { href: "/venue", label: "Venue" },
-  { href: "/organizers", label: "Committee" },
   { href: "/ambassador", label: "Ambassadors" },
   { href: "/contact", label: "Contact" },
   { href: REGISTER_HREF, label: "Registration" },
@@ -17,7 +17,7 @@ const LINKS = [
 
 export default function Footer() {
   const pathname = usePathname();
-  if (pathname === "/" || pathname === "/about" || pathname === "/contact") return null; // these pages have their own footer
+  if (pathname === "/" || pathname === "/contact") return null; // these pages have their own footer
   if (pathname.startsWith("/dashboard") || APP_PAGES.includes(pathname)) return null; // the dashboard is an app screen, not a marketing page
   return (
     <footer className="relative z-30 border-t border-starlight/15 bg-void px-6 pt-14 pb-10">

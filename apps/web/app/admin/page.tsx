@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppNav, ADMIN_LINKS } from "@/components/Nav";
 import QRCode from "qrcode";
-import { CreateAdminRequest, CreateStaffRequest, WalkInRequest } from "@avantra/shared";
+import { CreateAdminRequest, CreateStaffRequest, WalkInRequest, EXHIBITION_TOPICS } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, type Me } from "@/lib/api";
 import { Field, FormError, OpensSoon, SelectField, styles as account } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
@@ -135,7 +135,12 @@ function Overview({ name }: { name: string }) {
   const days = Math.max(0, Math.ceil((new Date(siteConfig.eventDateISO).getTime() - Date.now()) / 86_400_000));
   const sizes = s.exhibition.teamSizes;
   const teams = sizes["1"] + sizes["2"] + sizes["3"];
-  const topTheme = Math.max(1, ...s.exhibition.themes.map((x) => x.students));
+  const topicCounts = new Map(s.exhibition.themes.map((x) => [x.topic, x.students]));
+  const allThemes = EXHIBITION_TOPICS.map((topic) => ({
+    topic,
+    students: topicCounts.get(topic) ?? 0,
+  }));
+  const topTheme = Math.max(1, ...allThemes.map((x) => x.students));
   const topSchool = Math.max(1, ...s.topSchools.map((x) => x.students));
   return (
     <>
@@ -207,19 +212,15 @@ function Overview({ name }: { name: string }) {
           </div>
           <div>
             <h3 className={o.groupTitle}>Themes</h3>
-            {s.exhibition.themes.length === 0 ? (
-              <p className={t.mute}>No themes picked yet.</p>
-            ) : (
-              <ul className={o.rows}>
-                {s.exhibition.themes.map((x) => (
-                  <li key={x.topic} className={o.row}>
-                    <span className={o.rowName} title={x.topic}>{x.topic}</span>
-                    <span className={o.rowNum}>{x.students}</span>
-                    <Bar value={x.students} max={topTheme} />
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className={o.rows}>
+              {allThemes.map((x) => (
+                <li key={x.topic} className={o.row}>
+                  <span className={o.rowName} title={x.topic}>{x.topic}</span>
+                  <span className={o.rowNum}>{x.students}</span>
+                  <Bar value={x.students} max={topTheme} />
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>

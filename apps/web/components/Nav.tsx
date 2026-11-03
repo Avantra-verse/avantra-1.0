@@ -12,8 +12,6 @@ const LINKS = [
   { href: "/events", label: "Events" },
   { href: "/merch", label: "Merch" },
   { href: "/about", label: "About" },
-  { href: "/venue", label: "Venue" },
-  { href: "/organizers", label: "Committee" },
   { href: "/ambassador", label: "Ambassadors" },
   { href: "/contact", label: "Contact" },
   { href: LOGIN_HREF, label: "Log in" },
@@ -27,7 +25,7 @@ export const REGISTER_PILL =
 export default function Nav() {
   const pathname = usePathname();
 
-  if (pathname === "/" || pathname === "/about" || pathname === "/contact") return null;
+  if (pathname === "/" || pathname === "/contact") return null;
   if (pathname.startsWith("/dashboard")) return <AppNav links={DASH_LINKS} badge="STUDENT" loginHref={LOGIN_HREF} />;
   if (APP_PAGES.includes(pathname)) return null; // they render <AppNav> themselves, with tabs for the signed-in role
 
