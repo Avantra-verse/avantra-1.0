@@ -27,7 +27,6 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
   const dot2Ref = useRef<HTMLButtonElement>(null);
 
   const capRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)];
-  const nARef = useRef<HTMLButtonElement>(null);
   const nCRef = useRef<HTMLButtonElement>(null);
 
   const PRef = useRef<number>(700);
@@ -142,7 +141,6 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
 
       capRefs.forEach((r, i) => r.current?.classList.toggle(styles.on, face === i && f < 0.4));
 
-      if (nARef.current) nARef.current.classList.toggle(styles.on, cur < 0.68);
       if (nCRef.current) nCRef.current.classList.toggle(styles.on, cur >= 0.68);
 
       animId = requestAnimationFrame(frame);
@@ -171,11 +169,9 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
         </Link>
         <em>19–20 December 2026</em>
         <nav className={styles.nav}>
-          <button ref={nARef} id="nA" className={styles.on} onClick={() => go(0)}>
-            About
-          </button>
-          <Link href="/about#venue">Venue</Link>
-          <Link href="/about#committee">Committee</Link>
+          <Link href="/events">Events</Link>
+          <Link href="/merch">Merch</Link>
+          <Link href="/about">About</Link>
           <Link href="/ambassador">Ambassadors</Link>
           <button ref={nCRef} id="nC" onClick={() => go(getMax())}>
             Contact

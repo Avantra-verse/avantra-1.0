@@ -49,9 +49,8 @@ export default function Multiverse() {
         <span className="when">19–20 December 2026</span>
         <nav aria-label="Main">
           <Link href="/events" data-hover>Events</Link>
+          <Link href="/merch" data-hover>Merch</Link>
           <Link href="/about" data-hover>About</Link>
-          <Link href="/about#venue" data-hover>Venue</Link>
-          <Link href="/about#committee" data-hover>Committee</Link>
           <Link href="/ambassador" data-hover>Ambassadors</Link>
           <Link href="/contact" data-hover>Contact</Link>
           {apiReady && <Link href={LOGIN_HREF} data-hover>Log in</Link>}
@@ -243,9 +242,9 @@ export default function Multiverse() {
         </div>
         <div className="foot">
           <nav aria-label="Footer">
+            <Link href="/events">Events</Link>
+            <Link href="/merch">Merch</Link>
             <Link href="/about">About</Link>
-            <Link href="/about#venue">Venue</Link>
-            <Link href="/about#committee">Committee</Link>
             <Link href="/ambassador">Ambassadors</Link>
             <Link href="/contact">Contact</Link>
             {apiReady && <Link href={LOGIN_HREF}>Log in</Link>}
