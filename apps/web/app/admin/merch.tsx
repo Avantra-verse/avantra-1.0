@@ -261,7 +261,7 @@ export function MerchAdmin() {
 
   async function handleQrSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const readyItems = [];
+    const readyItems: { file: string; filename: string; label: string; upiId: string }[] = [];
     for (let i = 0; i < qrSlots.length; i++) {
       const slot = qrSlots[i];
       if (!slot.file) continue;
