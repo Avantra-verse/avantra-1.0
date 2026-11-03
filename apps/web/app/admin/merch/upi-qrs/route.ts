@@ -34,7 +34,7 @@ export function POST(req: Request) {
       // ignore bucket creation error if already exists
     }
 
-    const results = [];
+    const results: { id?: string; storagePath: string; label: string; upiId: string }[] = [];
 
     for (const item of items) {
       if (!item.label?.trim()) throw new AdminError(400, "Label is required for each QR");

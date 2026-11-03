@@ -19,7 +19,6 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
   const viewRef = useRef<HTMLDivElement>(null);
   const camRef = useRef<HTMLDivElement>(null);
   const roomRef = useRef<HTMLDivElement>(null);
-  const ctRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const dot0Ref = useRef<HTMLButtonElement>(null);
@@ -44,13 +43,13 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
     // camera sits at the room centre and turns rightwards (positive angles): [progress, yaw]
     // Face 1 (About us): 0deg
     // Face 2 (Step through video cards on the right): +90deg
-    // Face 3 (Questions? Step in arched door to the right of Face 2): +180deg
+    // Face 3 (Contact us wall on the back wall): +180deg
     const K: [number, number][] = [
       [0, 0],
-      [0.12, 0],
-      [0.32, 90],
-      [0.48, 90],
-      [0.68, 180],
+      [0.15, 0],
+      [0.35, 90],
+      [0.55, 90],
+      [0.75, 180],
       [1, 180],
     ];
 
@@ -119,27 +118,13 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
         roomRef.current.style.transform = `translateZ(${PRef.current}px) rotateY(${yaw(cur)}deg)`;
       }
 
-      // Transition from Face 3 (arched door) to Contact us card starts at cur >= 0.68
-      const f = Math.min(1, Math.max(0, (cur - 0.68) / 0.17));
-
-      if (camRef.current) {
-        camRef.current.style.transform = `scale(${1 + f * 0.5})`;
-      }
-
-      if (ctRef.current) {
-        ctRef.current.style.opacity = `${f}`;
-        ctRef.current.style.transform = `scale(${0.9 + 0.1 * f})`;
-        ctRef.current.classList.toggle(styles.live, f > 0.4);
-        ctRef.current.inert = f < 0.05; // keep keyboard focus out of the form while it is invisible
-      }
-
-      const face = cur < 0.22 ? 0 : cur < 0.58 ? 1 : 2;
+      const face = cur < 0.28 ? 0 : cur < 0.68 ? 1 : 2;
 
       if (dot0Ref.current) dot0Ref.current.classList.toggle(styles.on, face === 0);
       if (dot1Ref.current) dot1Ref.current.classList.toggle(styles.on, face === 1);
       if (dot2Ref.current) dot2Ref.current.classList.toggle(styles.on, face === 2);
 
-      capRefs.forEach((r, i) => r.current?.classList.toggle(styles.on, face === i && f < 0.4));
+      capRefs.forEach((r, i) => r.current?.classList.toggle(styles.on, face === i));
 
       if (nCRef.current) nCRef.current.classList.toggle(styles.on, cur >= 0.68);
 
@@ -212,9 +197,9 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
         </div>
         <div ref={capRefs[2]} className={styles.cap}>
           <h2>
-            Questions? <span className={styles.ser}>Step in.</span>
+            Write to <span className={styles.ser}>the team</span>
           </h2>
-          <p>Keep scrolling to write to the team.</p>
+          <p>Email: contact@arithi.in · @avantra.verse · SSRVM IEMS Sec-20</p>
         </div>
       </div>
 
@@ -306,16 +291,42 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
               </div>
             </div>
 
-            {/* Face 3: Questions? Step in (Arched door on back wall, right of Face 2) */}
+            {/* Face 3: Contact Us / Write to the team on 3D wall */}
             <div className={`${styles.w} ${styles.f3}`}>
-              <div className={styles.in} style={{ inset: 0 }}>
-                <div className={styles.door}>
-                  <video src="/videos/neon-hex-tunnel.mp4" data-v="neon" autoPlay loop muted playsInline></video>
-                </div>
-                <div className={styles.sign}>
-                  <h2>
-                    Questions? <span className={styles.ser}>Step in.</span>
+              <div className={styles.in}>
+                <div className={styles.contactLeft}>
+                  <h2 className={`${styles.h2} ${styles.hand}`}>
+                    Write to <span className={styles.ser}>the team</span>
                   </h2>
+                  <p className={`${styles.lead} ${styles.hand}`}>
+                    AVANTRA 2026 transmissions.{" "}
+                    <span>
+                      Ask us anything about registrations, exhibitions, rulebooks, or the venue.
+                    </span>
+                  </p>
+
+                  <div className={styles.cards}>
+                    <div className={styles.card}>
+                      <b>Email</b>
+                      <a href="mailto:contact@arithi.in" style={{ color: "var(--ink)", textDecoration: "underline" }}>
+                        contact@arithi.in
+                      </a>
+                    </div>
+                    <div className={styles.card}>
+                      <b>Instagram</b>
+                      <a href={siteConfig.instagram} target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink)", textDecoration: "underline" }}>
+                        @avantra.verse
+                      </a>
+                    </div>
+                    <div className={styles.card}>
+                      <b>Host Venue</b>
+                      SSRVM IEMS Sec-20
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.contactRight}>
+                  <ContactForm />
                 </div>
               </div>
             </div>
@@ -329,26 +340,6 @@ export default function RoomExperience({ initialScrolledToEnd = false }: RoomExp
           </div>
         </div>
       </div>
-
-      <section id="contact" ref={ctRef} className={styles.contact} aria-label="Contact">
-        <video src="/videos/neon-hex-tunnel.mp4" data-v="neon" autoPlay loop muted playsInline></video>
-        <div className={styles.cw}>
-          <div>
-            <h2>
-              Write to <span className={styles.ser}>the team</span>
-            </h2>
-            <p>Registration opens with the line-up. Ask anything before then.</p>
-            <p>
-              Or email <a href="mailto:contact@arithi.in">contact@arithi.in</a>, or message us on Instagram{" "}
-              <a href={siteConfig.instagram} target="_blank" rel="noopener noreferrer">@avantra.verse</a>
-            </p>
-            <button className={styles.bk} id="bk" onClick={() => go(0)}>
-              Back to About
-            </button>
-          </div>
-          <ContactForm />
-        </div>
-      </section>
     </div>
   );
 

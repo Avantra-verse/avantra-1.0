@@ -14,7 +14,7 @@ const CREAM = "#FDFBF2";
 const BLUSH = "#FDE2E4";
 const PEACH = "#FCD5CE";
 
-const file = (path: string) => readFile(join(process.cwd(), path));
+const file = (path: string) => readFile(/*turbopackIgnore: true*/ join(process.cwd(), path));
 const png = async (path: string) => `data:image/png;base64,${(await file(path)).toString("base64")}`;
 const [bold, semibold, avantra] = await Promise.all([
   file("assets/fonts/BricolageGrotesque-800.ttf"),
