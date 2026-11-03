@@ -37,10 +37,7 @@
   line-height: 1.08;
   letter-spacing: -0.03em;
   margin: 0 0 1rem;
-  background: linear-gradient(135deg, #f4ead9 30%, #9fd4ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #f4ead9;
 }
 
 .heroSub {

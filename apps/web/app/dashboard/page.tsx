@@ -200,7 +200,7 @@ function StudentDashboard({ me, s, w, regs }: { me: Me; s: Student; w: WallMe | 
                 <div>
                   <dt>Where</dt>
                   <dd>
-                    {siteConfig.venue.name}, Rourkela · <a className={styles.link} href="/venue">Directions</a>
+                    {siteConfig.venue.name}, Rourkela · <a className={styles.link} href="/about#venue">Directions</a>
                   </dd>
                 </div>
                 <div>

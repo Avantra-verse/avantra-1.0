@@ -1000,7 +1000,7 @@ export default function EventsPage() {
               <Link href={REGISTER_HREF} className={styles.primaryBtn} style={{ marginTop: 0 }}>
                 Register School Team Now
               </Link>
-              <Link href="/venue" className={styles.secondaryBtn}>
+              <Link href="/about#venue" className={styles.secondaryBtn}>
                 View Venue &amp; Dates
               </Link>
             </div>

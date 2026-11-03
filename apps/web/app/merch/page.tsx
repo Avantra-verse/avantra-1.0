@@ -183,7 +183,6 @@ function CheckoutModal({
 }) {
   const [step, setStep] = useState<CheckoutStep>("form");
   const [form, setForm] = useState({
-    fullName: me.name || "",
     studentClass: "",
     schoolName: "",
     contactNo: "",
@@ -204,7 +203,6 @@ function CheckoutModal({
 
   async function handleFormNext(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.fullName.trim()) return setError("Please enter your name.");
     if (!form.studentClass.trim()) return setError("Please choose your class.");
     if (!form.schoolName.trim()) return setError("Please enter your school name.");
     if (!form.contactNo.trim()) return setError("Please enter your contact number.");
@@ -249,8 +247,6 @@ function CheckoutModal({
     "Class 10",
     "Class 11",
     "Class 12",
-    "College / Undergraduate",
-    "Teacher / Mentor",
     "Other",
   ];
 
@@ -269,15 +265,9 @@ function CheckoutModal({
             <h2 className={s.checkoutTitle}>Your Details</h2>
             <form onSubmit={handleFormNext} noValidate>
               <div className={s.formField}>
-                <label>Name *</label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={form.fullName}
-                  onChange={set}
-                  placeholder="Your full name"
-                  required
-                />
+                {/* The order is under the account; change the name in Settings. */}
+                <label>Name (from your account)</label>
+                <input type="text" value={me.name} disabled style={{ opacity: 0.6 }} />
               </div>
               <div className={s.formField}>
                 <label>Class *</label>
