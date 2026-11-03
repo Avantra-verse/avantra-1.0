@@ -179,6 +179,7 @@ export default function MerchPage() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null | "loading">("loading");
   const [items, setItems] = useState<MerchItem[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
   const [cart, setCart] = useState<CartEntry[]>([]);
   const [showChart, setShowChart] = useState(false);
   const [loadError, setLoadError] = useState("");
@@ -194,13 +195,14 @@ export default function MerchPage() {
 
     if (apiReady) {
       getMe().then(setMe).catch(() => setMe(null));
+      api<MerchItem[]>("/merch/items")
+        .then((data) => { setItems(data); setItemsLoading(false); })
+        .catch((e) => { setLoadError(e?.message ?? "Failed to load products"); setItemsLoading(false); });
     } else {
       setMe(null);
+      setItemsLoading(false);
+      setLoadError("Store is not configured yet. Check back soon.");
     }
-
-    api<MerchItem[]>("/merch/items")
-      .then(setItems)
-      .catch((e) => setLoadError(e.message));
 
     return () => window.removeEventListener("avantra-cart-update", onCartUpdate);
   }, []);
@@ -245,39 +247,51 @@ export default function MerchPage() {
 
   return (
     <div className={s.page}>
-      <div className={s.section}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "1rem" }}>
-          <div>
-            <h1 className={s.title}>AVANTRA Merch Store</h1>
-            <p className={s.sub}>
-              Wear the multiverse. Premium official festival merchandise for AVANTRA 2026.
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: "0.8rem", alignItems: "center" }}>
+      {/* Hero */}
+      <div className={s.hero}>
+        <span className={s.heroLabel}>Official Merch — AVANTRA 2026</span>
+        <h1 className={s.heroTitle}>AVANTRA Merch Store</h1>
+        <p className={s.heroSub}>
+          Wear the multiverse. Premium official festival merchandise for AVANTRA 2026.
+        </p>
+        <div style={{ marginTop: "1.4rem", display: "flex", gap: "0.8rem", justifyContent: "center", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className={s.chartBtn}
+            onClick={() => setShowChart(true)}
+          >
+            📏 Size Guide
+          </button>
+          {cartCount > 0 && (
             <button
               type="button"
-              className={s.chartBtn}
-              onClick={() => setShowChart(true)}
+              className={s.cartCheckoutBtn}
+              onClick={goToCheckout}
+              style={{ padding: "0.45rem 1.2rem", fontSize: "0.85rem" }}
             >
-              📏 Size Guide
+              🛒 Cart ({cartCount}) — {rupees(cartTotal)} →
             </button>
-            {cartCount > 0 && (
-              <button
-                type="button"
-                className={s.cartCheckoutBtn}
-                onClick={goToCheckout}
-                style={{ padding: "0.45rem 1rem", fontSize: "0.85rem" }}
-              >
-                Checkout ({cartCount}) →
-              </button>
-            )}
-          </div>
+          )}
         </div>
+      </div>
 
+      <div className={s.section}>
         {loadError && (
           <div className={s.error} style={{ margin: "2rem 0" }}>
             {loadError}
           </div>
+        )}
+
+        {itemsLoading && !loadError && (
+          <p className={s.mute} style={{ textAlign: "center", padding: "3rem 0" }}>
+            Loading merchandise…
+          </p>
+        )}
+
+        {!itemsLoading && !loadError && items.length === 0 && (
+          <p className={s.mute} style={{ textAlign: "center", padding: "3rem 0" }}>
+            Merchandise dropping soon — check back later! 🔥
+          </p>
         )}
 
         {/* T-Shirts */}
