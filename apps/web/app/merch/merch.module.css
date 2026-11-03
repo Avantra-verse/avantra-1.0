@@ -891,3 +891,35 @@
   color: #9fd4ff;
 }
 
+/* ---- product detail gallery ---- */
+
+.thumbStrip {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.thumb {
+  width: 68px;
+  height: 68px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.thumb:hover {
+  border-color: rgba(159, 212, 255, 0.5);
+  transform: scale(1.05);
+}
+
+.thumbActive {
+  border-color: #9fd4ff !important;
+  box-shadow: 0 0 0 2px rgba(159, 212, 255, 0.3);
+}
+

@@ -271,7 +271,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "POST /admin/merch/orders/:id/verify": ({ id }) => rpc("admin_merch_verify_payment", { p_order_id: id }),
   "PATCH /admin/merch/orders/:id/status": ({ id, status }) => rpc("admin_merch_update_order_status", { p_order_id: id, p_status: status }),
   "GET /admin/merch/items": () => rpc("admin_merch_items"),
-  "POST /admin/merch/items": ({ name, type, variant, price, imageSrc, sizes, available }) =>
+  "POST /admin/merch/items": ({ name, type, variant, price, imageSrc, sizes, available, images }) =>
     rpc("admin_merch_create_item", {
       p_name: name,
       p_type: type,
@@ -280,8 +280,9 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
       p_image_src: imageSrc,
       p_sizes: sizes,
       p_available: available,
+      p_images: images ?? [],
     }),
-  "PUT /admin/merch/items/:id": ({ id, name, type, variant, price, imageSrc, sizes, available }) =>
+  "PUT /admin/merch/items/:id": ({ id, name, type, variant, price, imageSrc, sizes, available, images }) =>
     rpc("admin_merch_update_item", {
       p_id: id,
       p_name: name,
@@ -291,6 +292,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
       p_image_src: imageSrc,
       p_sizes: sizes,
       p_available: available,
+      p_images: images ?? null,
     }),
   "PATCH /admin/merch/items/:id/toggle": ({ id, available }) =>
     rpc("admin_merch_toggle_item", { p_id: id, p_available: available }),

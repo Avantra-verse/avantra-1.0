@@ -14,6 +14,7 @@ export type AdminMerchItem = {
   variant: string;
   price: number; // in paise
   imageSrc: string;
+  images: string[];
   available: boolean;
   sizes: string[];
   createdAt: string;
@@ -78,6 +79,7 @@ export function MerchAdmin() {
   const [pVariant, setPVariant] = useState("STANDARD");
   const [pPriceRupees, setPPriceRupees] = useState("");
   const [pImageSrc, setPImageSrc] = useState("");
+  const [pImages, setPImages] = useState<string[]>([]); // gallery images (URLs)
   const [pSizes, setPSizes] = useState<string[]>(["S", "M", "L", "XL", "XXL"]);
   const [pAvailable, setPAvailable] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -98,6 +100,7 @@ export function MerchAdmin() {
     setPVariant("STANDARD");
     setPPriceRupees("");
     setPImageSrc("");
+    setPImages([]);
     setPSizes(["S", "M", "L", "XL", "XXL"]);
     setPAvailable(true);
     setShowProductForm(false);
@@ -111,27 +114,57 @@ export function MerchAdmin() {
     setPVariant(item.variant);
     setPPriceRupees(String(item.price / 100));
     setPImageSrc(item.imageSrc);
+    setPImages(item.images ?? []);
     setPSizes(item.sizes);
     setPAvailable(item.available);
     setShowProductForm(true);
   }
 
-  // Handle uploading product image
+  // Upload a single product image, return URL
+  async function uploadOneImage(file: File): Promise<string> {
+    const b64 = await base64(file);
+    const res = await api<{ ok: boolean; url: string }>("/admin/merch/products/upload", {
+      file: b64,
+      filename: file.name,
+    });
+    return res.url;
+  }
+
+  // Handle uploading the PRIMARY product image
   async function handleProductImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingImage(true);
     try {
-      const b64 = await base64(file);
-      const res = await api<{ ok: boolean; url: string }>("/admin/merch/products/upload", {
-        file: b64,
-        filename: file.name,
-      });
-      if (res.url) {
-        setPImageSrc(res.url);
-      }
+      const url = await uploadOneImage(file);
+      setPImageSrc(url);
+      // Also add to gallery if not already present
+      setPImages((prev) => (prev.includes(url) ? prev : [url, ...prev]));
     } catch (err: unknown) {
       act.setError(err instanceof Error ? err.message : "Failed to upload product image");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  // Handle uploading MULTIPLE gallery images
+  async function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploadingImage(true);
+    try {
+      const urls = await Promise.all(files.map(uploadOneImage));
+      setPImages((prev) => {
+        const combined = [...prev];
+        for (const url of urls) {
+          if (!combined.includes(url)) combined.push(url);
+        }
+        return combined;
+      });
+      // If no primary yet, use first uploaded
+      setPImageSrc((prev) => prev || urls[0]);
+    } catch (err: unknown) {
+      act.setError(err instanceof Error ? err.message : "Failed to upload gallery images");
     } finally {
       setUploadingImage(false);
     }
@@ -154,6 +187,7 @@ export function MerchAdmin() {
       imageSrc: pImageSrc.trim(),
       sizes: pSizes,
       available: pAvailable,
+      images: pImages.filter(Boolean),
     };
 
     if (editingId) {
@@ -522,21 +556,21 @@ export function MerchAdmin() {
                 </div>
               </div>
 
-              {/* Image Input + Upload */}
+              {/* ── Primary Image ── */}
               <div style={{ marginTop: "1rem" }}>
                 <label style={{ fontSize: "0.8rem", color: "rgba(244,234,217,0.7)", display: "block", marginBottom: 4 }}>
-                  Product Image * (Upload photo or enter URL)
+                  Primary / Thumbnail Image * (shown on product card)
                 </label>
                 <div style={{ display: "flex", gap: "0.8rem", alignItems: "center", flexWrap: "wrap" }}>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. /merch/tshirt-blue.jpg or https://..."
+                    placeholder="URL or upload below"
                     value={pImageSrc}
                     onChange={(e) => setPImageSrc(e.target.value)}
                     style={{
                       flex: 1,
-                      minWidth: 240,
+                      minWidth: 220,
                       padding: "0.55rem 0.8rem",
                       background: "rgba(255,255,255,0.06)",
                       border: "1px solid rgba(255,255,255,0.15)",
@@ -545,7 +579,7 @@ export function MerchAdmin() {
                     }}
                   />
                   <label className={t.ghost} style={{ cursor: "pointer", whiteSpace: "nowrap" }}>
-                    {uploadingImage ? "Uploading…" : "📁 Upload Photo"}
+                    {uploadingImage ? "Uploading…" : "📁 Upload Primary"}
                     <input
                       type="file"
                       accept="image/*"
@@ -560,14 +594,108 @@ export function MerchAdmin() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={pImageSrc}
-                      alt="Preview"
+                      alt="Primary preview"
                       width={60}
                       height={60}
                       style={{ borderRadius: 6, objectFit: "contain", background: "#1a1310", border: "1px solid rgba(255,255,255,0.1)" }}
                       onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                     />
-                    <span className={t.mute} style={{ fontSize: "0.8rem" }}>Image preview</span>
+                    <span className={t.mute} style={{ fontSize: "0.8rem" }}>Primary image preview</span>
                   </div>
+                )}
+              </div>
+
+              {/* ── Gallery / Extra Photos ── */}
+              <div style={{ marginTop: "1.2rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <label style={{ fontSize: "0.8rem", color: "rgba(244,234,217,0.7)" }}>
+                    Gallery Photos ({pImages.length}) — shown on product detail page
+                  </label>
+                  <label
+                    className={t.ghost}
+                    style={{ cursor: uploadingImage ? "not-allowed" : "pointer", fontSize: "0.8rem", padding: "0.3rem 0.7rem", opacity: uploadingImage ? 0.5 : 1 }}
+                  >
+                    {uploadingImage ? "Uploading…" : "+ Add Photos"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleGalleryUpload}
+                      disabled={uploadingImage || act.busy}
+                      hidden
+                    />
+                  </label>
+                </div>
+
+                {pImages.length > 0 ? (
+                  <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+                    {pImages.map((url, idx) => (
+                      <div
+                        key={url}
+                        style={{
+                          position: "relative",
+                          width: 72,
+                          height: 72,
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          border: url === pImageSrc
+                            ? "2px solid #9fd4ff"
+                            : "1.5px solid rgba(255,255,255,0.1)",
+                          background: "#fff",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                        }}
+                        title={url === pImageSrc ? "Primary image" : "Click to set as primary"}
+                        onClick={() => setPImageSrc(url)}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url}
+                          alt={`Gallery ${idx + 1}`}
+                          style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
+                        />
+                        {/* Primary badge */}
+                        {url === pImageSrc && (
+                          <span style={{
+                            position: "absolute", bottom: 0, left: 0, right: 0,
+                            background: "rgba(159,212,255,0.9)", color: "#0a0a0a",
+                            fontSize: "0.6rem", fontWeight: 800, textAlign: "center", padding: "2px 0",
+                          }}>
+                            PRIMARY
+                          </span>
+                        )}
+                        {/* Remove button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPImages((prev) => prev.filter((_, i) => i !== idx));
+                            // if removing primary, pick next
+                            if (url === pImageSrc) {
+                              const next = pImages.find((u, i) => i !== idx);
+                              setPImageSrc(next ?? "");
+                            }
+                          }}
+                          style={{
+                            position: "absolute", top: 2, right: 2,
+                            width: 18, height: 18, borderRadius: "50%",
+                            background: "rgba(179,18,30,0.9)", border: "none",
+                            color: "#fff", fontSize: "0.65rem", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            lineHeight: 1,
+                          }}
+                          aria-label="Remove image"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "0.78rem", color: "rgba(244,234,217,0.35)", margin: "0.3rem 0" }}>
+                    No gallery photos yet — upload using &quot;+ Add Photos&quot; above. Click any thumbnail to set it as primary.
+                  </p>
                 )}
               </div>
 

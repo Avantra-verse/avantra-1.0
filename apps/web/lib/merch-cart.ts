@@ -5,6 +5,7 @@ export type MerchItem = {
   variant: string;
   price: number;
   imageSrc: string;
+  images: string[];   // all gallery images; may include imageSrc
   sizes: string[];
   available: boolean;
 };

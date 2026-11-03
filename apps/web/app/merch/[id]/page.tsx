@@ -14,6 +14,7 @@ type MerchItem = {
   variant: string;
   price: number;
   imageSrc: string;
+  images: string[];
   sizes: string[];
   available: boolean;
 };
@@ -109,6 +110,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [showChart, setShowChart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [activeImg, setActiveImg] = useState("");
 
   // Direct checkout state
   const [step, setStep] = useState<"form" | "payment" | "success">("form");
@@ -135,6 +137,8 @@ export default function ProductDetailPage() {
         if (data.sizes && data.sizes.length > 0) {
           setSelectedSize(data.sizes[0]);
         }
+        // Set gallery active image to primary
+        setActiveImg(data.imageSrc || (data.images?.[0] ?? ""));
       })
       .catch((err: Error) => setLoadError(err.message || "Product not found"))
       .finally(() => setLoading(false));
@@ -262,16 +266,52 @@ export default function ProductDetailPage() {
 
       {item && (
         <div className={s.detailContainer}>
-          {/* Left: Product Showcase */}
+          {/* Left: Product Gallery */}
           <div className={s.detailGallery}>
+            {/* Main image viewer */}
             <div className={s.detailImgBox}>
               <span className={s.detailBadge}>{formatType(item.type)}</span>
               {item.variant && item.variant !== "STANDARD" && (
                 <span className={s.cardVariantBadge}>{item.variant}</span>
               )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.imageSrc} alt={item.name} className={s.detailImg} />
+              <img
+                src={activeImg || item.imageSrc}
+                alt={item.name}
+                className={s.detailImg}
+              />
             </div>
+
+            {/* Thumbnail strip — only if there are multiple images */}
+            {(() => {
+              const gallery = item.images?.length
+                ? item.images
+                : item.imageSrc
+                ? [item.imageSrc]
+                : [];
+              if (gallery.length <= 1) return null;
+              return (
+                <div className={s.thumbStrip}>
+                  {gallery.map((url, i) => (
+                    <button
+                      key={url + i}
+                      type="button"
+                      className={`${s.thumb} ${(activeImg || item.imageSrc) === url ? s.thumbActive : ""}`}
+                      onClick={() => setActiveImg(url)}
+                      aria-label={`View image ${i + 1}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt={`${item.name} photo ${i + 1}`}
+                        style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
 
             <div style={{ background: "rgba(255,255,255,0.03)", padding: "1.25rem", borderRadius: 16, border: "1px solid rgba(255,255,255,0.07)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
