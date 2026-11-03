@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api, apiReady, getMe, type Me } from "@/lib/api";
+import { loadCart, saveCart, type CartEntry } from "@/lib/merch-cart";
 import s from "../merch.module.css";
 
 type MerchItem = {
@@ -28,6 +29,14 @@ type OrderResult = {
   orderId: string;
   trackingId: string;
   totalPaise: number;
+};
+
+type ProfileDefaults = {
+  schoolName: string;
+  grade: number | null;
+  studentClass: string;
+  contactNo: string;
+  nameToPrint: string;
 };
 
 const GRADE_OPTIONS = [
@@ -133,29 +142,28 @@ export default function ProductDetailPage() {
     api<ActiveQr | null>("/merch/active-qr").then(setQr).catch(() => null);
 
     if (apiReady) {
-      getMe()
-        .then((m) => {
+      const cachedSchool = typeof window !== "undefined" ? localStorage.getItem("avantra.schoolName") || "" : "";
+      if (cachedSchool) {
+        setForm((prev) => ({ ...prev, schoolName: prev.schoolName || cachedSchool }));
+      }
+
+      Promise.all([
+        getMe().catch(() => null),
+        api<ProfileDefaults>("/merch/profile-defaults").catch(() => null),
+      ])
+        .then(([m, profileData]) => {
           setMe(m);
-          if (m) {
-            api<{ student: { schoolName?: string; grade?: number } | null }>("/profile")
-              .then((res) => {
-                setStudent(res.student);
-                setForm((prev) => ({
-                  ...prev,
-                  studentClass: initialClass(res.student?.grade),
-                  schoolName: res.student?.schoolName ?? "",
-                  contactNo: m.phone ?? "",
-                  nameToPrint: initialNameToPrint(m.name),
-                }));
-              })
-              .catch(() => {
-                setForm((prev) => ({
-                  ...prev,
-                  contactNo: m.phone ?? "",
-                  nameToPrint: initialNameToPrint(m.name),
-                }));
-              });
+          const resolvedSchool = profileData?.schoolName || cachedSchool;
+          if (resolvedSchool && typeof window !== "undefined") {
+            try { localStorage.setItem("avantra.schoolName", resolvedSchool); } catch {}
           }
+          setForm((prev) => ({
+            ...prev,
+            studentClass: prev.studentClass || profileData?.studentClass || initialClass(profileData?.grade),
+            schoolName: prev.schoolName || resolvedSchool,
+            contactNo: prev.contactNo || m?.phone || profileData?.contactNo || "",
+            nameToPrint: prev.nameToPrint || initialNameToPrint(m?.name) || profileData?.nameToPrint || "",
+          }));
         })
         .catch(() => setMe(null));
     } else {
@@ -323,6 +331,38 @@ export default function ProductDetailPage() {
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "1rem", paddingTop: "0.8rem", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <span style={{ fontSize: "0.95rem", color: "rgba(244,234,217,0.7)" }}>Subtotal</span>
                 <span style={{ fontSize: "1.35rem", fontWeight: 800, color: "#9fd4ff" }}>{rupees(totalPaise)}</span>
+              </div>
+
+              <div style={{ marginTop: "1rem", display: "flex", gap: "0.6rem" }}>
+                <button
+                  type="button"
+                  className={s.addBtn}
+                  style={{ flex: 1, padding: "0.75rem" }}
+                  onClick={() => {
+                    const currentCart = loadCart();
+                    const size = selectedSize || item.sizes?.[0] || "Free Size";
+                    const idx = currentCart.findIndex((c) => c.item.id === item.id && c.size === size);
+                    let updated: CartEntry[];
+                    if (idx >= 0) {
+                      updated = [...currentCart];
+                      updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + quantity };
+                    } else {
+                      updated = [...currentCart, { item, size, quantity }];
+                    }
+                    saveCart(updated);
+                    setAddedToCart(true);
+                    setTimeout(() => setAddedToCart(false), 2000);
+                  }}
+                >
+                  {addedToCart ? "Added to Cart ✓" : "+ Add to Cart"}
+                </button>
+                <Link
+                  href="/merch/checkout"
+                  className={s.detailBtn}
+                  style={{ flex: 1, padding: "0.75rem" }}
+                >
+                  Go to Checkout →
+                </Link>
               </div>
             </div>
           </div>
@@ -637,3 +677,4 @@ export default function ProductDetailPage() {
     </div>
   );
 }
+

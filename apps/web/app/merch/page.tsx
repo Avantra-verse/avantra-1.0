@@ -1,43 +1,13 @@
 "use client";
 
 // Public merch e-commerce page. Login required to purchase.
-// Shows all MerchItems, size chart, cart, and checkout with UPI QR.
-import React, { useEffect, useRef, useState } from "react";
+// Shows all MerchItems, size chart, cart summary, and direct link to full-page checkout.
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api, apiReady, getMe, type Me } from "@/lib/api";
+import { loadCart, saveCart, type CartEntry, type MerchItem } from "@/lib/merch-cart";
 import s from "./merch.module.css";
-
-// ---- types ----
-
-type MerchItem = {
-  id: string;
-  name: string;
-  type: string;
-  variant: string;
-  price: number; // paise
-  imageSrc: string;
-  sizes: string[];
-  available: boolean;
-};
-
-type CartEntry = {
-  item: MerchItem;
-  size: string;
-  quantity: number;
-};
-
-type ActiveQr = {
-  id: string;
-  upiId: string;
-  storagePath: string;
-  label: string;
-};
-
-type OrderResult = {
-  orderId: string;
-  trackingId: string;
-  totalPaise: number;
-};
 
 // ---- size chart data ----
 
@@ -203,351 +173,59 @@ function ProductCard({ item, onAdd }: { item: MerchItem; onAdd: (entry: CartEntr
   );
 }
 
-// ---- CheckoutModal ----
-
-type CheckoutStep = "form" | "payment" | "success";
-
-const GRADE_OPTIONS = [
-  "Class 6",
-  "Class 7",
-  "Class 8",
-  "Class 9",
-  "Class 10",
-  "Class 11",
-  "Class 12",
-  "Other",
-];
-
-function initialClass(grade?: number): string {
-  if (!grade) return "";
-  const match = `Class ${grade}`;
-  return GRADE_OPTIONS.includes(match) ? match : "Other";
-}
-
-function initialNameToPrint(name?: string): string {
-  if (!name) return "";
-  const first = name.trim().split(/\s+/)[0] || "";
-  return first.slice(0, 10).toUpperCase();
-}
-
-function CheckoutModal({
-  cart,
-  me,
-  student,
-  qr,
-  onClose,
-}: {
-  cart: CartEntry[];
-  me: Me;
-  student?: { schoolName?: string; grade?: number } | null;
-  qr: ActiveQr | null;
-  onClose: () => void;
-}) {
-  const [step, setStep] = useState<CheckoutStep>("form");
-  const [form, setForm] = useState({
-    studentClass: initialClass(student?.grade),
-    schoolName: student?.schoolName ?? "",
-    contactNo: me.phone ?? "",
-    nameToPrint: initialNameToPrint(me.name),
-    isCoordinator: false,
-    paymentNote: "",
-  });
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<OrderResult | null>(null);
-
-  useEffect(() => {
-    setForm((f) => ({
-      ...f,
-      studentClass: f.studentClass || initialClass(student?.grade),
-      schoolName: f.schoolName || student?.schoolName || "",
-      contactNo: f.contactNo || me.phone || "",
-      nameToPrint: f.nameToPrint || initialNameToPrint(me.name),
-    }));
-  }, [student, me]);
-
-  const totalPaise = cart.reduce((sum, e) => sum + e.item.price * e.quantity, 0);
-
-  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-    setError("");
-  };
-
-  async function handleFormNext(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.studentClass.trim()) return setError("Please choose your class.");
-    if (!form.schoolName.trim()) return setError("Please enter your school name.");
-    if (!form.contactNo.trim()) return setError("Please enter your contact number.");
-    const cleanPhone = form.contactNo.replace(/\D/g, "");
-    if (!/^(91)?[6-9]\d{9}$/.test(cleanPhone)) {
-      return setError("Please enter a valid 10-digit Indian mobile number (e.g. 9876543210).");
-    }
-    if (!form.nameToPrint.trim()) return setError("Please enter the name to be printed on merch.");
-    if (form.nameToPrint.trim().length > 10) return setError("Name to print should be 10 characters or less.");
-    setStep("payment");
-  }
-
-  async function handlePlaceOrder() {
-    setError("");
-    setBusy(true);
-    try {
-      const items = cart.map((e) => ({
-        itemId: e.item.id,
-        size: e.size,
-        quantity: e.quantity,
-        pricePaise: e.item.price,
-      }));
-      const r = await api<OrderResult>("/merch/orders", {
-        items,
-        studentClass: form.studentClass,
-        schoolName: form.schoolName,
-        contactNo: form.contactNo,
-        nameToPrint: form.nameToPrint.trim(),
-        isCoordinator: form.isCoordinator,
-        paymentNote: form.paymentNote.trim() || null,
-      });
-      setResult(r);
-      setStep("success");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className={s.modal} onClick={step === "success" ? onClose : undefined}>
-      <div className={s.checkoutBox} onClick={(e) => e.stopPropagation()}>
-        {step !== "success" && (
-          <div className={s.stepBar}>
-            <div className={`${s.step} ${step === "form" ? s.active : s.done}`}>1. Your details</div>
-            <div className={`${s.step} ${step === "payment" ? s.active : ""}`}>2. Payment</div>
-          </div>
-        )}
-
-        {step === "form" && (
-          <>
-            <h2 className={s.checkoutTitle}>Your Details</h2>
-            {!me.profileComplete && (
-              <div className={s.error} style={{ marginBottom: "1rem" }}>
-                Your student profile is incomplete. Please{" "}
-                <Link href="/dashboard" style={{ color: "#9fd4ff", textDecoration: "underline" }}>
-                  complete your profile on the dashboard
-                </Link>{" "}
-                before placing your order.
-              </div>
-            )}
-            <form onSubmit={handleFormNext} noValidate>
-              <div className={s.formField}>
-                {/* The order is under the account; change the name in Settings. */}
-                <label>Name (from your account)</label>
-                <input type="text" value={me.name} disabled style={{ opacity: 0.6 }} />
-              </div>
-              <div className={s.formField}>
-                <label>Class *</label>
-                <select name="studentClass" value={form.studentClass} onChange={set} required>
-                  <option value="">Choose</option>
-                  {GRADE_OPTIONS.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
-              </div>
-              <div className={s.formField}>
-                <label>School Name *</label>
-                <input
-                  type="text"
-                  name="schoolName"
-                  value={form.schoolName}
-                  onChange={set}
-                  placeholder="Your school name"
-                  required
-                />
-              </div>
-              <div className={s.formField}>
-                <label>Contact No. *</label>
-                <input
-                  type="tel"
-                  name="contactNo"
-                  value={form.contactNo}
-                  onChange={set}
-                  placeholder="10-digit mobile number"
-                  required
-                />
-              </div>
-              <div className={s.formField}>
-                <label>Name to be Printed on Merch *</label>
-                <p className={s.mute} style={{ fontSize: "0.78rem", margin: "2px 0 6px", lineHeight: 1.4 }}>
-                  Note: If the number of characters in your name exceeds 10, it is preferable to use a shorter nickname so that it appears neatly on the merchandise.
-                </p>
-                <input
-                  type="text"
-                  name="nameToPrint"
-                  value={form.nameToPrint}
-                  onChange={set}
-                  placeholder="e.g. ROHNIT"
-                  maxLength={10}
-                  required
-                />
-              </div>
-              <div className={s.checkRow}>
-                <input
-                  type="checkbox"
-                  id="isCoord"
-                  checked={form.isCoordinator}
-                  onChange={(e) => setForm((f) => ({ ...f, isCoordinator: e.target.checked }))}
-                />
-                <label htmlFor="isCoord" style={{ cursor: "pointer" }}>
-                  <span>Are you a coordinator in AVANTRA 2026?</span>
-                </label>
-              </div>
-              {error && <div className={s.error}>{error}</div>}
-              <button type="submit" className={s.placeBtn}>
-                Next: Payment →
-              </button>
-            </form>
-            <button type="button" className={s.cancelBtn} onClick={onClose}>
-              Cancel
-            </button>
-          </>
-        )}
-
-        {step === "payment" && (
-          <>
-            <h2 className={s.checkoutTitle}>Complete Payment</h2>
-
-            {/* Order summary */}
-            <ul className={s.orderItems}>
-              {cart.map((e, i) => (
-                <li key={i} className={s.orderItem}>
-                  <span className={s.orderItemName}>
-                    {e.item.name} — {e.size} × {e.quantity}
-                  </span>
-                  <span className={s.orderItemPrice}>{rupees(e.item.price * e.quantity)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className={s.orderTotal}>
-              <span>Total</span>
-              <span style={{ color: "#9fd4ff" }}>{rupees(totalPaise)}</span>
-            </div>
-
-            {/* UPI QR */}
-            {qr ? (
-              <div className={s.qrSection}>
-                <p className={s.qrTotal}>{rupees(totalPaise)}</p>
-                <p className={s.qrUpiId}>{qr.upiId}</p>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "")}/storage/v1/object/public/merch-upi-qrs/${qr.storagePath}`}
-                  alt="UPI QR Code"
-                  className={s.qrImg}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-                <p className={s.qrNote}>
-                  Scan the QR or use UPI ID above. After paying, enter your UTR/reference below.
-                </p>
-              </div>
-            ) : (
-              <div className={s.qrSection}>
-                <p className={s.mute}>
-                  No UPI QR configured yet. Please contact the AVANTRA team for payment details.
-                  You can still place the order — payment details will be shared separately.
-                </p>
-              </div>
-            )}
-
-            <div className={s.formField}>
-              <label>UTR / Payment Reference (optional)</label>
-              <input
-                type="text"
-                name="paymentNote"
-                value={form.paymentNote}
-                onChange={set}
-                placeholder="e.g. 123456789012"
-              />
-            </div>
-
-            {error && <div className={s.error}>{error}</div>}
-            <button
-              type="button"
-              className={s.placeBtn}
-              onClick={handlePlaceOrder}
-              disabled={busy}
-            >
-              {busy ? "Placing Order…" : "Place Order"}
-            </button>
-            <button type="button" className={s.cancelBtn} onClick={() => setStep("form")}>
-              ← Back
-            </button>
-          </>
-        )}
-
-        {step === "success" && result && (
-          <div className={s.successBox}>
-            <div className={s.successIcon}>🎉</div>
-            <h2 className={s.successTitle}>Order Placed!</h2>
-            <p className={s.successSub}>
-              A confirmation email has been sent to <strong>{me.email}</strong>.
-            </p>
-            <div className={s.trackingId}>{result.trackingId}</div>
-            <p className={s.successSub}>
-              Total: <strong style={{ color: "#9fd4ff" }}>{rupees(result.totalPaise)}</strong>
-            </p>
-            <Link href={`/merch/track/${result.trackingId}`} className={s.trackLink}>
-              Track your order →
-            </Link>
-            <button type="button" className={s.cancelBtn} style={{ marginTop: "1.2rem" }} onClick={onClose}>
-              Close
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ---- Main Page ----
+// ---- Main Merch Store Page ----
 
 export default function MerchPage() {
+  const router = useRouter();
   const [me, setMe] = useState<Me | null | "loading">("loading");
-  const [student, setStudent] = useState<{ schoolName?: string; grade?: number } | null>(null);
   const [items, setItems] = useState<MerchItem[]>([]);
-  const [activeQr, setActiveQr] = useState<ActiveQr | null>(null);
   const [cart, setCart] = useState<CartEntry[]>([]);
   const [showChart, setShowChart] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
   const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    if (!apiReady) { setMe(null); return; }
-    getMe()
-      .then((m) => {
-        setMe(m);
-        if (m) {
-          api<{ student: { schoolName?: string; grade?: number } | null }>("/profile")
-            .then((res) => setStudent(res.student))
-            .catch(() => null);
-        }
-      })
-      .catch(() => setMe(null));
-    api<MerchItem[]>("/merch/items").then(setItems).catch((e) => setLoadError(e.message));
-    api<ActiveQr | null>("/merch/active-qr").then(setActiveQr).catch(() => null);
+    // Load initial cart
+    setCart(loadCart());
+
+    const onCartUpdate = () => {
+      setCart(loadCart());
+    };
+    window.addEventListener("avantra-cart-update", onCartUpdate);
+
+    if (apiReady) {
+      getMe().then(setMe).catch(() => setMe(null));
+    } else {
+      setMe(null);
+    }
+
+    api<MerchItem[]>("/merch/items")
+      .then(setItems)
+      .catch((e) => setLoadError(e.message));
+
+    return () => window.removeEventListener("avantra-cart-update", onCartUpdate);
   }, []);
 
   function addToCart(entry: CartEntry) {
     setCart((prev) => {
       const idx = prev.findIndex((e) => e.item.id === entry.item.id && e.size === entry.size);
+      let updated: CartEntry[];
       if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = { ...next[idx], quantity: next[idx].quantity + 1 };
-        return next;
+        updated = [...prev];
+        updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + 1 };
+      } else {
+        updated = [...prev, entry];
       }
-      return [...prev, entry];
+      saveCart(updated);
+      return updated;
     });
   }
 
   function removeFromCart(idx: number) {
-    setCart((prev) => prev.filter((_, i) => i !== idx));
+    setCart((prev) => {
+      const updated = prev.filter((_, i) => i !== idx);
+      saveCart(updated);
+      return updated;
+    });
   }
 
   const cartCount = cart.reduce((sum, e) => sum + e.quantity, 0);
@@ -557,47 +235,48 @@ export default function MerchPage() {
   const zippers = items.filter((i) => i.type === "ZIPPER" || i.type === "HOODIE");
   const others = items.filter((i) => i.type !== "TSHIRT" && i.type !== "ZIPPER" && i.type !== "HOODIE");
 
+  const goToCheckout = () => {
+    if (!me || me === "loading") {
+      router.push("/login?next=/merch/checkout");
+      return;
+    }
+    router.push("/merch/checkout");
+  };
+
   return (
     <div className={s.page}>
-      {/* Hero */}
-      <div className={s.hero}>
-        <div className={s.heroLabel}>AVANTRA 2026 · Official Merch</div>
-        <h1 className={s.heroTitle}>AVANTRA Merchandise</h1>
-        <p className={s.heroSub}>
-          Rep the multiverse. Exclusive t-shirts and zippers — your name, your design, your edition.
-        </p>
-        <button
-          type="button"
-          className={s.chartBtn}
-          style={{ marginTop: "1.2rem" }}
-          onClick={() => setShowChart(true)}
-        >
-          📏 Size Chart
-        </button>
-      </div>
-
-      {/* Content */}
       <div className={s.section}>
-        {/* Login gate */}
-        {me === null && (
-          <div className={s.loginPrompt}>
-            <p style={{ marginBottom: "1rem", color: "rgba(244,234,217,0.65)" }}>
-              Log in to purchase AVANTRA merch.
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <h1 className={s.title}>AVANTRA Merch Store</h1>
+            <p className={s.sub}>
+              Wear the multiverse. Premium official festival merchandise for AVANTRA 2026.
             </p>
-            <Link href="/login?next=/merch" className={s.loginBtn}>
-              Log in to Buy
-            </Link>
           </div>
-        )}
+          <div style={{ display: "flex", gap: "0.8rem", alignItems: "center" }}>
+            <button
+              type="button"
+              className={s.chartBtn}
+              onClick={() => setShowChart(true)}
+            >
+              📏 Size Guide
+            </button>
+            {cartCount > 0 && (
+              <button
+                type="button"
+                className={s.cartCheckoutBtn}
+                onClick={goToCheckout}
+                style={{ padding: "0.45rem 1rem", fontSize: "0.85rem" }}
+              >
+                Checkout ({cartCount}) →
+              </button>
+            )}
+          </div>
+        </div>
 
-        {loadError && <div className={s.error}>{loadError}</div>}
-
-        {/* Empty state when no products added yet */}
-        {!loadError && items.length === 0 && (
-          <div style={{ textAlign: "center", padding: "4rem 1rem" }}>
-            <p className={s.mute} style={{ fontSize: "1.1rem" }}>
-              Merchandise collection dropping soon! Check back shortly.
-            </p>
+        {loadError && (
+          <div className={s.error} style={{ margin: "2rem 0" }}>
+            {loadError}
           </div>
         )}
 
@@ -610,20 +289,14 @@ export default function MerchPage() {
                 <ProductCard
                   key={item.id}
                   item={item}
-                  onAdd={(entry) => {
-                    if (!me || me === "loading") {
-                      window.location.href = "/login?next=/merch";
-                      return;
-                    }
-                    addToCart(entry);
-                  }}
+                  onAdd={(entry) => addToCart(entry)}
                 />
               ))}
             </div>
           </>
         )}
 
-        {/* Zippers */}
+        {/* Zippers & Hoodies */}
         {zippers.length > 0 && (
           <>
             <h2 className={s.sectionTitle}>Zippers &amp; Hoodies</h2>
@@ -632,20 +305,14 @@ export default function MerchPage() {
                 <ProductCard
                   key={item.id}
                   item={item}
-                  onAdd={(entry) => {
-                    if (!me || me === "loading") {
-                      window.location.href = "/login?next=/merch";
-                      return;
-                    }
-                    addToCart(entry);
-                  }}
+                  onAdd={(entry) => addToCart(entry)}
                 />
               ))}
             </div>
           </>
         )}
 
-        {/* Other products */}
+        {/* Other Items */}
         {others.length > 0 && (
           <>
             <h2 className={s.sectionTitle}>More Merchandise</h2>
@@ -654,13 +321,7 @@ export default function MerchPage() {
                 <ProductCard
                   key={item.id}
                   item={item}
-                  onAdd={(entry) => {
-                    if (!me || me === "loading") {
-                      window.location.href = "/login?next=/merch";
-                      return;
-                    }
-                    addToCart(entry);
-                  }}
+                  onAdd={(entry) => addToCart(entry)}
                 />
               ))}
             </div>
@@ -669,13 +330,25 @@ export default function MerchPage() {
 
         {/* Cart overview (when items added) */}
         {cart.length > 0 && (
-          <div style={{ marginTop: "2rem" }}>
-            <h2 className={s.sectionTitle}>Cart</h2>
+          <div style={{ marginTop: "3rem", background: "rgba(255,255,255,0.02)", padding: "1.5rem", borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h2 className={s.sectionTitle} style={{ margin: 0 }}>
+                Shopping Cart ({cartCount})
+              </h2>
+              <button
+                type="button"
+                className={s.cartCheckoutBtn}
+                onClick={goToCheckout}
+                style={{ padding: "0.5rem 1.2rem", fontSize: "0.9rem" }}
+              >
+                Proceed to Checkout →
+              </button>
+            </div>
             <ul className={s.orderItems}>
               {cart.map((e, i) => (
-                <li key={i} className={s.orderItem}>
+                <li key={`${e.item.id}-${e.size}-${i}`} className={s.orderItem}>
                   <span className={s.orderItemName}>
-                    {e.item.name} — {e.size} × {e.quantity}
+                    {e.item.name} — <strong style={{ color: "#9fd4ff" }}>{e.size}</strong> × {e.quantity}
                   </span>
                   <span style={{ display: "flex", gap: "0.8rem", alignItems: "center" }}>
                     <span className={s.orderItemPrice}>{rupees(e.item.price * e.quantity)}</span>
@@ -693,7 +366,7 @@ export default function MerchPage() {
         )}
       </div>
 
-      {/* Sticky cart bar */}
+      {/* Sticky bottom cart bar */}
       {cart.length > 0 && (
         <div className={s.cartBar}>
           <div className={s.cartBarInner}>
@@ -704,13 +377,7 @@ export default function MerchPage() {
             <button
               type="button"
               className={s.cartCheckoutBtn}
-              onClick={() => {
-                if (!me || me === "loading") {
-                  window.location.href = "/login?next=/merch";
-                  return;
-                }
-                setShowCheckout(true);
-              }}
+              onClick={goToCheckout}
             >
               Checkout →
             </button>
@@ -718,21 +385,8 @@ export default function MerchPage() {
         </div>
       )}
 
-      {/* Modals */}
+      {/* Size Chart Modal */}
       {showChart && <SizeChartModal onClose={() => setShowChart(false)} />}
-      {showCheckout && me && me !== "loading" && (
-        <CheckoutModal
-          cart={cart}
-          me={me}
-          student={student}
-          qr={activeQr}
-          onClose={() => {
-            setShowCheckout(false);
-            setCart([]);
-          }}
-        />
-      )}
     </div>
   );
 }
-
