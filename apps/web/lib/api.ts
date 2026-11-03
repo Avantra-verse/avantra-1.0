@@ -227,6 +227,54 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
     if (!website) await rpc("contact_message", { p_name: name, p_email: email, p_message: message, p_school: school ?? null });
   },
 
+  // Merch e-commerce & admin: supabase/migrations/*_merch.sql
+  "GET /merch/items": async () => ok(await supabase().from("MerchItem").select("*").eq("available", true)),
+  "GET /merch/active-qr": () => rpc("merch_active_qr"),
+  "POST /merch/orders": ({ items, studentClass, schoolName, contactNo, nameToPrint, isCoordinator, paymentNote }) =>
+    rpc("place_merch_order", {
+      p_items: items,
+      p_student_class: studentClass,
+      p_school_name: schoolName,
+      p_contact_no: contactNo,
+      p_name_to_print: nameToPrint,
+      p_is_coordinator: isCoordinator,
+      p_payment_note: paymentNote,
+    }),
+  "GET /merch/orders/mine": () => rpc("my_merch_orders"),
+  "GET /merch/orders/:trackingId": ({ trackingId }) => rpc("merch_order_by_tracking", { p_tracking_id: trackingId }),
+  "GET /admin/merch/orders": () => rpc("admin_merch_orders"),
+  "POST /admin/merch/orders/:id/verify": ({ id }) => rpc("admin_merch_verify_payment", { p_order_id: id }),
+  "GET /admin/merch/items": () => rpc("admin_merch_items"),
+  "POST /admin/merch/items": ({ name, type, variant, price, imageSrc, sizes, available }) =>
+    rpc("admin_merch_create_item", {
+      p_name: name,
+      p_type: type,
+      p_variant: variant,
+      p_price: Number(price),
+      p_image_src: imageSrc,
+      p_sizes: sizes,
+      p_available: available,
+    }),
+  "PUT /admin/merch/items/:id": ({ id, name, type, variant, price, imageSrc, sizes, available }) =>
+    rpc("admin_merch_update_item", {
+      p_id: id,
+      p_name: name,
+      p_type: type,
+      p_variant: variant,
+      p_price: Number(price),
+      p_image_src: imageSrc,
+      p_sizes: sizes,
+      p_available: available,
+    }),
+  "PATCH /admin/merch/items/:id/toggle": ({ id, available }) =>
+    rpc("admin_merch_toggle_item", { p_id: id, p_available: available }),
+  "DELETE /admin/merch/items/:id": ({ id }) => rpc("admin_merch_delete_item", { p_id: id }),
+  "POST /admin/merch/products/upload": (b) => post("/admin/merch/products/upload", b),
+  "GET /admin/merch/upi-qrs": () => rpc("admin_merch_upi_qrs"),
+  "POST /admin/merch/upi-qrs": (b) => post("/admin/merch/upi-qrs", b),
+  "POST /admin/merch/upi-qrs/:id/activate": ({ id }) => rpc("admin_merch_set_active_qr", { p_qr_id: id }),
+  "DELETE /admin/merch/upi-qrs/:id": async ({ id }) => rpc("admin_merch_delete_qr", { p_qr_id: id }),
+
   "GET /wall/leaderboard": async () => {
     const res = await fetch("/wall/leaderboard.json");
     if (!res.ok) throw new ApiError(res.status, "Leaderboard unavailable. Try again in a moment.");

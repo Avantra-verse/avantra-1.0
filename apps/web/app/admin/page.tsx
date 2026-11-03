@@ -18,10 +18,11 @@ import { UpiPayments } from "./payments";
 import { Wall } from "./wall";
 import { Messages } from "./messages";
 import { Teams } from "./teams";
+import { MerchAdmin } from "./merch";
 import { Avatar, Profile, Students, toneOf } from "./people";
 import px from "./people.module.css";
 
-const TABS = { overview: "Overview", students: "Students", teams: "Teams", payments: "UPI payments", messages: "Messages", referrals: "Referral codes", events: "Events", desk: "Desk", wall: "Wall", staff: "Staff", admins: "Admins" } as const;
+const TABS = { overview: "Overview", students: "Students", teams: "Teams", payments: "UPI payments", merch: "Merch", messages: "Messages", referrals: "Referral codes", events: "Events", desk: "Desk", wall: "Wall", staff: "Staff", admins: "Admins" } as const;
 type Tab = keyof typeof TABS;
 
 // One line under each tab's title.
@@ -32,6 +33,7 @@ const INTRO: Record<Tab, string> = {
   referrals: "How many students each ambassador code brought in.",
   messages: "What visitors sent from the Contact page. Sort them into categories and mark them resolved once answered.",
   payments: "UPI payments for the school to check, and their answers coming back.",
+  merch: "Merchandise orders, payment verification, and UPI QR code management.",
   desk: "Cash fees and walk-in registrations at the registration desk.",
   staff: "Volunteer and judge accounts, and which event each judge scores. Open one to see their whole account.",
   events: "Open or close events and see the judges' results.",
@@ -77,6 +79,7 @@ export default function AdminPage() {
               {tab === "referrals" && <Referrals />}
               {tab === "messages" && <Messages />}
               {tab === "payments" && <UpiPayments />}
+              {tab === "merch" && <MerchAdmin />}
               {tab === "desk" && <Desk />}
               {tab === "staff" && <Staff canEdit={!!me.superAdmin} />}
               {tab === "events" && <Events />}

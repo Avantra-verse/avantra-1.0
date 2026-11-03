@@ -10,6 +10,7 @@ import { api, apiReady, LOGIN_HREF, REGISTER_HREF } from "@/lib/api";
 // Log in only appears once accounts are live; until then it is one more "Opening soon".
 const LINKS = [
   { href: "/events", label: "Events" },
+  { href: "/merch", label: "Merch" },
   { href: "/about", label: "About" },
   { href: "/venue", label: "Venue" },
   { href: "/organizers", label: "Committee" },
@@ -68,6 +69,7 @@ const DASH_LINKS: { href: string; label: string; icon: string }[] = [
   { href: "/dashboard", label: "Home", icon: "M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" },
   { href: "/dashboard/events", label: "Events", icon: "M4 5h16v15H4zM4 9h16M8 3v4M16 3v4" },
   { href: "/dashboard/teams", label: "Teams", icon: "M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.1a4 4 0 010 7.8M22 21v-1a6 6 0 00-4-5.7" },
+  { href: "/dashboard/merch", label: "Merch", icon: "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" },
   { href: "/dashboard/pay", label: "Payment", icon: "M3 6h18v12H3zM3 10h18M7 15h4" },
   { href: "/dashboard/settings", label: "Settings", icon: "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" },
 ];
@@ -83,6 +85,7 @@ export const ADMIN_LINKS: DashLink[] = [
   { group: "Participants", href: "/admin#students", label: "Students", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21v-1a8 8 0 0116 0v1" },
   { href: "/admin#teams", label: "Teams", icon: "M7 11a3 3 0 100-6 3 3 0 000 6zM17 11a3 3 0 100-6 3 3 0 000 6zM2 20v-1a5 5 0 0110 0v1M12 20v-1a5 5 0 0110 0v1" },
   { href: "/admin#payments", label: "UPI payments", icon: "M3 6h18v12H3zM3 10h18M7 15h4" },
+  { href: "/admin#merch", label: "Merch", icon: "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" },
   { group: "Inbox", href: "/admin#messages", label: "Messages", icon: "M4 5h16v11H8l-4 4zM8 9h8M8 12h5" },
   { href: "/admin#referrals", label: "Referrals", icon: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01" },
   { group: "Event day", href: "/admin#events", label: "Events", icon: "M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM7 6H4a3 3 0 003 4M17 6h3a3 3 0 01-3 4" },

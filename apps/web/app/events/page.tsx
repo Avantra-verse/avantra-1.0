@@ -545,6 +545,7 @@ export default function EventsPage() {
                 name: "Drone Events",
                 badge: "Live Aerials",
                 isLive: true,
+                image: "/events/droneracing.jpeg",
                 desc: "Experience the power of flying technology! Watch exciting drone flight demonstrations, explore autonomous drone capabilities, and discover how drones are transforming the modern world.",
                 tags: ["Autonomous Flight", "Aerial Maneuvers", "FPV Tech"],
                 tagHl: "Live Arena",
@@ -564,6 +565,7 @@ export default function EventsPage() {
                 name: "RC Planes",
                 badge: "Aeromodelling",
                 isLive: true,
+                image: "/events/rc plane.jpeg",
                 desc: "Witness the excitement of remote-controlled aircraft! Explore miniature aviation, watch RC planes slice through the air, and discover the science behind flight and aerodynamic lift.",
                 tags: ["Aviation Science", "Aerodynamics", "Flight Controls"],
                 tagHl: "Flight Demo",
@@ -578,6 +580,7 @@ export default function EventsPage() {
                 name: "Satellite & Rocket Showcase",
                 badge: "Space Tech",
                 isLive: false,
+                image: "/events/satelite.jpeg",
                 desc: "Explore the wonders of space technology! Discover satellite models, rocket propulsion systems, and orbital concepts while learning how scientists explore realms beyond Earth.",
                 tags: ["Rocket Propulsion", "Orbital Satellites", "Cosmology"],
                 tagHl: "Exploration",
@@ -595,6 +598,7 @@ export default function EventsPage() {
                 name: "Robotics Events",
                 badge: "Automation",
                 isLive: true,
+                image: "/events/robotics.jpeg",
                 desc: "Step into the world of intelligent machines! Explore robots, autonomous navigation, and innovative mechanical builds through interactive demonstrations and live obstacle activities.",
                 tags: ["Intelligent Bots", "Embedded Systems", "Sensors"],
                 tagHl: "Interactive",
@@ -608,6 +612,23 @@ export default function EventsPage() {
                   </svg>
                 ),
               },
+              {
+                num: "05",
+                name: "BMR (Black Mamba Racing)",
+                badge: "Go-Kart Racing",
+                isLive: true,
+                image: "/events/bmr.jpeg",
+                desc: "Feel the rush of high-octane track engineering! Witness high-speed go-kart racing demonstrations, precision cornering, aerodynamic chassis design, and live motorsport mechanics in action.",
+                tags: ["Go-Kart Racing", "Chassis Engineering", "Track Telemetry"],
+                tagHl: "Live Track",
+                icon: (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M12 3v6M12 15v6M3 12h6M15 12h6" />
+                  </svg>
+                ),
+              },
             ].map((ev, i) => (
               <Reveal key={ev.num} delay={i * 0.08}>
                 <div className={`${styles.cardBase} ${styles.showcaseCard}`}>
@@ -615,6 +636,8 @@ export default function EventsPage() {
 
                   {/* Designated image frame ready for user's photos */}
                   <EventImageFrame
+                    src={ev.image}
+                    alt={ev.name}
                     label={ev.name}
                     categoryBadge={ev.badge}
                     isLive={ev.isLive}
@@ -683,6 +706,8 @@ export default function EventsPage() {
                 <CircuitCorner position="bottomRight" />
 
                 <EventImageFrame
+                  src="/events/mcp.jpeg"
+                  alt="Multiverse Containment Protocol"
                   label="Multiverse Containment Protocol Sector"
                   categoryBadge="Mission Dossier"
                   icon={(
@@ -783,6 +808,8 @@ export default function EventsPage() {
                 <CircuitCorner position="bottomRight" />
 
                 <EventImageFrame
+                  src="/events/wall.jpeg"
+                  alt="Paradox Wall"
                   label="Paradox Wall Sector"
                   categoryBadge="Puzzle Wall"
                   icon={(
@@ -867,6 +894,8 @@ export default function EventsPage() {
                 <CircuitCorner position="bottomRight" />
 
                 <EventImageFrame
+                  src="/events/chronoquest.jpeg"
+                  alt="Chrono-Quest"
                   label="Chrono-Quest Mystery Sector"
                   categoryBadge="Dimensional Quest"
                   icon={(

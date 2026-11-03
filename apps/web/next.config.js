@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ["@avantra/shared"],
   images: { unoptimized: true },
   // The chits PDF reads its fonts from disk (lib/server/chits.ts).
   outputFileTracingIncludes: { "/admin/wall/chits.pdf": ["./assets/fonts/*.ttf"] },
