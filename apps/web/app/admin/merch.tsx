@@ -247,6 +247,16 @@ export function MerchAdmin() {
     orders.reload();
   }
 
+  async function rejectPayment(order: AdminMerchOrder) {
+    if (
+      !confirm(
+        `Reject payment of ${rupees(order.totalPaise)} for ${order.buyerName} (${order.trackingId})?\n\nThis cancels the order and emails the buyer that the payment was not found.`
+      )
+    )
+      return;
+    await updateOrderStatus(order, "CANCELLED");
+  }
+
   // Update order status (SHIPPED / DELIVERED / CANCELLED)
   async function updateOrderStatus(order: AdminMerchOrder, status: string) {
     await act.run(
@@ -1036,6 +1046,17 @@ export function MerchAdmin() {
                           style={{ fontSize: "0.85rem", padding: "0.45rem 1rem" }}
                         >
                           ✓ Verify Payment
+                        </button>
+                      )}
+                      {o.status === "PENDING" && (
+                        <button
+                          type="button"
+                          className={t.ghost}
+                          disabled={act.busy}
+                          onClick={() => rejectPayment(o)}
+                          style={{ fontSize: "0.85rem", padding: "0.45rem 0.9rem" }}
+                        >
+                          ✕ Reject Payment
                         </button>
                       )}
                       {o.status === "PAID" && (
