@@ -19,7 +19,7 @@ CREATE OR REPLACE FUNCTION public.admin_merch_create_item(
 DECLARE
   v_id text;
 BEGIN
-  PERFORM private.require_admin();
+  PERFORM private.my_admin();
   INSERT INTO public."MerchItem" ("name","type","variant","price","imageSrc","sizes","available","images")
   VALUES (trim(p_name), p_type, trim(p_variant), p_price, trim(p_image_src), p_sizes, p_available, p_images)
   RETURNING "id" INTO v_id;
@@ -39,7 +39,7 @@ CREATE OR REPLACE FUNCTION public.admin_merch_update_item(
   p_images text[] DEFAULT NULL
 ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 BEGIN
-  PERFORM private.require_admin();
+  PERFORM private.my_admin();
   UPDATE public."MerchItem"
   SET
     "name"      = trim(p_name),
