@@ -535,10 +535,17 @@ export default function CheckoutPage() {
                     {qr?.storagePath ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
-                        src={`/api/qr/${qr.storagePath}`}
+                        src={
+                          qr.storagePath.startsWith("http://") || qr.storagePath.startsWith("https://")
+                            ? qr.storagePath
+                            : `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "")}/storage/v1/object/public/merch-upi-qrs/${qr.storagePath}`
+                        }
                         alt="AVANTRA UPI QR"
                         className={s.qrImg}
-                        style={{ maxWidth: 220, borderRadius: 12, margin: "0 auto" }}
+                        style={{ maxWidth: 220, background: "#ffffff", padding: 8, borderRadius: 12, margin: "0 auto", display: "block" }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
                       />
                     ) : (
                       <div className={s.qrPlaceholder} style={{ padding: "2rem" }}>

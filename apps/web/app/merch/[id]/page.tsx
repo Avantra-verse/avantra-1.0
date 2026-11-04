@@ -578,7 +578,11 @@ export default function ProductDetailPage() {
 
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "")}/storage/v1/object/public/merch-upi-qrs/${qr.storagePath}`}
+                      src={
+                        qr.storagePath.startsWith("http://") || qr.storagePath.startsWith("https://")
+                          ? qr.storagePath
+                          : `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "")}/storage/v1/object/public/merch-upi-qrs/${qr.storagePath}`
+                      }
                       alt="UPI QR Code"
                       className={s.qrImg}
                       style={{ maxWidth: 220, background: "#fff", padding: 8, borderRadius: 12 }}

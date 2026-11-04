@@ -384,11 +384,12 @@ export function MerchAdmin() {
         </div>
 
         {/* Navigation Tabs */}
-        <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.5rem", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "0.5rem" }}>
+        <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.5rem", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "0.5rem", overflowX: "auto", flexWrap: "nowrap" }}>
           <button
             type="button"
             className={subTab === "products" ? t.btn : t.ghost}
             onClick={() => setSubTab("products")}
+            style={{ whiteSpace: "nowrap" }}
           >
             👕 Products ({productCount})
           </button>
@@ -396,6 +397,7 @@ export function MerchAdmin() {
             type="button"
             className={subTab === "orders" ? t.btn : t.ghost}
             onClick={() => setSubTab("orders")}
+            style={{ whiteSpace: "nowrap" }}
           >
             📦 Orders ({allOrders.length})
           </button>
@@ -403,6 +405,7 @@ export function MerchAdmin() {
             type="button"
             className={subTab === "qrs" ? t.btn : t.ghost}
             onClick={() => setSubTab("qrs")}
+            style={{ whiteSpace: "nowrap" }}
           >
             💳 UPI QR Codes ({activeQrCount}/3)
           </button>
@@ -899,117 +902,161 @@ export function MerchAdmin() {
           ) : filteredOrders.length === 0 ? (
             <p className={t.mute}>No orders found under {orderFilter.toLowerCase()}.</p>
           ) : (
-            <div className={t.scroll}>
-              <table className={`${t.table} ${t.stack}`}>
-                <thead>
-                  <tr>
-                    <th>Tracking ID</th>
-                    <th>Student &amp; School</th>
-                    <th>Custom Print Name</th>
-                    <th>Items</th>
-                    <th className={t.num}>Total</th>
-                    <th>UTR / Ref</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrders.map((o) => (
-                    <tr key={o.id}>
-                      <td className={t.mono} data-label="Tracking ID">
-                        <Link href={`/merch/track/${o.trackingId}`} target="_blank" style={{ color: "#9fd4ff", textDecoration: "underline" }}>
-                          {o.trackingId}
-                        </Link>
-                        <div className={t.mute} style={{ fontSize: "0.75rem" }}>
-                          {new Date(o.createdAt).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </div>
-                      </td>
-                      <td data-label="Student">
-                        <strong>{o.buyerName}</strong>
-                        <div className={t.mute} style={{ fontSize: "0.82rem" }}>
-                          {o.schoolName} (Class {o.studentClass})
-                        </div>
-                        <div className={t.mute} style={{ fontSize: "0.82rem" }}>
-                          📞 {o.contactNo} · {o.buyerEmail}
-                        </div>
-                        {o.isCoordinator && (
-                          <span className={t.status} data-tone="warn" style={{ marginTop: 4, display: "inline-block" }}>
-                            Coordinator
-                          </span>
-                        )}
-                      </td>
-                      <td data-label="Custom Print Name">
-                        <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#f4ead9", letterSpacing: "0.04em" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {filteredOrders.map((o) => (
+                <div
+                  key={o.id}
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: o.status === "PENDING"
+                      ? "1.5px solid rgba(234,179,8,0.3)"
+                      : o.status === "PAID"
+                      ? "1.5px solid rgba(34,197,94,0.3)"
+                      : "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 14,
+                    padding: "1.25rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                  }}
+                >
+                  {/* Card Header */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.6rem", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "0.75rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", flexWrap: "wrap" }}>
+                      <Link
+                        href={`/merch/track/${o.trackingId}`}
+                        target="_blank"
+                        style={{ color: "#9fd4ff", fontWeight: 700, fontFamily: "monospace", fontSize: "1.05rem", textDecoration: "underline" }}
+                      >
+                        {o.trackingId}
+                      </Link>
+                      <span className={t.mute} style={{ fontSize: "0.8rem" }}>
+                        {new Date(o.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      {o.isCoordinator && (
+                        <span className={t.status} data-tone="warn">
+                          Coordinator
+                        </span>
+                      )}
+                      <span className={t.status} data-tone={o.status === "PAID" ? "ok" : o.status === "PENDING" ? "warn" : undefined}>
+                        {o.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card Body Grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+                    {/* Student Info */}
+                    <div>
+                      <div style={{ fontSize: "0.72rem", color: "rgba(244,234,217,0.5)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>
+                        Buyer &amp; School
+                      </div>
+                      <strong style={{ fontSize: "1rem", color: "#f4ead9" }}>{o.buyerName}</strong>
+                      <div style={{ fontSize: "0.85rem", color: "rgba(244,234,217,0.8)", marginTop: 2 }}>
+                        {o.schoolName} · Class <strong>{o.studentClass}</strong>
+                      </div>
+                      <div style={{ fontSize: "0.82rem", color: "rgba(244,234,217,0.6)", marginTop: 3 }}>
+                        📞 <a href={`tel:${o.contactNo}`} style={{ color: "#9fd4ff", textDecoration: "none" }}>{o.contactNo}</a> · {o.buyerEmail}
+                      </div>
+                    </div>
+
+                    {/* Custom Print Name */}
+                    <div>
+                      <div style={{ fontSize: "0.72rem", color: "rgba(244,234,217,0.5)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
+                        Custom Name to Print
+                      </div>
+                      <div style={{
+                        display: "inline-block",
+                        background: "rgba(159,212,255,0.09)",
+                        border: "1.5px solid rgba(159,212,255,0.3)",
+                        borderRadius: 8,
+                        padding: "0.35rem 0.8rem",
+                      }}>
+                        <span style={{ fontSize: "1.1rem", fontWeight: 800, color: "#f4ead9", letterSpacing: "0.08em" }}>
                           {o.nameToPrint}
+                        </span>
+                      </div>
+                      {o.paymentNote && (
+                        <div style={{ fontSize: "0.8rem", color: "rgba(244,234,217,0.6)", marginTop: 6 }}>
+                          UTR / Ref: <code style={{ color: "#9fd4ff" }}>{o.paymentNote}</code>
                         </div>
-                      </td>
-                      <td data-label="Items">
+                      )}
+                    </div>
+
+                    {/* Order Items */}
+                    <div>
+                      <div style={{ fontSize: "0.72rem", color: "rgba(244,234,217,0.5)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
+                        Ordered Items
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                         {o.items.map((it, idx) => (
-                          <div key={idx} style={{ fontSize: "0.85rem" }}>
-                            {it.name} ({it.size}) × {it.quantity}
+                          <div key={idx} style={{ fontSize: "0.88rem", display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+                            <span>{it.name} (<strong style={{ color: "#9fd4ff" }}>{it.size}</strong>) × {it.quantity}</span>
+                            <span style={{ color: "rgba(244,234,217,0.7)" }}>{rupees(it.pricePaise * it.quantity)}</span>
                           </div>
                         ))}
-                      </td>
-                      <td className={t.num} data-label="Total">
-                        <strong>{rupees(o.totalPaise)}</strong>
-                      </td>
-                      <td className={t.mono} data-label="UTR / Ref">
-                        {o.paymentNote || <span className={t.mute}>—</span>}
-                      </td>
-                      <td data-label="Status">
-                        <span className={t.status} data-tone={o.status === "PAID" ? "ok" : o.status === "PENDING" ? "warn" : undefined}>
-                          {o.status}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer: Total & Actions */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.8rem", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "0.75rem", marginTop: "auto" }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
+                      <span className={t.mute} style={{ fontSize: "0.85rem" }}>Total:</span>
+                      <strong style={{ fontSize: "1.25rem", color: "#9fd4ff" }}>{rupees(o.totalPaise)}</strong>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                      {o.status === "PENDING" && (
+                        <button
+                          type="button"
+                          className={t.btn}
+                          disabled={act.busy}
+                          onClick={() => verifyPayment(o)}
+                          style={{ fontSize: "0.85rem", padding: "0.45rem 1rem" }}
+                        >
+                          ✓ Verify Payment
+                        </button>
+                      )}
+                      {o.status === "PAID" && (
+                        <button
+                          type="button"
+                          className={t.ghost}
+                          disabled={act.busy}
+                          onClick={() => updateOrderStatus(o, "SHIPPED")}
+                          style={{ fontSize: "0.85rem", padding: "0.45rem 0.9rem" }}
+                        >
+                          Mark Shipped →
+                        </button>
+                      )}
+                      {o.status === "SHIPPED" && (
+                        <button
+                          type="button"
+                          className={t.ghost}
+                          disabled={act.busy}
+                          onClick={() => updateOrderStatus(o, "DELIVERED")}
+                          style={{ fontSize: "0.85rem", padding: "0.45rem 0.9rem" }}
+                        >
+                          Mark Delivered ✓
+                        </button>
+                      )}
+                      {o.status === "DELIVERED" && (
+                        <span className={t.status} data-tone="ok" style={{ fontSize: "0.8rem" }}>
+                          Completed ✓
                         </span>
-                      </td>
-                      <td data-label="Actions">
-                        {o.status === "PENDING" && (
-                          <button
-                            type="button"
-                            className={t.btn}
-                            disabled={act.busy}
-                            onClick={() => verifyPayment(o)}
-                            style={{ fontSize: "0.85rem", padding: "0.4rem 0.8rem", whiteSpace: "nowrap" }}
-                          >
-                            Payment Verified
-                          </button>
-                        )}
-                        {o.status === "PAID" && (
-                          <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
-                            <button
-                              type="button"
-                              className={t.ghost}
-                              disabled={act.busy}
-                              onClick={() => updateOrderStatus(o, "SHIPPED")}
-                              style={{ fontSize: "0.78rem", padding: "0.3rem 0.6rem" }}
-                            >
-                              Mark Shipped
-                            </button>
-                          </div>
-                        )}
-                        {o.status === "SHIPPED" && (
-                          <button
-                            type="button"
-                            className={t.ghost}
-                            disabled={act.busy}
-                            onClick={() => updateOrderStatus(o, "DELIVERED")}
-                            style={{ fontSize: "0.78rem", padding: "0.3rem 0.6rem" }}
-                          >
-                            Mark Delivered
-                          </button>
-                        )}
-                        {o.status === "DELIVERED" && (
-                          <span className={t.mute} style={{ fontSize: "0.8rem" }}>Completed</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </section>

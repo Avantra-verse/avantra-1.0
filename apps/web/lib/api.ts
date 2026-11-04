@@ -254,7 +254,18 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
       nameToPrint: prevOrder?.nameToPrint || "",
     };
   },
-  "GET /merch/active-qr": () => rpc("merch_active_qr"),
+  "GET /merch/active-qr": async () => {
+    const active = await rpc("merch_active_qr").catch(() => null);
+    if (active) return active;
+    // Fallback: If any QR was uploaded, return the most recent QR so payments are never blocked
+    const { data } = await supabase()
+      .from("MerchUpiQr")
+      .select("id, label, upiId, storagePath")
+      .order("createdAt", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data;
+  },
   "POST /merch/orders": ({ items, studentClass, schoolName, contactNo, nameToPrint, isCoordinator, paymentNote }) =>
     rpc("place_merch_order", {
       p_items: items,
