@@ -70,7 +70,7 @@ const ZIPPER_CHART = [
 
 const rupees = (p: number) => "₹" + (p / 100).toFixed(0);
 
-function initialClass(grade?: number): string {
+function initialClass(grade?: number | null): string {
   if (!grade) return "";
   const match = `Class ${grade}`;
   return GRADE_OPTIONS.includes(match) ? match : "Other";
