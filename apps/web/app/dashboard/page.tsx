@@ -36,6 +36,13 @@ export default function DashboardPage() {
         <p className={styles.subtext} role="status">Loading…</p>
       ) : (
         <>
+          {/* Only staff land here: students without a profile are sent to /profile by useDashboard. */}
+          <p className={styles.subtext}>
+            The student dashboard is for students. You&apos;re signed in with {me.role === "ADMIN" ? "an admin" : "a staff"} account.
+          </p>
+          <a className={t.btn} href={me.role === "ADMIN" ? "/admin" : "/staff"}>
+            {me.role === "ADMIN" ? "Open the admin panel" : "Open the staff panel"}
+          </a>
           <div className={styles.footerLine}>
             Signed in as {me.email} ·{" "}
             <button type="button" className={styles.link} onClick={logout}>
