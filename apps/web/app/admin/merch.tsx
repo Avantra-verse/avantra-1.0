@@ -946,7 +946,18 @@ export function MerchAdmin() {
                           Coordinator
                         </span>
                       )}
-                      <span className={t.status} data-tone={o.status === "PAID" ? "ok" : o.status === "PENDING" ? "warn" : undefined}>
+                      <span
+                        className={t.status}
+                        data-tone={
+                          o.status === "DELIVERED" || o.status === "PAID"
+                            ? "ok"
+                            : o.status === "SHIPPED"
+                            ? "info"
+                            : o.status === "PENDING"
+                            ? "warn"
+                            : "danger"
+                        }
+                      >
                         {o.status}
                       </span>
                     </div>

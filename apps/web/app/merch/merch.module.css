@@ -198,17 +198,25 @@
   color: rgba(244, 234, 217, 0.55);
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   flex-wrap: wrap;
 }
 
 .sizeChip {
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.7rem;
-  color: rgba(244, 234, 217, 0.75);
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(244, 234, 217, 0.85);
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+}
+
+.sizeChip:hover {
+  border-color: rgba(159, 212, 255, 0.35);
+  color: #9fd4ff;
 }
 
 .cardActions {
@@ -988,6 +996,163 @@
   box-shadow: 0 0 0 2px rgba(159, 212, 255, 0.3);
 }
 
+/* ---- status pills ---- */
+
+.trackStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  display: inline-block;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+.statusPending {
+  background: rgba(234, 179, 8, 0.14);
+  color: #facc15;
+  border: 1.5px solid rgba(250, 204, 21, 0.45);
+  box-shadow: 0 0 16px rgba(234, 179, 8, 0.2);
+}
+
+.statusPaid {
+  background: rgba(34, 197, 94, 0.14);
+  color: #4ade80;
+  border: 1.5px solid rgba(74, 222, 128, 0.45);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.2);
+}
+
+.statusShipped {
+  background: rgba(159, 212, 255, 0.14);
+  color: #9fd4ff;
+  border: 1.5px solid rgba(159, 212, 255, 0.45);
+  box-shadow: 0 0 16px rgba(159, 212, 255, 0.2);
+}
+
+.statusDelivered {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  border: 1.5px solid rgba(74, 222, 128, 0.5);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.3);
+}
+
+.statusCancelled {
+  background: rgba(239, 68, 68, 0.14);
+  color: #f87171;
+  border: 1.5px solid rgba(248, 113, 113, 0.45);
+}
+
+/* ---- order tracking stepper ---- */
+
+.stepperWrap {
+  position: relative;
+  margin: 2.5rem 0;
+}
+
+.stepperLine {
+  position: absolute;
+  top: 17px;
+  left: 12%;
+  right: 12%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.stepperLineProgress {
+  height: 100%;
+  background: linear-gradient(90deg, #b3121e, #9fd4ff);
+  transition: width 0.4s ease;
+}
+
+.stepperGrid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.stepperStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stepperCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #1b1613;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  color: rgba(244, 234, 217, 0.45);
+  font-size: 0.85rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+  transition: all 0.25s ease;
+}
+
+.stepperCircleDone {
+  background: #b3121e !important;
+  border-color: #ff4d5a !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(179, 18, 30, 0.5);
+}
+
+.stepperCircleActive {
+  background: #141a22 !important;
+  border-color: #9fd4ff !important;
+  color: #9fd4ff !important;
+  box-shadow: 0 0 16px rgba(159, 212, 255, 0.6);
+  transform: scale(1.08);
+}
+
+.stepperLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: rgba(244, 234, 217, 0.45);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.stepperLabelActive {
+  color: #f4ead9 !important;
+}
+
+.stepperDesc {
+  font-size: 0.7rem;
+  color: rgba(244, 234, 217, 0.45);
+  line-height: 1.3;
+}
+
 /* =========================================================================
    Mobile Responsiveness (screens <= 768px and <= 480px)
    ========================================================================= */
@@ -1124,6 +1289,37 @@
   .checkoutBox {
     padding: 1.25rem;
     border-radius: 14px;
+  }
+
+  .stepperGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .stepperLine {
+    top: 18px;
+    bottom: 18px;
+    left: 17px;
+    right: auto;
+    width: 3px;
+    height: auto;
+  }
+
+  .stepperLineProgress {
+    width: 100%;
+    transition: height 0.4s ease;
+  }
+
+  .stepperStep {
+    flex-direction: row;
+    text-align: left;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .stepperCircle {
+    margin-bottom: 0;
+    flex-shrink: 0;
   }
 }
 
