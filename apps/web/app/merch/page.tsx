@@ -187,13 +187,16 @@ function ProductCard({ item, onAdd }: { item: MerchItem; onAdd: (entry: CartEntr
           <Link href={`/merch/${item.id}`} className={s.detailBtn}>
             Customize →
           </Link>
-          <button
-            type="button"
-            className={s.addBtn}
-            onClick={handleAdd}
-          >
-            {added ? "Added ✓" : "Add to Cart"}
-          </button>
+          {/* Sized items need a size and print name, so they go through Customize. */}
+          {!item.sizes?.length && (
+            <button
+              type="button"
+              className={s.addBtn}
+              onClick={handleAdd}
+            >
+              {added ? "Added ✓" : "Add to Cart"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -236,7 +239,7 @@ export default function MerchPage() {
 
   function addToCart(entry: CartEntry) {
     setCart((prev) => {
-      const idx = prev.findIndex((e) => e.item.id === entry.item.id && e.size === entry.size);
+      const idx = prev.findIndex((e) => e.item.id === entry.item.id && e.size === entry.size && e.nameToPrint === entry.nameToPrint);
       let updated: CartEntry[];
       if (idx >= 0) {
         updated = [...prev];
@@ -389,7 +392,7 @@ export default function MerchPage() {
               {cart.map((e, i) => (
                 <li key={`${e.item.id}-${e.size}-${i}`} className={s.orderItem}>
                   <span className={s.orderItemName}>
-                    {e.item.name} — <strong style={{ color: "#9fd4ff" }}>{e.size}</strong> × {e.quantity}
+                    {e.item.name} — <strong style={{ color: "#9fd4ff" }}>{e.size}</strong>{e.nameToPrint && ` · ${e.nameToPrint}`} × {e.quantity}
                   </span>
                   <span style={{ display: "flex", gap: "0.8rem", alignItems: "center" }}>
                     <span className={s.orderItemPrice}>{rupees(e.item.price * e.quantity)}</span>

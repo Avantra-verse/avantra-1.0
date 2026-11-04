@@ -5,6 +5,13 @@
 ALTER TABLE public."MerchItem"
   ADD COLUMN IF NOT EXISTS "images" text[] NOT NULL DEFAULT '{}';
 
+-- The old 7-argument versions would stay as overloads next to the new ones.
+DROP FUNCTION IF EXISTS public.admin_merch_create_item(text, text, text, integer, text, text[], boolean);
+DROP FUNCTION IF EXISTS public.admin_merch_update_item(text, text, text, text, integer, text, text[], boolean);
+-- Hand-applied copies with different defaults exist live; CREATE OR REPLACE cannot change defaults.
+DROP FUNCTION IF EXISTS public.admin_merch_create_item(text, text, text, integer, text, text[], boolean, text[]);
+DROP FUNCTION IF EXISTS public.admin_merch_update_item(text, text, text, text, integer, text, text[], boolean, text[]);
+
 -- Admin update function: add images param
 CREATE OR REPLACE FUNCTION public.admin_merch_create_item(
   p_name text,
@@ -55,3 +62,12 @@ BEGIN
 END;
 $$;
 
+-- New functions are executable by PUBLIC by default; admin functions stay signed-in only.
+REVOKE ALL ON FUNCTION
+  public.admin_merch_create_item(text, text, text, integer, text, text[], boolean, text[]),
+  public.admin_merch_update_item(text, text, text, text, integer, text, text[], boolean, text[])
+  FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION
+  public.admin_merch_create_item(text, text, text, integer, text, text[], boolean, text[]),
+  public.admin_merch_update_item(text, text, text, text, integer, text, text[], boolean, text[])
+  TO authenticated;

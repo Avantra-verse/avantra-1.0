@@ -217,6 +217,7 @@ export default function CheckoutPage() {
         itemId: c.item.id,
         size: c.size,
         quantity: c.quantity,
+        nameToPrint: c.nameToPrint,
       }));
 
       const res = await api<OrderResult>("/merch/orders", {
@@ -337,7 +338,9 @@ export default function CheckoutPage() {
                             {entry.item.name}
                           </div>
                           <div style={{ fontSize: "0.78rem", color: "rgba(244,234,217,0.6)", marginTop: 2 }}>
-                            Size: <strong style={{ color: "#9fd4ff" }}>{entry.size}</strong> · {rupees(entry.item.price)} each
+                            Size: <strong style={{ color: "#9fd4ff" }}>{entry.size}</strong>
+                            {entry.nameToPrint && <> · Print: <strong style={{ color: "#9fd4ff" }}>{entry.nameToPrint}</strong></>}
+                            {" "}· {rupees(entry.item.price)} each
                           </div>
                         </div>
 

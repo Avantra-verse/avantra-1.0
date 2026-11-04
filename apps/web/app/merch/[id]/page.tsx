@@ -110,6 +110,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [showChart, setShowChart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [cartError, setCartError] = useState("");
   const [activeImg, setActiveImg] = useState("");
 
   // Direct checkout state
@@ -178,6 +179,7 @@ export default function ProductDetailPage() {
   const setFormField = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
     setError("");
+    setCartError("");
   };
 
   const handleNextStep = (e: React.FormEvent) => {
@@ -372,6 +374,29 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
+              <div style={{ marginTop: "1rem" }}>
+              <div className={s.formField} style={{ margin: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <label>Name to be Printed on Merch *</label>
+                  <span style={{ fontSize: "0.75rem", color: form.nameToPrint.length === 10 ? "#facc15" : "rgba(244,234,217,0.5)" }}>
+                    {form.nameToPrint.length}/10 chars
+                  </span>
+                </div>
+                <p className={s.mute} style={{ fontSize: "0.78rem", margin: "2px 0 6px", lineHeight: 1.4 }}>
+                  Max 10 characters so your name prints neatly and boldly on the merchandise.
+                </p>
+                <input
+                  type="text"
+                  name="nameToPrint"
+                  value={form.nameToPrint}
+                  onChange={setFormField}
+                  placeholder="e.g. VISHESH"
+                  maxLength={10}
+                  required
+                />
+              </div>
+              </div>
+
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "1rem", paddingTop: "0.8rem", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <span style={{ fontSize: "0.95rem", color: "rgba(244,234,217,0.7)" }}>Subtotal</span>
                 <span style={{ fontSize: "1.35rem", fontWeight: 800, color: "#9fd4ff" }}>{rupees(totalPaise)}</span>
@@ -383,15 +408,18 @@ export default function ProductDetailPage() {
                   className={s.addBtn}
                   style={{ flex: 1, padding: "0.75rem" }}
                   onClick={() => {
+                    const nameToPrint = form.nameToPrint.trim().toUpperCase();
+                    if (!nameToPrint) return setCartError("Enter the name to print first.");
+                    setCartError("");
                     const currentCart = loadCart();
                     const size = selectedSize || item.sizes?.[0] || "Free Size";
-                    const idx = currentCart.findIndex((c) => c.item.id === item.id && c.size === size);
+                    const idx = currentCart.findIndex((c) => c.item.id === item.id && c.size === size && c.nameToPrint === nameToPrint);
                     let updated: CartEntry[];
                     if (idx >= 0) {
                       updated = [...currentCart];
                       updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + quantity };
                     } else {
-                      updated = [...currentCart, { item, size, quantity }];
+                      updated = [...currentCart, { item, size, quantity, nameToPrint }];
                     }
                     saveCart(updated);
                     setAddedToCart(true);
@@ -408,6 +436,7 @@ export default function ProductDetailPage() {
                   Go to Checkout →
                 </Link>
               </div>
+              {cartError && <div className={s.error} style={{ marginTop: "0.6rem" }}>{cartError}</div>}
             </div>
           </div>
 
@@ -490,27 +519,6 @@ export default function ProductDetailPage() {
                     value={form.contactNo}
                     onChange={setFormField}
                     placeholder="10-digit mobile number"
-                    required
-                  />
-                </div>
-
-                <div className={s.formField}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <label>Name to be Printed on Merch *</label>
-                    <span style={{ fontSize: "0.75rem", color: form.nameToPrint.length === 10 ? "#facc15" : "rgba(244,234,217,0.5)" }}>
-                      {form.nameToPrint.length}/10 chars
-                    </span>
-                  </div>
-                  <p className={s.mute} style={{ fontSize: "0.78rem", margin: "2px 0 6px", lineHeight: 1.4 }}>
-                    Max 10 characters so your name prints neatly and boldly on the merchandise.
-                  </p>
-                  <input
-                    type="text"
-                    name="nameToPrint"
-                    value={form.nameToPrint}
-                    onChange={setFormField}
-                    placeholder="e.g. VISHESH"
-                    maxLength={10}
                     required
                   />
                 </div>

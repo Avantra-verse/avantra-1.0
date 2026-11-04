@@ -14,6 +14,7 @@ export type CartEntry = {
   item: MerchItem;
   size: string;
   quantity: number;
+  nameToPrint?: string;
 };
 
 export const CART_STORAGE_KEY = "avantra.merch.cart";

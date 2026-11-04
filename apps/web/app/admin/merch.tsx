@@ -41,6 +41,7 @@ export type AdminMerchOrder = {
     size: string;
     quantity: number;
     pricePaise: number;
+    nameToPrint?: string;
   }[];
 };
 
@@ -1010,7 +1011,7 @@ export function MerchAdmin() {
                       <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                         {o.items.map((it, idx) => (
                           <div key={idx} style={{ fontSize: "0.88rem", display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
-                            <span>{it.name} (<strong style={{ color: "#9fd4ff" }}>{it.size}</strong>) × {it.quantity}</span>
+                            <span>{it.name} (<strong style={{ color: "#9fd4ff" }}>{it.size}</strong>{it.nameToPrint && ` · ${it.nameToPrint}`}) × {it.quantity}</span>
                             <span style={{ color: "rgba(244,234,217,0.7)" }}>{rupees(it.pricePaise * it.quantity)}</span>
                           </div>
                         ))}

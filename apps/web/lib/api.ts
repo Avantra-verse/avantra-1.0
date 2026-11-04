@@ -230,42 +230,8 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   // Merch e-commerce & admin: supabase/migrations/*_merch.sql
   "GET /merch/items": async () => ok(await supabase().from("MerchItem").select("*").eq("available", true)),
   "GET /merch/items/:id": async ({ id }) => ok(await supabase().from("MerchItem").select("*").eq("id", id).maybeSingle()),
-  "GET /merch/profile-defaults": async () => {
-    const id = await uid();
-    const { data: student } = await supabase()
-      .from("Student")
-      .select("schoolName, grade")
-      .eq("userId", id)
-      .maybeSingle();
-
-    const { data: prevOrder } = await supabase()
-      .from("MerchOrder")
-      .select("schoolName, studentClass, contactNo, nameToPrint")
-      .eq("buyerId", id)
-      .order("createdAt", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    return {
-      schoolName: student?.schoolName || prevOrder?.schoolName || "",
-      grade: student?.grade ?? null,
-      studentClass: (student?.grade ? `Class ${student.grade}` : "") || prevOrder?.studentClass || "",
-      contactNo: prevOrder?.contactNo || "",
-      nameToPrint: prevOrder?.nameToPrint || "",
-    };
-  },
-  "GET /merch/active-qr": async () => {
-    const active = await rpc("merch_active_qr").catch(() => null);
-    if (active) return active;
-    // Fallback: If any QR was uploaded, return the most recent QR so payments are never blocked
-    const { data } = await supabase()
-      .from("MerchUpiQr")
-      .select("id, label, upiId, storagePath")
-      .order("createdAt", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    return data;
-  },
+  "GET /merch/profile-defaults": () => rpc("merch_profile_defaults"),
+  "GET /merch/active-qr": () => rpc("merch_active_qr"),
   "POST /merch/orders": ({ items, studentClass, schoolName, contactNo, nameToPrint, isCoordinator, paymentNote }) =>
     rpc("place_merch_order", {
       p_items: items,

@@ -21,6 +21,7 @@ type TrackingOrder = {
     size: string;
     quantity: number;
     pricePaise: number;
+    nameToPrint?: string;
   }[];
 };
 
@@ -284,7 +285,8 @@ export default function OrderTrackingPage() {
                   <span>
                     <strong>{it.name}</strong>{" "}
                     <span className={s.mute}>
-                      · Size: <strong style={{ color: "#9fd4ff" }}>{it.size}</strong> × {it.quantity}
+                      · Size: <strong style={{ color: "#9fd4ff" }}>{it.size}</strong>
+                      {it.nameToPrint && <> · Print: <strong style={{ color: "#9fd4ff" }}>{it.nameToPrint}</strong></>} × {it.quantity}
                     </span>
                   </span>
                   <span className={s.orderItemPrice}>
