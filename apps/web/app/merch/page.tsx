@@ -112,60 +112,10 @@ function formatType(type: string): string {
 
 function ProductCard({ item, onAdd }: { item: MerchItem; onAdd: (entry: CartEntry) => void }) {
   const [added, setAdded] = useState(false);
-  const [imgIdx, setImgIdx] = useState(0);
-  const [fade, setFade] = useState(true);
-  const cardRef = React.useRef<HTMLDivElement>(null);
-  const visibleRef = React.useRef(false);
-  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Build the gallery — deduplicate, always include imageSrc first
-  const gallery = React.useMemo(() => {
-    const base = item.imageSrc ? [item.imageSrc] : [];
-    const extra = (item.images ?? []).filter((u) => u && u !== item.imageSrc);
-    return [...base, ...extra];
-  }, [item.imageSrc, item.images]);
-
-  const hasMultiple = gallery.length > 1;
-
-  // Auto-slide: only tick when card is visible in viewport
-  React.useEffect(() => {
-    if (!hasMultiple) return;
-
-    const startSlide = () => {
-      if (timerRef.current) return;
-      timerRef.current = setInterval(() => {
-        setFade(false);
-        setTimeout(() => {
-          setImgIdx((i) => (i + 1) % gallery.length);
-          setFade(true);
-        }, 220); // crossfade out → swap → fade in
-      }, 3000);
-    };
-
-    const stopSlide = () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        visibleRef.current = entry.isIntersecting;
-        if (entry.isIntersecting) startSlide();
-        else stopSlide();
-      },
-      { threshold: 0.1 }
-    );
-
-    if (cardRef.current) observer.observe(cardRef.current);
-    return () => {
-      observer.disconnect();
-      stopSlide();
-    };
-  }, [hasMultiple, gallery.length]);
-
   const defaultSize = item.sizes?.[0] || "Free Size";
+
+  const primaryImg = item.imageSrc || item.images?.[0] || "";
+  const secondaryImg = (item.images ?? []).find((u) => u && u !== primaryImg);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -176,28 +126,37 @@ function ProductCard({ item, onAdd }: { item: MerchItem; onAdd: (entry: CartEntr
   };
 
   return (
-    <div className={s.card} ref={cardRef}>
+    <div className={s.card}>
       <Link href={`/merch/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
         <div className={s.cardImgWrap}>
           <span className={s.cardBadge}>{formatType(item.type)}</span>
           {item.variant && item.variant !== "STANDARD" && (
             <span className={s.cardVariantBadge}>{item.variant}</span>
           )}
+          {/* Primary image */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={gallery[imgIdx] ?? item.imageSrc}
+            src={primaryImg}
             alt={item.name}
-            className={s.cardImg}
+            className={`${s.cardImg} ${secondaryImg ? s.cardImgPrimary : ""}`}
             loading="lazy"
             decoding="async"
-            style={{ opacity: fade ? 1 : 0, transition: "opacity 0.22s ease" }}
           />
-          {/* Dot indicators — only if multiple images */}
-          {hasMultiple && (
+          {/* Alternate image shown smoothly on hover */}
+          {secondaryImg && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={secondaryImg}
+              alt={`${item.name} alternate view`}
+              className={s.cardImgSecondary}
+              loading="lazy"
+              decoding="async"
+            />
+          )}
+          {secondaryImg && (
             <div className={s.slideDots}>
-              {gallery.map((_, i) => (
-                <span key={i} className={`${s.slideDot} ${i === imgIdx ? s.slideDotActive : ""}`} />
-              ))}
+              <span className={`${s.slideDot} ${s.slideDotActive}`} />
+              <span className={s.slideDot} />
             </div>
           )}
         </div>
