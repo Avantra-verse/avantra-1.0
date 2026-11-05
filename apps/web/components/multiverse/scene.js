@@ -35,10 +35,13 @@ Promise.all([Promise.all(FA.map(loadImg)),Promise.all(FB.map(loadImg)),loadImg(C
 timers.push(setTimeout(function(){loaded=true;},15000));
 
 var pre=$('pre'),pn=$('pn'),plogo=$('plogo'),shown=0,introStart=0,started=false;
+// The loading screen is for opening the site; coming back to Home from another page skips it (frames are cached by then).
+var seen=false;try{seen=sessionStorage.getItem('avantra-intro')==='1';sessionStorage.setItem('avantra-intro','1');}catch(e){}
+if(seen){pre.style.transition='none';pre.classList.add('done');}
 (function preTick(){
   if(!alive)return;
   var target=loaded?100:Math.min(96,done/total*100);
-  shown+=(target-shown)*.12;if(loaded&&shown>99.4)shown=100;
+  shown+=(target-shown)*.12;if(loaded&&(seen||shown>99.4))shown=100;
   pn.textContent=Math.round(shown);
   plogo.style.clipPath='inset(0 '+(100-shown)+'% 0 0)';
   if(shown>=100){
@@ -46,9 +49,9 @@ var pre=$('pre'),pn=$('pn'),plogo=$('plogo'),shown=0,introStart=0,started=false;
       if(!alive)return;
       pre.classList.add('done');
       document.documentElement.style.overflow='';
-      introStart=performance.now()+(reduce?0:500);
+      introStart=performance.now()+(reduce||seen?0:500);
       start();
-    },320));
+    },seen?0:320));
   }else if(alive)requestAnimationFrame(preTick);
 })();
 

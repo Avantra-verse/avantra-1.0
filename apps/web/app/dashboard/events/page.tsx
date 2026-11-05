@@ -278,6 +278,7 @@ function EventDialog({
   const [topic, setTopic] = useState("");
   const { student: dashStudent } = useDashboard();
   const [stay, setStay] = useState(!!dashStudent?.accommodation); // keep the choice on "Change theme"
+  const [stayStep, setStayStep] = useState(false); // theme picked, now choosing the dormitory stay
   // Came from a team's invite link: register on that team's theme instead of picking one.
   const [invite, setInvite] = useState<{ name: string; topic: string | null; eventId: string } | null>(null);
   useEffect(() => {
@@ -345,7 +346,7 @@ function EventDialog({
         </p>
         {exhibition && !feePaid ? (
           <Link href="/dashboard/pay" className={account.submitBtn} style={linkBtn}>
-            {reviewing ? "Payment under review" : "Pay ₹299 to finish"}
+            {reviewing ? "Payment under review" : `Pay ₹${feeTotal(!!dashStudent?.accommodation)} to finish`}
           </Link>
         ) : (
           e.teamMax > 1 && (
@@ -366,11 +367,11 @@ function EventDialog({
   else if (onTheme)
     footer = (
       <div className={styles.footRow}>
-        <button type="button" className={`${account.link} ${styles.quiet}`} onClick={() => setStep("details")}>
+        <button type="button" className={`${account.link} ${styles.quiet}`} onClick={() => (stayStep ? setStayStep(false) : setStep("details"))}>
           ← Back
         </button>
         <button type="submit" form={`${e.slug}-theme`} className={account.submitBtn} disabled={busy} style={{ marginTop: 0 }}>
-          {busy ? "Registering…" : `Register & pay ₹${feeTotal(stay)}`}
+          {busy ? "Registering…" : stayStep ? `Register & pay ₹${feeTotal(stay)}` : "Next: stay"}
         </button>
       </div>
     );
@@ -402,11 +403,11 @@ function EventDialog({
 
         {exhibition && student && (
           <ol className={`${steps.steps} ${styles.steps}`} aria-label="Registration steps">
-            {["Details", "Theme", "Pay"].map((label, i) => (
+            {["Details", "Theme", "Stay", "Pay"].map((label, i) => (
               <li
                 key={label}
-                aria-current={i === (onTheme ? 1 : reg && !feePaid ? 2 : reg ? -1 : 0) ? "step" : undefined}
-                data-done={(i === 0 && (onTheme || !!reg)) || (i === 1 && !!reg) || (i === 2 && feePaid) || undefined}
+                aria-current={i === (onTheme ? (stayStep ? 2 : 1) : reg && !feePaid ? 3 : reg ? -1 : 0) ? "step" : undefined}
+                data-done={(i === 0 && (onTheme || !!reg)) || (i === 1 && ((onTheme && stayStep) || !!reg)) || (i === 2 && !!reg) || (i === 3 && feePaid) || undefined}
               >
                 {label}
               </li>
@@ -423,12 +424,17 @@ function EventDialog({
                 ev.preventDefault();
                 const chosen = teamTopic ?? topic;
                 if (!chosen) return setError("Pick a theme.");
+                if (!stayStep) return setStayStep(true);
                 run(async () => {
                   await api("/registrations", { eventId: e.id, topic: chosen });
                   await api("/profile/accommodation", { on: stay }, "PUT");
                 }).then((ok) => ok && router.push("/dashboard/pay"));
               }}
             >
+              {stayStep ? (
+                <StayOption checked={stay} onChange={setStay} />
+              ) : (
+              <>
               <p className={styles.note} style={{ marginTop: 0 }}>
                 You compete as a <strong>{level(grade)}</strong>, from your class. Your team builds its project on this theme.
               </p>
@@ -460,7 +466,8 @@ function EventDialog({
                 </div>
               </fieldset>
               )}
-              <StayOption checked={stay} onChange={setStay} />
+              </>
+              )}
             </form>
           ) : (
             <>
