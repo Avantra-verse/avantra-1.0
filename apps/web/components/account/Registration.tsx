@@ -3,6 +3,7 @@
 // Student sign-up: /registration. -> details -> 6-digit code emailed -> account created and logged in -> profile step.
 // The account only exists once the code is verified (POST /auth/register, then /auth/register/verify).
 // Ambassador sign-up is handled externally via Google Forms at /ambassador.
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterRequest } from "@avantra/shared";
@@ -119,6 +120,12 @@ export function Registration({ role }: { role: Extract<Role, "STUDENT"> }) {
             <button type="button" className={styles.link} onClick={() => setStep("details")}>
               change email
             </button>
+          </div>
+          {/* Supabase sends no code to an email that already has an account (same answer, so it can't be probed). */}
+          <div className={styles.footerLine}>
+            Signed up with this email before? No code is sent then.{" "}
+            <Link href="/login" className={styles.link}>Log in</Link> or{" "}
+            <Link href="/forgot-password" className={styles.link}>reset your password</Link>.
           </div>
         </>
       ) : !studentSignupOpen ? (
