@@ -379,6 +379,9 @@ export default function EventsPage() {
                   <p className="text-[#b9ab9a] text-sm mt-1 max-w-[44ch]">
                     Enter solo or as a team of up to 3 students from the same class, presenting an active working model or proof of concept.
                   </p>
+                  <p className="text-[#9fd4ff] text-sm mt-2 max-w-[44ch]">
+                    Optional: dormitory accommodation with food for both days, +₹599 per student. Choose it when you register; it&apos;s paid with the ₹299 fee in one UPI payment.
+                  </p>
                 </div>
 
                 <div className={styles.flagshipFeeBadge}>

@@ -276,7 +276,8 @@ function EventDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [topic, setTopic] = useState("");
-  const [stay, setStay] = useState(!!useDashboard().student?.accommodation); // keep the choice on "Change theme"
+  const { student: dashStudent } = useDashboard();
+  const [stay, setStay] = useState(!!dashStudent?.accommodation); // keep the choice on "Change theme"
   // Came from a team's invite link: register on that team's theme instead of picking one.
   const [invite, setInvite] = useState<{ name: string; topic: string | null; eventId: string } | null>(null);
   useEffect(() => {
@@ -473,6 +474,12 @@ function EventDialog({
                   <dt>Fee</dt>
                   <dd>{exhibition ? "₹299 per student" : "Free"}</dd>
                 </div>
+                {exhibition && (
+                  <div>
+                    <dt>Stay</dt>
+                    <dd>Optional dormitory with food, 2 days, +₹599</dd>
+                  </div>
+                )}
                 {exhibition && (
                   <div>
                     <dt>Who</dt>
