@@ -379,9 +379,6 @@ export default function EventsPage() {
                   <p className="text-[#b9ab9a] text-sm mt-1 max-w-[44ch]">
                     Enter solo or as a team of up to 3 students from the same class, presenting an active working model or proof of concept.
                   </p>
-                  <p className="text-[#9fd4ff] text-sm mt-2 max-w-[44ch]">
-                    Optional: dormitory accommodation with food for both days, +₹599 per student. Choose it when you register; it&apos;s paid with the ₹299 fee in one UPI payment.
-                  </p>
                 </div>
 
                 <div className={styles.flagshipFeeBadge}>
@@ -513,6 +510,37 @@ export default function EventsPage() {
                     </ul>
                   </div>
                 </div>
+              </div>
+
+              {/* Optional dormitory stay; price must match siteConfig.fee and private.fee_paise. */}
+              <div id="accommodation" className={styles.prizepoolContainer}>
+                <div className={styles.prizepoolHeader}>
+                  <div>
+                    <span className={styles.sectionEyebrow}>Optional · For Exhibition Students</span>
+                    <h4 className={styles.prizepoolTitle}>Dormitory Stay &amp; Food</h4>
+                    <p className={styles.prizepoolSub}>
+                      Coming from far? Stay at the venue for both days of AVANTRA (19–20 December) in a shared dormitory, with meals included.
+                    </p>
+                  </div>
+                  <div className={styles.prizepoolBadge}>
+                    <span>🛏️ +₹599 / Student</span>
+                  </div>
+                </div>
+                <ul className={styles.awardsList}>
+                  {[
+                    { title: "Shared dormitory bed, both days", icon: "🛏️" },
+                    { title: "Meals included", icon: "🍽️" },
+                    { title: "Choose it in the Stay step when you register", icon: "📝" },
+                    { title: "Paid with the fee in one UPI payment: ₹299 + ₹599 = ₹898", icon: "💳" },
+                  ].map((item) => (
+                    <li key={item.title} className={styles.awardItem}>
+                      <div className={styles.awardLeft}>
+                        <span className={styles.awardIcon}>{item.icon}</span>
+                        <span className={styles.awardName}>{item.title}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               <div className={styles.flagshipFooter}>
