@@ -16,6 +16,8 @@ export interface SiteConfig {
   whatsappChannel: string; // AVANTRA's WhatsApp channel (updates, not the ambassador group)
   // The school's UPI for the ₹299 exhibition fee. Empty id = the pay box says payments open soon.
   upi: { id: string; payee: string; qrSrc: string };
+  // Science Exhibition students only; must match private.fee_paise in the database.
+  fee: { exhibition: number; stay: number };
   gallery: { src: string; alt: string }[];
   introVideoSrc: string;
 }
@@ -60,6 +62,7 @@ export const siteConfig: SiteConfig = {
   instagram: "https://www.instagram.com/avantra.verse",
   whatsappChannel: "https://whatsapp.com/channel/0029Vb9RT1z5a248YFlBfP3N",
   upi: { id: "vyapar.176548151671@hdfcbank", payee: "SSRVM IEMS", qrSrc: "/upi-qr.png" },
+  fee: { exhibition: 299, stay: 599 },
   gallery: [],
   introVideoSrc: "/video/intro.mp4",
 };

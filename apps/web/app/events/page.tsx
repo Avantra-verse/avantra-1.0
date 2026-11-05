@@ -8,6 +8,9 @@ import { REGISTER_HREF } from "@/lib/api";
 import { EXHIBITION_TOPICS } from "@avantra/shared";
 import styles from "./events.module.css";
 
+// Multiverse Containment + Chrono-Quest are not final yet; set true to show them again.
+const SHOW_UNFINISHED_FUN = false;
+
 /* ═══════════════════════════════════════════════════════════
    Circuit Board Corner SVG (Brochure Design Detail)
    ═══════════════════════════════════════════════════════════ */
@@ -700,7 +703,7 @@ export default function EventsPage() {
 
           <div className={styles.interactiveStack}>
             {/* ACTIVITY 01: MULTIVERSE CONTAINMENT PROTOCOL */}
-            <Reveal>
+            {SHOW_UNFINISHED_FUN && <Reveal>
               <div className={`${styles.cardBase} ${styles.interactiveCard}`}>
                 <CircuitCorner position="topLeft" />
                 <CircuitCorner position="bottomRight" />
@@ -799,7 +802,7 @@ export default function EventsPage() {
                   Join the Mission (Free)
                 </Link>
               </div>
-            </Reveal>
+            </Reveal>}
 
             {/* ACTIVITY 02: PARADOX WALL */}
             <Reveal>
@@ -888,7 +891,7 @@ export default function EventsPage() {
             </Reveal>
 
             {/* ACTIVITY 03: CHRONO-QUEST */}
-            <Reveal>
+            {SHOW_UNFINISHED_FUN && <Reveal>
               <div className={`${styles.cardBase} ${styles.interactiveCard}`}>
                 <CircuitCorner position="topLeft" />
                 <CircuitCorner position="bottomRight" />
@@ -980,7 +983,23 @@ export default function EventsPage() {
                   Embark on Chrono-Quest (Free)
                 </Link>
               </div>
-            </Reveal>
+            </Reveal>}
+
+            {!SHOW_UNFINISHED_FUN && (
+              <Reveal>
+                <div className={`${styles.cardBase} ${styles.interactiveCard}`}>
+                  <CircuitCorner position="topLeft" />
+                  <CircuitCorner position="bottomRight" />
+                  <div className={styles.eventCardMeta}>
+                    <span className="text-[#9fd4ff]">Coming Soon</span>
+                  </div>
+                  <h3 className={styles.eventCardTitle}>More Activities Loading…</h3>
+                  <p className={styles.eventCardDesc}>
+                    New puzzles and mystery quests are being prepared. Check back soon for the full line-up.
+                  </p>
+                </div>
+              </Reveal>
+            )}
           </div>
         </section>
 

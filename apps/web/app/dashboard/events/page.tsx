@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { EXHIBITION_TOPICS } from "@avantra/shared";
 import { api, ApiError, apiReady, getMe, pendingInvite, type Me } from "@/lib/api";
 import { FormError, OpensSoon, styles as account } from "@/components/account/Account";
+import { feeTotal, StayOption } from "@/components/account/StayOption";
 import styles from "./events.module.css";
 import d from "../dashboard.module.css";
 import { Cosmos } from "../cosmos";
@@ -275,6 +276,7 @@ function EventDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [topic, setTopic] = useState("");
+  const [stay, setStay] = useState(!!useDashboard().student?.accommodation); // keep the choice on "Change theme"
   // Came from a team's invite link: register on that team's theme instead of picking one.
   const [invite, setInvite] = useState<{ name: string; topic: string | null; eventId: string } | null>(null);
   useEffect(() => {
@@ -367,7 +369,7 @@ function EventDialog({
           ← Back
         </button>
         <button type="submit" form={`${e.slug}-theme`} className={account.submitBtn} disabled={busy} style={{ marginTop: 0 }}>
-          {busy ? "Registering…" : "Register & pay ₹299"}
+          {busy ? "Registering…" : `Register & pay ₹${feeTotal(stay)}`}
         </button>
       </div>
     );
@@ -420,7 +422,10 @@ function EventDialog({
                 ev.preventDefault();
                 const chosen = teamTopic ?? topic;
                 if (!chosen) return setError("Pick a theme.");
-                run(() => api("/registrations", { eventId: e.id, topic: chosen })).then((ok) => ok && router.push("/dashboard/pay"));
+                run(async () => {
+                  await api("/registrations", { eventId: e.id, topic: chosen });
+                  await api("/profile/accommodation", { on: stay }, "PUT");
+                }).then((ok) => ok && router.push("/dashboard/pay"));
               }}
             >
               <p className={styles.note} style={{ marginTop: 0 }}>
@@ -454,6 +459,7 @@ function EventDialog({
                 </div>
               </fieldset>
               )}
+              <StayOption checked={stay} onChange={setStay} />
             </form>
           ) : (
             <>

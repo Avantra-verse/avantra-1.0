@@ -66,20 +66,6 @@ textarea:-webkit-autofill:focus {
   transition: background-color 5000s ease-in-out 0s;
 }
 
-body:has(#room-experience) {
-  background-color: #171210 !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-}
-
-body:has(#room-experience) main#main {
-  padding-top: 0 !important;
-}
-
-body:has(#room-experience)::before {
-  display: none !important;
-}
-
 body::before {
   content: "";
   position: fixed;

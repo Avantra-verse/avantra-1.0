@@ -17,6 +17,7 @@ export type Student = {
   guardianPhone: string | null;
   referralCode: string | null;
   feePaidAt: string | null;
+  accommodation: boolean; // dormitory stay with food, chosen before paying
   _count: { checkIns: number };
   payments: LastPayment[]; // the latest only
 };

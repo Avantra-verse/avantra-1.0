@@ -7,7 +7,7 @@ const FILES: Record<string, { kind: string; name: string; columns: string[]; map
   "students.csv": {
     kind: "students",
     name: "students",
-    columns: ["avantraId", "name", "email", "phone", "grade", "school", "referralCode", "guardianPhone", "guardianEmail", "feePaidAt", "paidBy", "paymentRef", "checkIns", "signedUpAt"],
+    columns: ["avantraId", "name", "email", "phone", "grade", "school", "referralCode", "guardianPhone", "guardianEmail", "feePaidAt", "paidBy", "paymentRef", "accommodation", "checkIns", "signedUpAt"],
   },
   "registrations.csv": {
     kind: "registrations",

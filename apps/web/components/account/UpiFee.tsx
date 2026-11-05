@@ -14,7 +14,7 @@ const { upi } = siteConfig;
 const when = (iso: string) => new Date(iso).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
 const STEPS = ["Pay", "UTR", "Status"];
 
-export function UpiFee({ paid, last, onSent }: { paid: boolean; last?: LastPayment; onSent: () => Promise<void> }) {
+export function UpiFee({ paid, last, amount, onSent }: { paid: boolean; last?: LastPayment; amount: number; onSent: () => Promise<void> }) {
   const reviewing = last?.method === "UPI" && last.status === "CREATED";
   const failed = last?.method === "UPI" && last.status === "FAILED";
   const [step, setStep] = useState(paid || reviewing ? 2 : 0);
@@ -71,7 +71,7 @@ export function UpiFee({ paid, last, onSent }: { paid: boolean; last?: LastPayme
               <img src={upi.qrSrc} alt={`UPI QR code to pay ${upi.payee}`} width={220} height={220} />
               <div>
                 <p style={{ margin: "0 0 4px" }}>
-                  Pay <strong>₹299</strong> to {upi.payee}
+                  Pay <strong>₹{amount}</strong> to {upi.payee}
                 </p>
                 <p className={t.mono} style={{ margin: "0 0 10px", whiteSpace: "normal", overflowWrap: "anywhere" }}>{upi.id}</p>
                 <button type="button" className={t.ghost} onClick={copy}>
@@ -79,7 +79,7 @@ export function UpiFee({ paid, last, onSent }: { paid: boolean; last?: LastPayme
                 </button>
                 <ol className={t.mute} style={{ margin: "14px 0 0", paddingLeft: "1.2em", listStyle: "decimal" }}>
                   <li>Scan the QR with any UPI app, or pay to the UPI ID.</li>
-                  <li>Pay exactly ₹299.</li>
+                  <li>Pay exactly ₹{amount}.</li>
                   <li>Then tap Next and enter the UTR from your app.</li>
                 </ol>
               </div>

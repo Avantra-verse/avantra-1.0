@@ -158,6 +158,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
 
   // Fee by UPI and the Engagement Wall: supabase/migrations/*_fee_and_wall.sql
   "POST /payments/upi": ({ utr }) => rpc("submit_upi_payment", { p_utr: utr }),
+  "PUT /profile/accommodation": ({ on }) => rpc("set_accommodation", { p_on: on }),
   "GET /wall/me": () => rpc("wall_me"),
   "GET /wall/challenges/:code": ({ code }) => rpc("wall_challenge", { p_code: code }),
   "POST /wall/challenges/:code/answer": ({ code, answer }) => rpc("wall_answer", { p_code: code, p_answer: answer }),
