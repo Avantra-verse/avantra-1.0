@@ -12,6 +12,7 @@ import { Cosmos } from "./cosmos";
 import { Tile } from "../admin/ui";
 import { getTimeRemaining } from "@/lib/countdown";
 import { siteConfig } from "@/content/site";
+import { feeTotal } from "@/components/account/StayOption";
 import { Community } from "@/components/Community";
 import { feeReviewing, useDashboard, type MyReg, type Student, type WallMe } from "./data";
 
@@ -69,7 +70,7 @@ function Checklist({ s, exhibition, reviewing }: { s: Student; exhibition: MyReg
       action: "Register",
     },
     {
-      title: "Pay the ₹299 fee",
+      title: `Pay the ₹${feeTotal(s.accommodation)} fee`,
       sub: s.feePaidAt ? "Paid. The school confirmed it." : reviewing ? "Sent. The school is checking your UTR." : "Pay by UPI to the school, then send the UTR.",
       done: !!s.feePaidAt,
       waiting: reviewing,

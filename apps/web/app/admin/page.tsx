@@ -349,7 +349,7 @@ function MarkPaid() {
     if (!id.trim()) return act.setError("Type the AVANTRA ID.");
     const ok = await act.run(
       () => api<{ avantraId: string; name: string }>(`/admin/students/${encodeURIComponent(id.trim())}/mark-paid`, { note: note.trim() || undefined }),
-      (r) => `${r.name} (${r.avantraId}): ₹299 cash recorded. A receipt email is on its way.`,
+      (r) => `${r.name} (${r.avantraId}): fee recorded as cash. A receipt email is on its way.`,
     );
     if (ok) {
       setId("");
@@ -360,10 +360,11 @@ function MarkPaid() {
   return (
     <section className={t.panel} aria-labelledby="cash">
       <h2 id="cash">Cash fee (signed up online)</h2>
+      <p className={t.mute}>Collect ₹{siteConfig.fee.exhibition}, or ₹{siteConfig.fee.exhibition + siteConfig.fee.stay} if they chose the dormitory stay (their Payment page shows the total).</p>
       <form className={t.inline} onSubmit={submit} noValidate>
         <Field name="payId" label="AVANTRA ID" placeholder="AV26-K7M2Q" autoComplete="off" value={id} onChange={(e) => setId(e.target.value)} />
         <Field name="payNote" label="Receipt no. (optional)" autoComplete="off" value={note} onChange={(e) => setNote(e.target.value)} />
-        <button type="submit" className={t.btn} disabled={act.busy} style={{ marginBottom: 4 }}>Mark ₹299 paid</button>
+        <button type="submit" className={t.btn} disabled={act.busy} style={{ marginBottom: 4 }}>Mark fee paid</button>
       </form>
       <FormError message={act.error} />
       {act.note && <p role="status">{act.note}</p>}

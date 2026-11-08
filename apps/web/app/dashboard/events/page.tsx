@@ -157,7 +157,7 @@ export default function EventsPage() {
                           </button>
                         ) : reg && exhibition && !feePaid ? (
                           <Link href="/dashboard/pay" className={styles.btn}>
-                            {reviewing ? "Payment under review" : "Pay ₹299"}
+                            {reviewing ? "Payment under review" : `Pay ₹${feeTotal(!!dash?.accommodation)}`}
                           </Link>
                         ) : reg ? (
                           <Link href="/dashboard/teams" className={styles.btn}>
