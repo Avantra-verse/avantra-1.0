@@ -63,7 +63,7 @@ const EXPERIENCES = [
   {
     tag: "03",
     title: "The Exchange",
-    desc: "Direct interactions with college engineering teams from NIT Rourkela and industry mentors, discovering real-world STEM pathways.",
+    desc: "Direct interactions with experts, discovering real-world STEM pathways.",
   },
 ];
 
