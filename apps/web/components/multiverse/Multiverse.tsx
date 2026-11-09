@@ -53,6 +53,7 @@ export default function Multiverse() {
           <Link href="/about" data-hover>About</Link>
           <Link href="/ambassador" data-hover>Ambassadors</Link>
           <Link href="/contact" data-hover>Contact</Link>
+          <Link href="/how-to-register" data-hover>How to register</Link>
           {apiReady && <Link href={LOGIN_HREF} data-hover>Log in</Link>}
           <Link className={REGISTER_PILL} href={REGISTER_HREF} data-hover>Registration</Link>
         </nav>
@@ -247,6 +248,7 @@ export default function Multiverse() {
             <Link href="/about">About</Link>
             <Link href="/ambassador">Ambassadors</Link>
             <Link href="/contact">Contact</Link>
+            <Link href="/how-to-register">How to register</Link>
             {apiReady && <Link href={LOGIN_HREF}>Log in</Link>}
             <Link href={REGISTER_HREF}>Registration</Link>
             <a href={siteConfig.instagram} target="_blank" rel="noopener noreferrer">Instagram</a>

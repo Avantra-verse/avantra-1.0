@@ -21,6 +21,7 @@ const MAIN_LINKS = [
   { href: "/about", label: "About" },
   { href: "/ambassador", label: "Ambassadors" },
   { href: "/contact", label: "Contact" },
+  { href: "/how-to-register", label: "How to register" },
 ];
 
 // Registration is the one call to action in every header.
@@ -47,7 +48,7 @@ export default function Nav() {
           <img src="/brand/avantra-logo-500w.png" alt="AVANTRA" className="h-9 w-auto" />
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-5 whitespace-nowrap md:flex lg:gap-8">
           {MAIN_LINKS.map((link) => (
             <Link
               key={link.href}

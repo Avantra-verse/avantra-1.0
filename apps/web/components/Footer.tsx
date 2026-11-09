@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/ambassador", label: "Ambassadors" },
   { href: "/contact", label: "Contact" },
   { href: REGISTER_HREF, label: "Registration" },
+  { href: "/how-to-register", label: "How to register" },
 ];
 
 export default function Footer() {
