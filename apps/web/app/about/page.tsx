@@ -53,7 +53,7 @@ const EXPERIENCES = [
   {
     tag: "01",
     title: "The Showcase",
-    desc: "School students bring their own science, robotics, and technology projects to present to judges, college clubs, and fellow innovators.",
+    desc: "School students bring their own science, robotics, and technology projects to present to judges and fellow innovators.",
   },
   {
     tag: "02",
@@ -189,7 +189,7 @@ export default function AboutPage() {
               The collaborative ecosystem powering AVANTRA 2026.
             </p>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {siteConfig.partners.map((p) => (
                 <div key={p.name} className={subCard}>
                   <h3 className="font-[family-name:var(--font-display)] text-base font-bold text-sky">{p.name}</h3>

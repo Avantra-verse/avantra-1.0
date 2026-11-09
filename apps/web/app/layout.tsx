@@ -31,7 +31,7 @@ const instrumentSans = Instrument_Sans({
 });
 
 const description =
-  "A science fair and exhibition hosted by SSRVM IEMS with student clubs from NIT Rourkela.";
+  "A science fair and exhibition hosted by SSRVM IEMS in partnership with ARITHI.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

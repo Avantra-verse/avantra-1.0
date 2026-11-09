@@ -28,17 +28,15 @@ export const siteConfig: SiteConfig = {
   eventDateISO: "2026-12-19T00:00:00",
   overview:
     "AVANTRA is a two-day science fair and exhibition hosted by SSRVM IEMS, " +
-    "organized in partnership with ARITHI. Student clubs from NIT Rourkela " +
-    "showcase projects and run sessions, bringing college-level science " +
-    "exposure to school students, all built around a Multiverse theme.",
+    "organized in partnership with ARITHI, which runs the events and sessions, " +
+    "all built around a Multiverse theme.",
   partners: [
     { name: "SSRVM IEMS", role: "Institutional Partner. Hosts the event, provides venue and infrastructure, handles internal coordination." },
-    { name: "ARITHI", role: "Event Partner. Plans the event, brings sponsorship, coordinates NIT Rourkela clubs, runs execution." },
+    { name: "ARITHI", role: "Event Partner. Plans the event, brings sponsorship, runs the events and sessions." },
     { name: "Sponsors", role: "Fund and support the event to keep school spend low." },
-    { name: "NIT Rourkela Clubs", role: "Showcase projects and conduct science events and sessions for students." },
   ],
   days: [
-    { title: "Day 1", description: "Opening and science exhibition. Exhibits from school students and NIT Rourkela clubs open to view, plus the inaugural session." },
+    { title: "Day 1", description: "Opening and science exhibition. Exhibits from school students open to view, plus the inaugural session." },
     { title: "Day 2", description: "Competitive events and challenges run across the day, alongside continuing exhibition, followed by results and the closing ceremony." },
   ],
   rules: [
