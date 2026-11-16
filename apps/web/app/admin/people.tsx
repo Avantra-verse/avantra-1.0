@@ -11,7 +11,7 @@ import x from "./people.module.css";
 import { rupees, useAction, useLoad } from "./ui";
 
 type Role = "STUDENT" | "VOLUNTEER" | "JUDGE" | "ADMIN";
-type PersonRow = { id: string; name: string; email: string; phone: string | null; role: Role; superAdmin: boolean; disabledAt: string | null; createdAt: string; avantraId: string | null; schoolName: string | null; feePaid: boolean };
+type PersonRow = { id: string; name: string; email: string; phone: string | null; role: Role; superAdmin: boolean; disabledAt: string | null; createdAt: string; avantraId: string | null; schoolName: string | null; feePaid: boolean; utrs: string | null };
 type Person = {
   user: { id: string; name: string; email: string; phone: string | null; role: Role; superAdmin: boolean; disabledAt: string | null; expiresAt: string | null; createdAt: string; assignedEvent: string | null };
   student: { avantraId: string; schoolName: string; grade: number; section: string | null; referralCode: string | null; guardianEmail: string | null; guardianPhone: string | null; guardianConsentAt: string; feePaidAt: string | null } | null;
@@ -51,7 +51,7 @@ export function Students({ canEdit }: { canEdit: boolean }) {
   const students = (list.data ?? []).filter((p) => p.role === "STUDENT");
   const schools = [...new Set(students.map((p) => p.schoolName).filter((v): v is string => !!v))].sort();
   // Counts on the chips follow the school and search filters, so they always match what a tap shows.
-  const matching = students.filter((p) => (!school || p.schoolName === school) && (!needle || [p.name, p.email, p.phone, p.avantraId, p.schoolName].some((v) => v?.toLowerCase().includes(needle))));
+  const matching = students.filter((p) => (!school || p.schoolName === school) && (!needle || [p.name, p.email, p.phone, p.avantraId, p.schoolName, p.utrs].some((v) => v?.toLowerCase().includes(needle))));
   const rows = matching.filter((p) => !status || STATUS[status][1](p));
   const chips: [string, string, number][] = [["", "All", matching.length], ...Object.entries(STATUS).map(([k, [label, test]]): [string, string, number] => [k, label, matching.filter(test).length])];
 
@@ -63,7 +63,7 @@ export function Students({ canEdit }: { canEdit: boolean }) {
         <button type="button" className={t.ghost} onClick={list.reload}>Refresh</button>
       </div>
       <div className={x.filters}>
-        <Field name="peopleSearch" label="Search name, email, phone, AVANTRA ID or school" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} />
+        <Field name="peopleSearch" label="Search name, email, phone, AVANTRA ID, school or UTR" autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} />
         <SelectField name="peopleSchool" label="School" value={school} onChange={(e) => setSchool(e.target.value)}>
           <option value="">All schools</option>
           {schools.map((v) => (
