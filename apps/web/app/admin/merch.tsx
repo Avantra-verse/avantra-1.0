@@ -5,7 +5,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { FormError, styles as account } from "@/components/account/Account";
 import t from "../staff/tools.module.css";
-import { rupees, useAction, useLoad } from "./ui";
+import { fileUrl, rupees, useAction, useLoad } from "./ui";
 
 export type AdminMerchItem = {
   id: string;
@@ -350,9 +350,11 @@ export function MerchAdmin() {
     return true;
   });
 
-  const totalPaise = allOrders.reduce((sum, o) => (o.status === "PAID" ? sum + o.totalPaise : sum), 0);
+  // Shipped and delivered orders were verified first, so they count as paid too.
+  const verified = allOrders.filter((o) => o.status === "PAID" || o.status === "SHIPPED" || o.status === "DELIVERED");
+  const totalPaise = verified.reduce((sum, o) => sum + o.totalPaise, 0);
   const pendingCount = allOrders.filter((o) => o.status === "PENDING").length;
-  const paidCount = allOrders.filter((o) => o.status === "PAID").length;
+  const paidCount = verified.length;
   const activeQrCount = qrs.data?.length ?? 0;
   const productCount = items.data?.length ?? 0;
 
@@ -902,6 +904,9 @@ export function MerchAdmin() {
                   </button>
                 ))}
               </div>
+              <a className={t.ghost} href={fileUrl("/admin/merch/orders.xlsx")}>
+                Download Excel
+              </a>
               <button type="button" className={t.ghost} onClick={orders.reload}>
                 Refresh
               </button>
