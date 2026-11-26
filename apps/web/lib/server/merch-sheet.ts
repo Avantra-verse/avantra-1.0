@@ -1,4 +1,4 @@
-// The merch orders Excel file: a Summary sheet (orders + ₹ per status, pieces per product and size) and an Orders sheet (one row per order).
+// The merch orders Excel file: a Summary sheet (orders + ₹ per status, pieces per product and size), an Orders sheet (one row per order), and a Paid sheet (verified orders only).
 // Totals are formulas, so they stay right if someone edits a status or amount; each also carries its value for viewers that don't recalculate.
 import ExcelJS from 'exceljs';
 import type { AdminMerchOrder } from '@/app/admin/merch';
@@ -19,10 +19,9 @@ const sizeRank = (s: string) => (SIZE_ORDER.indexOf(s) + 1 || 99);
 // Excel has no time zones: shift to IST so the cell shows Indian time.
 const ist = (d: string | null) => (d ? new Date(new Date(d).getTime() + 5.5 * 3600e3) : null);
 
-export async function writeMerchSheet(orders: AdminMerchOrder[], exportedAt = new Date()): Promise<Buffer> {
-  const wb = new ExcelJS.Workbook();
-  const summary = wb.addWorksheet('Summary');
-  const ws = wb.addWorksheet('Orders', { views: [{ state: 'frozen', ySplit: 1 }] });
+// One row per order, a filter on every column and a bold total row.
+function addOrderSheet(wb: ExcelJS.Workbook, name: string, orders: AdminMerchOrder[]) {
+  const ws = wb.addWorksheet(name, { views: [{ state: 'frozen', ySplit: 1 }] });
 
   ws.columns = [
     { header: 'Tracking ID', key: 'trackingId', width: 16 },
@@ -63,8 +62,6 @@ export async function writeMerchSheet(orders: AdminMerchOrder[], exportedAt = ne
   const status = ws.getColumn('status').letter;
   const amount = ws.getColumn('amount').letter;
   const qty = ws.getColumn('qty').letter;
-  const rupees = (list: readonly AdminMerchOrder['status'][]) =>
-    orders.filter((o) => list.includes(o.status)).reduce((s, o) => s + o.totalPaise, 0) / 100;
   ws.autoFilter = { from: 'A1', to: { row: Math.max(last, 2), column: ws.columnCount } };
 
   // SUBTOTAL ignores rows hidden by a filter, so this total follows whatever the filter shows.
@@ -78,11 +75,22 @@ export async function writeMerchSheet(orders: AdminMerchOrder[], exportedAt = ne
       formula: `SUBTOTAL(109,${qty}2:${qty}${last})`,
       result: orders.reduce((n, o) => n + o.items.reduce((m, i) => m + i.quantity, 0), 0),
     };
-    total.getCell('amount').value = { formula: `SUBTOTAL(109,${amount}2:${amount}${last})`, result: rupees(ALL) };
+    total.getCell('amount').value = { formula: `SUBTOTAL(109,${amount}2:${amount}${last})`, result: orders.reduce((s, o) => s + o.totalPaise, 0) / 100 };
     total.font = { bold: true };
     total.getCell('items').alignment = { horizontal: 'right' };
     total.border = { top: { style: 'thin' } };
   }
+  return { head, last, status, amount };
+}
+
+export async function writeMerchSheet(orders: AdminMerchOrder[], exportedAt = new Date()): Promise<Buffer> {
+  const wb = new ExcelJS.Workbook();
+  const summary = wb.addWorksheet('Summary');
+  const { head, last, status, amount } = addOrderSheet(wb, 'Orders', orders);
+  // Paid = every order whose payment was verified (paid, shipped, delivered), same as verified revenue.
+  addOrderSheet(wb, 'Paid', orders.filter((o) => (VERIFIED as readonly string[]).includes(o.status)));
+  const rupees = (list: readonly AdminMerchOrder['status'][]) =>
+    orders.filter((o) => list.includes(o.status)).reduce((s, o) => s + o.totalPaise, 0) / 100;
 
   summary.columns = [{ width: 42 }, { width: 10 }, { width: 16, style: { numFmt: RUPEES } }];
   summary.addRow(['AVANTRA 2026 merch orders']).font = { bold: true, size: 14 };
