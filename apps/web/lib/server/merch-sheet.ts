@@ -1,4 +1,4 @@
-// The merch orders Excel file: a Summary sheet (orders + ₹ per status) and an Orders sheet (one row per order).
+// The merch orders Excel file: a Summary sheet (orders + ₹ per status, pieces per product and size) and an Orders sheet (one row per order).
 // Totals are formulas, so they stay right if someone edits a status or amount; each also carries its value for viewers that don't recalculate.
 import ExcelJS from 'exceljs';
 import type { AdminMerchOrder } from '@/app/admin/merch';
@@ -14,6 +14,8 @@ const LABEL: Record<AdminMerchOrder['status'], string> = {
 const VERIFIED = ['PAID', 'SHIPPED', 'DELIVERED'] as const;
 const ALL = Object.keys(LABEL) as AdminMerchOrder['status'][];
 const RUPEES = '"₹"#,##0';
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const sizeRank = (s: string) => (SIZE_ORDER.indexOf(s) + 1 || 99);
 // Excel has no time zones: shift to IST so the cell shows Indian time.
 const ist = (d: string | null) => (d ? new Date(new Date(d).getTime() + 5.5 * 3600e3) : null);
 
@@ -36,6 +38,7 @@ export async function writeMerchSheet(orders: AdminMerchOrder[], exportedAt = ne
     { header: 'Coordinator', key: 'isCoordinator', width: 12 },
     { header: 'UTR / Ref', key: 'paymentNote', width: 16, style: { numFmt: '@' } }, // text, so Excel never shows 1.23457E+11
     { header: 'Items', key: 'items', width: 50 },
+    { header: 'Qty', key: 'qty', width: 6 },
     { header: 'Amount (₹)', key: 'amount', width: 13, style: { numFmt: RUPEES } },
   ];
   const head = ws.getRow(1);
@@ -52,12 +55,14 @@ export async function writeMerchSheet(orders: AdminMerchOrder[], exportedAt = ne
       items: o.items
         .map((i) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}${i.nameToPrint ? ` "${i.nameToPrint}"` : ''}`)
         .join('; '),
+      qty: o.items.reduce((n, i) => n + i.quantity, 0),
       amount: o.totalPaise / 100,
     });
 
   const last = orders.length + 1; // last data row
   const status = ws.getColumn('status').letter;
   const amount = ws.getColumn('amount').letter;
+  const qty = ws.getColumn('qty').letter;
   const rupees = (list: readonly AdminMerchOrder['status'][]) =>
     orders.filter((o) => list.includes(o.status)).reduce((s, o) => s + o.totalPaise, 0) / 100;
   ws.autoFilter = { from: 'A1', to: { row: Math.max(last, 2), column: ws.columnCount } };
@@ -69,13 +74,17 @@ export async function writeMerchSheet(orders: AdminMerchOrder[], exportedAt = ne
     total.getCell('trackingId').value = { formula: `SUBTOTAL(103,A2:A${last})`, result: orders.length };
     total.getCell('trackingId').numFmt = '0 "orders"';
     total.getCell('items').value = 'Total of rows shown';
+    total.getCell('qty').value = {
+      formula: `SUBTOTAL(109,${qty}2:${qty}${last})`,
+      result: orders.reduce((n, o) => n + o.items.reduce((m, i) => m + i.quantity, 0), 0),
+    };
     total.getCell('amount').value = { formula: `SUBTOTAL(109,${amount}2:${amount}${last})`, result: rupees(ALL) };
     total.font = { bold: true };
     total.getCell('items').alignment = { horizontal: 'right' };
     total.border = { top: { style: 'thin' } };
   }
 
-  summary.columns = [{ width: 34 }, { width: 10 }, { width: 16, style: { numFmt: RUPEES } }];
+  summary.columns = [{ width: 42 }, { width: 10 }, { width: 16, style: { numFmt: RUPEES } }];
   summary.addRow(['AVANTRA 2026 merch orders']).font = { bold: true, size: 14 };
   summary.addRow([`Exported ${exportedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })} IST`]).font = { color: { argb: 'FF666666' } };
   summary.addRow([]);
@@ -104,6 +113,37 @@ export async function writeMerchSheet(orders: AdminMerchOrder[], exportedAt = ne
   line('Cancelled (payment rejected)', ['CANCELLED']);
   line('All orders', ALL, true);
   summary.lastRow!.border = { top: { style: 'thin' } };
+
+  // Pieces to make: verified orders only. Plain numbers, not formulas (the Orders sheet keeps items as text).
+  const pieces = new Map<string, Map<string, number>>();
+  for (const o of orders)
+    if ((VERIFIED as readonly string[]).includes(o.status))
+      for (const i of o.items) {
+        const sizes = pieces.get(i.name) ?? new Map<string, number>();
+        sizes.set(i.size || '-', (sizes.get(i.size || '-') ?? 0) + i.quantity);
+        pieces.set(i.name, sizes);
+      }
+  summary.addRow([]);
+  const ph = summary.addRow(['Pieces to make (paid, shipped, delivered)', 'Size', 'Qty']);
+  ph.font = { bold: true };
+  ph.fill = head.fill;
+  summary.getCell(`C${ph.number}`).alignment = { horizontal: 'left' };
+  let allPieces = 0;
+  for (const [name, sizes] of [...pieces].sort(([a], [b]) => a.localeCompare(b))) {
+    let n = 0;
+    for (const [size, q] of [...sizes].sort(([a], [b]) => sizeRank(a) - sizeRank(b) || a.localeCompare(b))) {
+      summary.addRow([name, size, q]).getCell(3).numFmt = '0';
+      n += q;
+    }
+    const sub = summary.addRow([`${name} total`, '', n]);
+    sub.font = { bold: true };
+    sub.getCell(3).numFmt = '0';
+    allPieces += n;
+  }
+  const pt = summary.addRow(['All pieces', '', allPieces]);
+  pt.font = { bold: true };
+  pt.getCell(3).numFmt = '0';
+  pt.border = { top: { style: 'thin' } };
 
   wb.calcProperties.fullCalcOnLoad = true; // Excel recomputes every total on open (exceljs drops cached zeros)
   return Buffer.from(await wb.xlsx.writeBuffer());
