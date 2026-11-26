@@ -36,6 +36,7 @@ export type AdminMerchOrder = {
   buyerName: string;
   buyerEmail: string;
   items: {
+    id: string;
     name: string;
     type: string;
     size: string;
@@ -64,7 +65,26 @@ const base64 = (file: File) =>
 
 const DEFAULT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
-export function MerchAdmin() {
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "0.55rem 0.8rem",
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.15)",
+  borderRadius: 8,
+  color: "#f4ead9",
+};
+
+type OrderEdit = {
+  id: string;
+  nameToPrint: string;
+  studentClass: string;
+  schoolName: string;
+  contactNo: string;
+  items: { id: string; name: string; size: string; nameToPrint: string }[];
+};
+
+// canEdit: super admin; may fix a paid order's details (checked again in the DB).
+export function MerchAdmin({ canEdit = false }: { canEdit?: boolean }) {
   const [subTab, setSubTab] = useState<"products" | "orders" | "qrs">("products");
 
   const items = useLoad<AdminMerchItem[]>("/admin/merch/items");
@@ -89,6 +109,8 @@ export function MerchAdmin() {
   const [qrSlots, setQrSlots] = useState<
     { file: File | null; preview: string; label: string; upiId: string }[]
   >([{ file: null, preview: "", label: "", upiId: "" }]);
+
+  const [orderEdit, setOrderEdit] = useState<OrderEdit | null>(null);
 
   // Orders filter
   const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "PAID" | "NOT_ORDERED">("ALL");
@@ -260,6 +282,19 @@ export function MerchAdmin() {
   async function markNotOrdered(order: AdminMerchOrder) {
     if (!confirm(`Mark ${order.trackingId} (${order.buyerName}) as tried, not ordered?\n\nNo payment came in. The buyer gets no email.`)) return;
     await updateOrderStatus(order, "NOT_ORDERED");
+  }
+
+  async function saveOrderEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!orderEdit) return;
+    const saved = await act.run(
+      () => api(`/admin/merch/orders/${orderEdit.id}`, orderEdit, "PATCH").then(() => true),
+      () => "Order details saved. No email was sent."
+    );
+    if (saved) {
+      setOrderEdit(null);
+      orders.reload();
+    }
   }
 
   // Update order status (SHIPPED / DELIVERED / CANCELLED)
@@ -1040,6 +1075,44 @@ export function MerchAdmin() {
                     </div>
                   </div>
 
+                  {orderEdit?.id === o.id && (
+                    <form onSubmit={saveOrderEdit} style={{ display: "flex", flexDirection: "column", gap: "0.8rem", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "0.75rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.8rem" }}>
+                        {([
+                          ["nameToPrint", "Name to print", 10],
+                          ["studentClass", "Class", 40],
+                          ["schoolName", "School", 120],
+                          ["contactNo", "Contact no.", 15],
+                        ] as const).map(([k, label, max]) => (
+                          <label key={k} style={{ fontSize: "0.8rem", color: "rgba(244,234,217,0.7)" }}>
+                            {label}
+                            <input required maxLength={max} value={orderEdit[k]} onChange={(e) => setOrderEdit({ ...orderEdit, [k]: e.target.value })} style={{ ...inputStyle, marginTop: 4 }} />
+                          </label>
+                        ))}
+                      </div>
+                      {orderEdit.items.map((it, idx) => (
+                        <div key={it.id} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.8rem" }}>
+                          {(["size", "nameToPrint"] as const).map((k) => (
+                            <label key={k} style={{ fontSize: "0.8rem", color: "rgba(244,234,217,0.7)" }}>
+                              {it.name}: {k === "size" ? "size" : "name to print"}
+                              <input
+                                maxLength={10}
+                                value={it[k]}
+                                onChange={(e) => setOrderEdit({ ...orderEdit, items: orderEdit.items.map((x, j) => (j === idx ? { ...x, [k]: e.target.value } : x)) })}
+                                style={{ ...inputStyle, marginTop: 4 }}
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      ))}
+                      <FormError message={act.error} />
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <button type="submit" className={t.btn} disabled={act.busy}>Save details</button>
+                        <button type="button" className={t.ghost} onClick={() => setOrderEdit(null)}>Cancel</button>
+                      </div>
+                    </form>
+                  )}
+
                   {/* Card Footer: Total & Actions */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.8rem", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "0.75rem", marginTop: "auto" }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
@@ -1079,6 +1152,26 @@ export function MerchAdmin() {
                           style={{ fontSize: "0.85rem", padding: "0.45rem 0.9rem" }}
                         >
                           Tried, not ordered
+                        </button>
+                      )}
+                      {canEdit && orderEdit?.id !== o.id && (o.status === "PAID" || o.status === "SHIPPED" || o.status === "DELIVERED") && (
+                        <button
+                          type="button"
+                          className={t.ghost}
+                          disabled={act.busy}
+                          onClick={() =>
+                            setOrderEdit({
+                              id: o.id,
+                              nameToPrint: o.nameToPrint,
+                              studentClass: o.studentClass,
+                              schoolName: o.schoolName,
+                              contactNo: o.contactNo,
+                              items: o.items.map((it) => ({ id: it.id, name: it.name, size: it.size, nameToPrint: it.nameToPrint ?? "" })),
+                            })
+                          }
+                          style={{ fontSize: "0.85rem", padding: "0.45rem 0.9rem" }}
+                        >
+                          Edit details
                         </button>
                       )}
                       {o.status === "PAID" && (

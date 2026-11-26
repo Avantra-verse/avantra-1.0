@@ -79,7 +79,7 @@ export default function AdminPage() {
               {tab === "referrals" && <Referrals />}
               {tab === "messages" && <Messages />}
               {tab === "payments" && <UpiPayments />}
-              {tab === "merch" && <MerchAdmin />}
+              {tab === "merch" && <MerchAdmin canEdit={!!me.superAdmin} />}
               {tab === "desk" && <Desk />}
               {tab === "staff" && <Staff canEdit={!!me.superAdmin} />}
               {tab === "events" && <Events />}
