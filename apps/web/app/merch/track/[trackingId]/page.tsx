@@ -9,7 +9,7 @@ import s from "../../merch.module.css";
 type TrackingOrder = {
   id: string;
   trackingId: string;
-  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "NOT_ORDERED";
   totalPaise: number;
   nameToPrint: string;
   studentClass: string;
@@ -46,6 +46,8 @@ function statusConfig(status: TrackingOrder["status"]) {
       return { label: "🎉 Delivered", className: s.statusDelivered };
     case "CANCELLED":
       return { label: "✕ Cancelled", className: s.statusCancelled };
+    case "NOT_ORDERED":
+      return { label: "✕ Not ordered (no payment)", className: s.statusCancelled };
     default:
       return { label: status, className: s.statusPending };
   }
@@ -73,7 +75,7 @@ export default function OrderTrackingPage() {
   }, [trackingId]);
 
   const currentStepIndex = order
-    ? order.status === "CANCELLED"
+    ? order.status === "CANCELLED" || order.status === "NOT_ORDERED"
       ? -1
       : STATUS_STEPS.findIndex((st) => st.key === order.status)
     : 0;
@@ -169,7 +171,7 @@ export default function OrderTrackingPage() {
             </div>
 
             {/* Stepper Timeline */}
-            {order.status !== "CANCELLED" && (
+            {order.status !== "CANCELLED" && order.status !== "NOT_ORDERED" && (
               <div className={s.stepperWrap}>
                 <div className={s.stepperLine}>
                   <div

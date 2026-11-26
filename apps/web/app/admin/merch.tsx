@@ -23,7 +23,7 @@ export type AdminMerchItem = {
 export type AdminMerchOrder = {
   id: string;
   trackingId: string;
-  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "NOT_ORDERED";
   totalPaise: number;
   nameToPrint: string;
   studentClass: string;
@@ -91,7 +91,7 @@ export function MerchAdmin() {
   >([{ file: null, preview: "", label: "", upiId: "" }]);
 
   // Orders filter
-  const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "PAID">("ALL");
+  const [orderFilter, setOrderFilter] = useState<"ALL" | "PENDING" | "PAID" | "NOT_ORDERED">("ALL");
 
   // Reset product form
   function resetProductForm() {
@@ -257,6 +257,11 @@ export function MerchAdmin() {
     await updateOrderStatus(order, "CANCELLED");
   }
 
+  async function markNotOrdered(order: AdminMerchOrder) {
+    if (!confirm(`Mark ${order.trackingId} (${order.buyerName}) as tried, not ordered?\n\nNo payment came in. The buyer gets no email.`)) return;
+    await updateOrderStatus(order, "NOT_ORDERED");
+  }
+
   // Update order status (SHIPPED / DELIVERED / CANCELLED)
   async function updateOrderStatus(order: AdminMerchOrder, status: string) {
     await act.run(
@@ -347,6 +352,7 @@ export function MerchAdmin() {
   const filteredOrders = allOrders.filter((o) => {
     if (orderFilter === "PENDING") return o.status === "PENDING";
     if (orderFilter === "PAID") return o.status === "PAID";
+    if (orderFilter === "NOT_ORDERED") return o.status === "NOT_ORDERED";
     return true;
   });
 
@@ -892,7 +898,7 @@ export function MerchAdmin() {
             <h2 id="merch-orders-table">Merchandise Orders ({filteredOrders.length})</h2>
             <div className={t.inline}>
               <div className={t.inline} style={{ gap: 4 }}>
-                {(["ALL", "PENDING", "PAID"] as const).map((k) => (
+                {(["ALL", "PENDING", "PAID", "NOT_ORDERED"] as const).map((k) => (
                   <button
                     key={k}
                     type="button"
@@ -900,7 +906,7 @@ export function MerchAdmin() {
                     style={{ padding: "0.3rem 0.75rem", fontSize: "0.82rem" }}
                     onClick={() => setOrderFilter(k)}
                   >
-                    {k}
+                    {k === "NOT_ORDERED" ? "TRIED, NOT ORDERED" : k}
                   </button>
                 ))}
               </div>
@@ -916,7 +922,7 @@ export function MerchAdmin() {
           {!orders.data ? (
             <p className={t.mute} role="status">Loading orders…</p>
           ) : filteredOrders.length === 0 ? (
-            <p className={t.mute}>No orders found under {orderFilter.toLowerCase()}.</p>
+            <p className={t.mute}>No orders found under {orderFilter === "NOT_ORDERED" ? "tried, not ordered" : orderFilter.toLowerCase()}.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {filteredOrders.map((o) => (
@@ -974,7 +980,7 @@ export function MerchAdmin() {
                             : "danger"
                         }
                       >
-                        {o.status}
+                        {o.status === "NOT_ORDERED" ? "TRIED, NOT ORDERED" : o.status}
                       </span>
                     </div>
                   </div>
@@ -1062,6 +1068,17 @@ export function MerchAdmin() {
                           style={{ fontSize: "0.85rem", padding: "0.45rem 0.9rem" }}
                         >
                           ✕ Reject Payment
+                        </button>
+                      )}
+                      {o.status === "PENDING" && (
+                        <button
+                          type="button"
+                          className={t.ghost}
+                          disabled={act.busy}
+                          onClick={() => markNotOrdered(o)}
+                          style={{ fontSize: "0.85rem", padding: "0.45rem 0.9rem" }}
+                        >
+                          Tried, not ordered
                         </button>
                       )}
                       {o.status === "PAID" && (

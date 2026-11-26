@@ -11,7 +11,7 @@ import { Cosmos } from "../cosmos";
 type MyMerchOrder = {
   id: string;
   trackingId: string;
-  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  status: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "NOT_ORDERED";
   totalPaise: number;
   nameToPrint: string;
   createdAt: string;
@@ -126,7 +126,7 @@ export default function DashboardMerchPage() {
                       </td>
                       <td data-label="Status">
                         <span className={t.status} data-tone={statusTone(o.status)}>
-                          {o.status}
+                          {o.status === "NOT_ORDERED" ? "NOT ORDERED" : o.status}
                         </span>
                       </td>
                       <td data-label="Placed On">
