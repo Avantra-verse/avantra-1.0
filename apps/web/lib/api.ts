@@ -248,6 +248,7 @@ const routes: Record<string, (body: Body) => Promise<unknown>> = {
   "GET /admin/merch/orders": () => rpc("admin_merch_orders"),
   "POST /admin/merch/orders/:id/verify": ({ id }) => rpc("admin_merch_verify_payment", { p_order_id: id }),
   "PATCH /admin/merch/orders/:id/status": ({ id, status }) => rpc("admin_merch_update_order_status", { p_order_id: id, p_status: status }),
+  "PATCH /admin/merch/orders/:id/set-status": ({ id, status }) => rpc("admin_merch_set_status", { p_order_id: id, p_status: status }),
   "PATCH /admin/merch/orders/:id": ({ id, nameToPrint, studentClass, schoolName, contactNo, items }) =>
     rpc("admin_merch_edit_order", {
       p_order_id: id, p_name_to_print: nameToPrint, p_student_class: studentClass,

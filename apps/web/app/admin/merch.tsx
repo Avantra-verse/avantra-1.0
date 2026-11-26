@@ -297,6 +297,17 @@ export function MerchAdmin({ canEdit = false }: { canEdit?: boolean }) {
     }
   }
 
+  // Super admin fixes a wrong status (any non-pending order); no email is sent.
+  async function setStatus(order: AdminMerchOrder, status: string) {
+    if (!status || status === order.status) return;
+    if (!confirm(`Change ${order.trackingId} (${order.buyerName}) from ${order.status} to ${status}?\n\nThe buyer gets no email.`)) return;
+    await act.run(
+      () => api(`/admin/merch/orders/${order.id}/set-status`, { status }, "PATCH"),
+      () => `Order ${order.trackingId} set to ${status}. No email was sent.`
+    );
+    orders.reload();
+  }
+
   // Update order status (SHIPPED / DELIVERED / CANCELLED)
   async function updateOrderStatus(order: AdminMerchOrder, status: string) {
     await act.run(
@@ -1200,6 +1211,24 @@ export function MerchAdmin({ canEdit = false }: { canEdit?: boolean }) {
                         <span className={t.status} data-tone="ok" style={{ fontSize: "0.8rem" }}>
                           Completed ✓
                         </span>
+                      )}
+                      {canEdit && o.status !== "PENDING" && (
+                        <select
+                          aria-label={`Change status of ${o.trackingId}`}
+                          value=""
+                          disabled={act.busy}
+                          onChange={(e) => setStatus(o, e.target.value)}
+                          style={{ ...inputStyle, width: "auto", fontSize: "0.85rem", padding: "0.4rem 0.6rem", colorScheme: "dark" }}
+                        >
+                          <option value="">Change status…</option>
+                          {(["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "NOT_ORDERED"] as const)
+                            .filter((s) => s !== o.status)
+                            .map((s) => (
+                              <option key={s} value={s}>
+                                {s === "PENDING" ? "PENDING (not paid, waiting)" : s === "NOT_ORDERED" ? "TRIED, NOT ORDERED" : s}
+                              </option>
+                            ))}
+                        </select>
                       )}
                     </div>
                   </div>
